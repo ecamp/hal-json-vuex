@@ -1,0 +1,27 @@
+{
+  "name": "hal-json-vuex",
+  "version": "1.0.0",
+  "description": "Use a HAL JSON API with Vuex",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ecamp/hal-json-vuex.git"
+  },
+  "keywords": [
+    "HAL",
+    "JSON",
+    "API",
+    "HATEOAS",
+    "Vuex",
+    "Vue"
+  ],
+  "author": "Carlo Beltrame",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ecamp/hal-json-vuex/issues"
+  },
+  "homepage": "https://github.com/ecamp/hal-json-vuex#readme"
+}
