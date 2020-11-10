@@ -2,7 +2,7 @@
   "name": "hal-json-vuex",
   "version": "1.0.0",
   "description": "Use a HAL JSON API with Vuex",
-  "main": "src/index.js",
+  "main": "dist/bundle.js",
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
     "clean": "cross-env rimraf dist coverage lib",
