@@ -1,6 +1,5 @@
 import { createLocalVue, mount } from '@vue/test-utils'
-import ApiStorePlugin from '@/plugins/store/apiPlugin'
-import store from '@/plugins/store'
+import HalJsonVuex from '../src'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
 import VueAxios from 'vue-axios'
@@ -23,22 +22,23 @@ async function letNetworkRequestFinish () {
   })
 }
 
-jest.unmock('lodash')
-
 describe('API store', () => {
   let localVue
   let axiosMock
   let vm
-  const stateCopy = cloneDeep(store.state)
+  let store
 
   beforeEach(() => {
     localVue = createLocalVue()
-    localVue.use(ApiStorePlugin)
     localVue.use(Vuex)
+    store = new Vuex.Store({
+      strict: process.env.NODE_ENV !== 'production'
+    })
     axiosMock = new MockAdapter(axios)
     localVue.use(VueAxios, axiosMock)
     // Restore the initial state before each test
-    store.replaceState(cloneDeep(stateCopy))
+    store.replaceState({})
+    localVue.use(HalJsonVuex(store, axios, { forceRequestedSelfLink: true }))
     vm = mount({ localVue, store, template: '<div></div>' }).vm
     vm.api = localVue.prototype.api
   })
