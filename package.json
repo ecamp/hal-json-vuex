@@ -6,6 +6,7 @@
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
     "clean": "cross-env rimraf dist coverage lib",
+    "coverage": "cross-env npm run build && jest --coverage",
     "lint": "cross-env eslint src --ext .js",
     "test": "cross-env npm run build && jest"
   },
