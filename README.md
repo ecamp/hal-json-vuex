@@ -1,5 +1,7 @@
 # hal-json-vuex
 
+[![npm version](https://img.shields.io/npm/v/hal-json-vuex.svg?style=flat)](https://www.npmjs.com/package/hal-json-vuex)
+[![Downloads](http://img.shields.io/npm/dm/hal-json-vuex.svg?style=flat-square)](https://npmjs.org/package/hal-json-vuex)
 [![Build Status](https://travis-ci.com/ecamp/hal-json-vuex.svg?branch=master)](https://travis-ci.com/ecamp/hal-json-vuex)
 [![Coverage Status](https://coveralls.io/repos/github/ecamp/hal-json-vuex/badge.svg?branch=master)](https://coveralls.io/github/ecamp/hal-json-vuex?branch=master)
 
