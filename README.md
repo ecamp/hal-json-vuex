@@ -1,5 +1,8 @@
 # hal-json-vuex
 
+[![Build Status](https://travis-ci.com/ecamp/hal-json-vuex.svg?branch=master)](https://travis-ci.com/ecamp/hal-json-vuex)
+[![Coverage Status](https://coveralls.io/repos/github/ecamp/hal-json-vuex/badge.svg?branch=master)](https://coveralls.io/github/ecamp/hal-json-vuex?branch=master)
+
 A package to access [HAL JSON](https://tools.ietf.org/html/draft-kelly-json-hal-08) data from an API, using a [Vuex](https://vuex.vuejs.org) store, restructured to make life easier.
 
 With this plugin, you can use your HAL JSON API in a fluid way:
