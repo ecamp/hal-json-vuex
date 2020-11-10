@@ -5,7 +5,7 @@ var nodeExternals = require('webpack-node-externals');
 module.exports = {
   externals: [nodeExternals()],
   entry: [
-    './src/normalize'
+    './src/index'
   ],
   output: {
     path: path.join(__dirname, 'dist'),

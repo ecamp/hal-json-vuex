@@ -1,8 +1,7 @@
 import urltemplate from 'url-template'
 
-export default function StoreValueProxy(apiRoot, get) {
-
-  function isEqualIgnoringOrder(array, other) {
+export default function StoreValueProxy (apiRoot, get) {
+  function isEqualIgnoringOrder (array, other) {
     return array.length === other.length && array.every(elem => other.includes(elem))
   }
 
@@ -11,7 +10,7 @@ export default function StoreValueProxy(apiRoot, get) {
    * @param object         to be examined
    * @returns boolean      true if the object looks like a templated link, false otherwise
    */
-  function isTemplatedLink(object) {
+  function isTemplatedLink (object) {
     if (!object) return false
     return isEqualIgnoringOrder(Object.keys(object), ['href', 'templated']) && (object.templated === true)
   }
@@ -21,12 +20,12 @@ export default function StoreValueProxy(apiRoot, get) {
    * @param object    to be examined
    * @returns boolean true if the object looks like an entity reference, false otherwise
    */
-  function isEntityReference(object) {
+  function isEntityReference (object) {
     if (!object) return false
     return isEqualIgnoringOrder(Object.keys(object), ['href'])
   }
 
-  function containsLoadingEntityReference(array) {
+  function containsLoadingEntityReference (array) {
     return array.some(entry => isEntityReference(entry) && get(entry.href)._meta.loading)
   }
 
@@ -35,7 +34,7 @@ export default function StoreValueProxy(apiRoot, get) {
    * @param object    to be examined
    * @returns boolean true if the object looks like a standalone collection, false otherwise
    */
-  function isCollection(object) {
+  function isCollection (object) {
     return !!(object && Array.isArray(object.items))
   }
 
@@ -57,7 +56,7 @@ export default function StoreValueProxy(apiRoot, get) {
    *                     returned loadingProxy will return it in calls to .self and ._meta.self
    * @returns object     a loadingProxy
    */
-  function loadingProxy(entityLoaded, uri = null) {
+  function loadingProxy (entityLoaded, uri = null) {
     const handler = {
       get: function (target, prop, _) {
         if (prop === Symbol.for('isLoadingProxy')) {
@@ -107,7 +106,7 @@ export default function StoreValueProxy(apiRoot, get) {
    * @param existingContent optionally set the elements that are already known, for random access
    * @returns Array         a proxy that can act as a placeholder for an array that is still being loaded from the API
    */
-  function loadingArrayProxy(arrayLoaded, existingContent = []) {
+  function loadingArrayProxy (arrayLoaded, existingContent = []) {
     const singleResultFunctions = ['find']
     const arrayResultFunctions = ['map', 'flatMap', 'filter']
     singleResultFunctions.forEach(func => {
@@ -125,7 +124,7 @@ export default function StoreValueProxy(apiRoot, get) {
     return existingContent
   }
 
-  function filterDeleting(array) {
+  function filterDeleting (array) {
     return array.filter(entry => !entry._meta.deleting)
   }
 
@@ -137,7 +136,7 @@ export default function StoreValueProxy(apiRoot, get) {
    * @returns array the new array with replaced items, or a loadingArrayProxy if any of the array elements
    *                is still loading.
    */
-  function mapArrayOfEntityReferences(array) {
+  function mapArrayOfEntityReferences (array) {
     const arrayWithReplacedReferences = array.map(entry => {
       if (isEntityReference(entry)) {
         return get(entry.href)
@@ -165,9 +164,9 @@ export default function StoreValueProxy(apiRoot, get) {
    * @param items    array of items, which can be mixed primitive values and entity references
    * @returns object the target object with the added getter
    */
-  function addItemsGetter(target, items) {
-    Object.defineProperty(target, 'items', {get: () => filterDeleting(mapArrayOfEntityReferences(items))})
-    Object.defineProperty(target, 'allItems', {get: () => mapArrayOfEntityReferences(items)})
+  function addItemsGetter (target, items) {
+    Object.defineProperty(target, 'items', { get: () => filterDeleting(mapArrayOfEntityReferences(items)) })
+    Object.defineProperty(target, 'allItems', { get: () => mapArrayOfEntityReferences(items) })
     return target
   }
 
@@ -182,8 +181,8 @@ export default function StoreValueProxy(apiRoot, get) {
    * @param reloadProperty property in the containing entity under which the embedded collection is saved
    * @returns object the imitated collection object
    */
-  function embeddedCollectionProxy(items, reloadUri, reloadProperty) {
-    const result = addItemsGetter({_meta: {reload: {uri: reloadUri, property: reloadProperty}}}, items)
+  function embeddedCollectionProxy (items, reloadUri, reloadProperty) {
+    const result = addItemsGetter({ _meta: { reload: { uri: reloadUri, property: reloadProperty } } }, items)
     result._meta.load = Promise.resolve(result)
     return result
   }
@@ -215,8 +214,8 @@ export default function StoreValueProxy(apiRoot, get) {
    * @param data                entity data from the Vuex store
    * @returns object            wrapped entity ready for use in a frontend component
    */
-  function wrap(data) {
-    const meta = data._meta || {load: Promise.resolve()}
+  function wrap (data) {
+    const meta = data._meta || { load: Promise.resolve() }
 
     if (meta.loading) {
       const entityLoaded = meta.load.then(loadedData => createStoreValueProxy(loadedData))
@@ -232,7 +231,7 @@ export default function StoreValueProxy(apiRoot, get) {
    * returned, along with a ._meta.load promise that resolves when the reload is complete.
    * @param data fully loaded entity data from the Vuex store
    */
-  function createStoreValueProxy(data) {
+  function createStoreValueProxy (data) {
     const result = {}
     Object.keys(data).forEach(key => {
       const value = data[key]
@@ -256,7 +255,7 @@ export default function StoreValueProxy(apiRoot, get) {
       : createResolvedPromise(result)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
-    result._meta = {...data._meta, load: loadedPromise, self: apiRoot + data._meta.self}
+    result._meta = { ...data._meta, load: loadedPromise, self: apiRoot + data._meta.self }
     return result
   }
 
@@ -264,12 +263,11 @@ export default function StoreValueProxy(apiRoot, get) {
    * Creates a resolved Promise; sets the Done-Flag
    * @param value Promise return value
    */
-  function createResolvedPromise(value) {
+  function createResolvedPromise (value) {
     const promise = Promise.resolve(value)
     promise[Symbol.for('done')] = true
     return promise
   }
 
   return wrap
-
 }

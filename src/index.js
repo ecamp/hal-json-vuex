@@ -1,7 +1,7 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
 import { normalizeEntityUri } from './normalizeUri'
-import { default as StoreValueProxyCreator } from './storeValueProxy'
+import StoreValueProxyCreator from './storeValueProxy'
 import storeModule from './storeModule'
 
 /**

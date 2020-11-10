@@ -1,7 +1,59 @@
 {
-  "extends": "airbnb-base",
-  "parser": "babel-eslint",
+  "root": true,
   "env": {
-    "mocha": true
+    "node": true,
+    "jest": true
+  },
+  "extends": [
+    "plugin:vue/recommended",
+    "@vue/standard"
+  ],
+  "rules": {
+    "vue/component-tags-order": [
+      "error",
+      {
+        "order": [
+          "template",
+          "script",
+          "style"
+        ]
+      }
+    ],
+    "vue/html-closing-bracket-newline": [
+      "error",
+      {
+        "singleline": "never",
+        "multiline": "never"
+      }
+    ],
+    "vue/max-attributes-per-line": [
+      "error",
+      {
+        "singleline": 3,
+        "multiline": {
+          "max": 2,
+          "allowFirstLine": true
+        }
+      }
+    ],
+    "vue/singleline-html-element-content-newline": [
+      "error",
+      {
+        "ignoreWhenEmpty": true,
+        "ignores": [
+          "v-chip",
+          "v-icon",
+          "v-btn",
+          "v-alert",
+          "span",
+          "router-link",
+          "h1",
+          "pre"
+        ]
+      }
+    ]
+  },
+  "parserOptions": {
+    "parser": "babel-eslint"
   }
 }
