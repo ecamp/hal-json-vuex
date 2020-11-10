@@ -38,7 +38,9 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({})
 
-Vue.use(HalJsonVuex(store, axios, { apiRoot: 'https://my-api.com/api' }))
+axios.defaults.baseURL = 'https://my-api.com/api'
+
+Vue.use(HalJsonVuex(store, axios))
 ```
 
 ```

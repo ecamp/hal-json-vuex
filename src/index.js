@@ -33,7 +33,6 @@ export class ServerException extends Error {
  */
 function HalJsonVuex (store, axios, options) {
   const defaultOptions = {
-    apiRoot: '',
     forceRequestedSelfLink: false,
     apiName: 'api'
   }
@@ -41,7 +40,7 @@ function HalJsonVuex (store, axios, options) {
 
   store.registerModule(opts.apiName, storeModule)
 
-  const storeValueProxy = StoreValueProxyCreator(opts.apiRoot, get)
+  const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get)
 
   /**
    * Sends a POST request to the backend, in order to create a new entity. Note that this does not
@@ -52,11 +51,11 @@ function HalJsonVuex (store, axios, options) {
    *                        in the Vuex store.
    */
   function post (uriOrCollection, data) {
-    const uri = normalizeEntityUri(uriOrCollection, opts.apiRoot)
+    const uri = normalizeEntityUri(uriOrCollection, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
-    return markAsDoneWhenResolved(axios.post(opts.apiRoot + uri, preparePostData(data)).then(({ data }) => {
+    return markAsDoneWhenResolved(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {
@@ -107,8 +106,8 @@ function HalJsonVuex (store, axios, options) {
   function get (uriOrEntity, forceReload = false) {
     const forceReloadingEmbeddedCollection = forceReload && uriOrEntity._meta && uriOrEntity._meta.reload && uriOrEntity._meta.reload.uri
     const uri = forceReloadingEmbeddedCollection
-      ? normalizeEntityUri(uriOrEntity._meta.reload.uri, opts.apiRoot)
-      : normalizeEntityUri(uriOrEntity, opts.apiRoot)
+      ? normalizeEntityUri(uriOrEntity._meta.reload.uri, axios.defaults.baseURL)
+      : normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       if (uriOrEntity[Symbol.for('isLoadingProxy')]) {
         // A loadingProxy is safe to return without breaking the UI.
@@ -170,7 +169,7 @@ function HalJsonVuex (store, axios, options) {
    */
   function loadFromApi (uri) {
     return new Promise((resolve, reject) => {
-      axios.get(opts.apiRoot + uri).then(
+      axios.get(axios.defaults.baseURL + uri).then(
         ({ data }) => {
           if (opts.forceRequestedSelfLink) {
             data._links.self.href = uri
@@ -194,13 +193,13 @@ function HalJsonVuex (store, axios, options) {
    * @returns Promise      resolves to the URI of the related entity.
    */
   async function href (uriOrEntity, relation, templateParams = {}) {
-    const self = normalizeEntityUri(await get(uriOrEntity)._meta.load, opts.apiRoot)
+    const self = normalizeEntityUri(await get(uriOrEntity)._meta.load, axios.defaults.baseURL)
     const rel = store.state[opts.apiName][self][relation]
     if (!rel || !rel.href) return undefined
     if (rel.templated) {
       return urltemplate.parse(rel.href).expand(templateParams)
     }
-    return opts.apiRoot + rel.href
+    return axios.defaults.baseURL + rel.href
   }
 
   /**
@@ -211,7 +210,7 @@ function HalJsonVuex (store, axios, options) {
    *                    in the Vuex store.
    */
   function patch (uriOrEntity, data) {
-    const uri = normalizeEntityUri(uriOrEntity, opts.apiRoot)
+    const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform PATCH, "${uriOrEntity}" is not an entity or URI`))
     }
@@ -221,7 +220,7 @@ function HalJsonVuex (store, axios, options) {
       store.commit('addEmpty', uri)
     }
 
-    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(axios.patch(opts.apiRoot + uri, data).then(({ data }) => {
+    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -241,7 +240,7 @@ function HalJsonVuex (store, axios, options) {
    * @param uriOrEntity URI (or instance) of an entity which should be removed from the Vuex store
    */
   function purge (uriOrEntity) {
-    const uri = normalizeEntityUri(uriOrEntity, opts.apiRoot)
+    const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't purge an unknown URI, do nothing
       return
@@ -271,13 +270,13 @@ function HalJsonVuex (store, axios, options) {
    *                    been reloaded from the API, or the failed deletion has been cleaned up.
    */
   function del (uriOrEntity) {
-    const uri = normalizeEntityUri(uriOrEntity, opts.apiRoot)
+    const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't delete an unknown URI, do nothing
       return Promise.reject(new Error(`Could not perform DELETE, "${uriOrEntity}" is not an entity or URI`))
     }
     store.commit('deleting', uri)
-    return markAsDoneWhenResolved(axios.delete(opts.apiRoot + uri).then(
+    return markAsDoneWhenResolved(axios.delete(axios.defaults.baseURL + uri).then(
       () => deleted(uri),
       (error) => {
         store.commit('deletingFailed', uri)
@@ -327,7 +326,7 @@ function HalJsonVuex (store, axios, options) {
     const normalizedData = normalize(data, {
       camelizeKeys: false,
       metaKey: '_meta',
-      normalizeUri: (uri) => normalizeEntityUri(uri, opts.apiRoot),
+      normalizeUri: (uri) => normalizeEntityUri(uri, axios.defaults.baseURL),
       filterReferences: true,
       embeddedStandaloneCollectionKey: 'items'
     })
