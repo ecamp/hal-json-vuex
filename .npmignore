@@ -1,0 +1,11 @@
+coverage
+demo
+docs
+node_modules
+src
+test
+.babelrc
+.eslintrc
+.idea
+.travis.yml
+webpack.config.js
