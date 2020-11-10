@@ -38,7 +38,7 @@ function HalJsonVuex (store, axios, options) {
   }
   const opts = { ...defaultOptions, ...options }
 
-  store.registerModule(opts.apiName, storeModule)
+  store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
   const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get)
 
@@ -392,34 +392,31 @@ function HalJsonVuex (store, axios, options) {
     if (error.response) {
       const response = error.response
 
-      // 404 Entity not found error
       if (response.status === 404) {
+        // 404 Entity not found error
         store.commit('deleting', uri)
         deleted(uri).then(() => {}) // no need to wait for delete operation to finish
         // return new ServerException(response, `Could not perform operation, "${uri}" has been deleted`)
         return new Error(`Could not perform operation, "${uri}" has been deleted`)
-
-        // 403 Permission error
       } else if (response.status === 403) {
+        // 403 Permission error
         return new ServerException(response, 'No permission to perform operation')
-
-        // API Problem
       } else if (response.headers['content-type'] === 'application/problem+json') {
+        // API Problem
         return new ServerException(response, 'Server-Error ' + response.status + ' (' + response.data.detail + ')')
-
-        // other unknown server error (not of type application/problem+json)
       } else {
+        // other unknown server error (not of type application/problem+json)
         return new ServerException(response)
       }
-      // another error (most probably connection timeout; no response received)
     } else {
+      // another error (most probably connection timeout; no response received)
       return new Error('Could not connect to server. Check your internet connection and try again.')
     }
   }
 
   const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href }
 
-  halJsonVuex.install = function (Vue) {
+  function install (Vue) {
     Object.defineProperties(Vue.prototype, {
       [opts.apiName]: {
         get () {
@@ -429,7 +426,7 @@ function HalJsonVuex (store, axios, options) {
     })
   }
 
-  return halJsonVuex
+  return { ...halJsonVuex, install }
 }
 
 export default HalJsonVuex

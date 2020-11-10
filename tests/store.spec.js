@@ -4,6 +4,7 @@ import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
 import VueAxios from 'vue-axios'
 import Vuex from 'vuex'
+import Vue from 'vue'
 import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import referenceToSingleEntity from './resources/reference-to-single-entity'
@@ -22,25 +23,36 @@ async function letNetworkRequestFinish () {
   })
 }
 
-describe('API store', () => {
-  let localVue
-  let axiosMock
-  let vm
-  let store
+let axiosMock
+let store
+let vm
+let stateCopy
 
-  beforeEach(() => {
-    localVue = createLocalVue()
-    localVue.use(Vuex)
+describe('API store', () => {
+
+  beforeAll(() => {
+    axios.defaults.baseURL = 'http://localhost'
+    Vue.use(Vuex)
     store = new Vuex.Store({
+      modules: {},
       strict: process.env.NODE_ENV !== 'production'
     })
+    stateCopy = cloneDeep(store.state)
+  })
+
+  beforeEach(() => {
     axiosMock = new MockAdapter(axios)
-    localVue.use(VueAxios, axiosMock)
-    // Restore the initial state before each test
-    store.replaceState({})
+    store.replaceState(cloneDeep(stateCopy))
+    const localVue = createLocalVue()
+    localVue.use(Vuex)
+    localVue.use(VueAxios, axios)
     localVue.use(HalJsonVuex(store, axios, { forceRequestedSelfLink: true }))
-    vm = mount({ localVue, store, template: '<div></div>' }).vm
-    vm.api = localVue.prototype.api
+    const wrapper = mount({ store, template: '<div></div>' }, { localVue })
+    vm = wrapper.vm
+  })
+
+  afterEach(() => {
+    axiosMock.restore()
   })
 
   it('imports embedded single entity', async done => {
