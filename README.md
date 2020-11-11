@@ -11,10 +11,11 @@ With this plugin, you can use your HAL JSON API in a fluid way:
 ```js
 // Reading data and traversing relationships
 let singleBook = this.api.get('/books/1')
-let bookName = this.api.get().books().items[0].name // visits the 'books' rel on the root API endpoint
+let firstBookName = this.api.get().books().items[0].name // visits the 'books' rel on the root API endpoint
 let author = singleBook.author() // related entity
 let bookChapters = this.api().books().items[0].chapters()
-this.api.reload(author)
+author = singleBook.author() // doesn't trigger another network call because we already fetched it
+this.api.reload(author) // force re-fetching an entity or a URI
 
 // Writing data
 this.api.post('/books', { name: 'My first book', author: { _links: { self: '/users/433' } } })
@@ -25,7 +26,7 @@ this.api.del(author).then(() => { /* do something */ })
 This library will only load data from the API when necessary (i.e. if the data is not yet in the Vuex store).
 It also supports templated links and partially loaded data from the API.
 
-# Install
+# Installation
 
 ```bash
 npm install hal-json-vuex
@@ -45,7 +46,7 @@ const store = new Vuex.Store({})
 
 axios.defaults.baseURL = 'https://my-api.com/api'
 
-Vue.use(HalJsonVuex(store, axios))
+Vue.use(HalJsonVuex(store, axios, { /* options */ }))
 ```
 
 ```js
@@ -57,4 +58,42 @@ this.api.reload(someEntity)
 ```html
 <!-- Use it in the <template> part of a Vue component -->
 <li v-for="book in api.get('/all/my/books').items" :key="book._meta.self">...</li>
+```
+
+# Available options
+
+### apiName
+This package will install a module into your Vuex store, as well as an accessor (`this.api`) into your Vue prototype.
+These are by default called `api`, but in case you want to change that or need to support multiple APIs at the same time, you can use the `apiName` option:
+```js
+Vue.use(HalJsonVuex(store, axios, { apiName: 'backend' }))
+
+// In a Vue component
+let someEntity = this.backend.get('/some/endpoint')
+```
+
+### forceRequestedSelfLink
+When requesting an entity, some HAL JSON APIs will not always return the same `self` link as it was in the request.
+An example would be if the API added a `page=0` query parameter to the `self` link of a collection, even if the request was done without that parameter:
+```
+// request
+GET /all/my/books
+
+// response JSON from the API
+{
+  "_embedded": {
+    "items": [ ... ]
+  },
+  "_links": {
+    "self": {
+      "href": "/all/my/books?page=0"
+    }
+  }
+}
+```
+This can lead to problems, because in your component template you might be requesting `/all/my/books` but that URI never appears in your Vuex store, causing an infinite loop of re-fetching the same URI.
+
+In case your backend API does this, you can set the `forceRequestedSelfLink` option to true, and the top-level `self` link in all responses will be overwritten to the link that was actually requested.
+```js
+Vue.use(HalJsonVuex(store, axios, { forceRequestedSelfLink: true }))
 ```
