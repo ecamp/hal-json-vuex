@@ -3,7 +3,7 @@ demo
 docs
 node_modules
 src
-test
+tests
 .babelrc
 .eslintrc
 .idea
