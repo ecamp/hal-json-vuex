@@ -34,13 +34,30 @@ export class ServerException extends Error {
 function HalJsonVuex (store, axios, options) {
   const defaultOptions = {
     forceRequestedSelfLink: false,
-    apiName: 'api'
+    apiName: 'api',
+    nuxtInject: null
   }
   const opts = { ...defaultOptions, ...options }
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
   const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get)
+
+  if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
+
+  /**
+   * Since Nuxt.js uses $get, $post etc., we need to use an adapter in the case of a Nuxt.js app...
+   * @param $axios
+   */
+  function adaptNuxtAxios ($axios) {
+    return {
+      get: $axios.$get,
+      patch: $axios.$patch,
+      post: $axios.$post,
+      delete: $axios.$delete,
+      ...$axios
+    }
+  }
 
   /**
    * Sends a POST request to the backend, in order to create a new entity. Note that this does not
@@ -417,13 +434,21 @@ function HalJsonVuex (store, axios, options) {
   const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href }
 
   function install (Vue) {
-    Object.defineProperties(Vue.prototype, {
-      [opts.apiName]: {
-        get () {
-          return halJsonVuex
+    if (this.installed) return
+
+    if (opts.nuxtInject === null) {
+      // Normal installation in a Vue app
+      Object.defineProperties(Vue.prototype, {
+        [opts.apiName]: {
+          get () {
+            return halJsonVuex
+          }
         }
-      }
-    })
+      })
+    } else {
+      // Support for Nuxt-style inject installation
+      opts.nuxtInject(opts.apiName, halJsonVuex)
+    }
   }
 
   return { ...halJsonVuex, install }

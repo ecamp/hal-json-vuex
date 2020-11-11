@@ -60,6 +60,48 @@ this.api.reload(someEntity)
 <li v-for="book in api.get('/all/my/books').items" :key="book._meta.self">...</li>
 ```
 
+### Nuxt.js (experimental support)
+To install in a Nuxt.js application:
+```js
+// First, make sure the Nuxt.js app uses Vuex, by adding an index.js to your store/ directory.
+
+// Then, create a file plugins/hal-json-vuex.js with the following content:
+import Vue from 'vue'
+import HalJsonVuex from 'hal-json-vuex'
+
+export default function ({ store, $axios }, nuxtInject) {
+  if (!Vue.$api) {
+    Vue.use(HalJsonVuex(store, $axios, { nuxtInject }))
+  }
+}
+
+// Add the plugin to nuxt.config.js:
+export default {
+  plugins: [
+    { src: '~/plugins/hal-json-vuex.js' }
+  ],
+  // ...
+}
+```
+Then, you can use `$api` on both the server side and the client side:
+```js
+// On the server
+async asyncData({ $api }) {
+  const books = await $api.get().books()._meta.load
+  return { books }
+}
+```
+
+```js
+// On the client, in a computed or method or lifecycle hook of a Vue component
+let someEntity = this.$api.get('/some/endpoint')
+```
+
+```html
+<!-- On the client, in the <template> part of a Vue component -->
+<li v-for="book in $api.get('/all/my/books').items" :key="book._meta.self">...</li>
+```
+
 # Available options
 
 ### apiName
