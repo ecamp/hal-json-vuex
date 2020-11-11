@@ -27,8 +27,8 @@ It also supports templated links and partially loaded data from the API.
 
 # Install
 
-```shell
-$ npm install ecamp/hal-json-vuex#master
+```bash
+npm install hal-json-vuex
 ```
 
 # Usage
@@ -48,7 +48,7 @@ axios.defaults.baseURL = 'https://my-api.com/api'
 Vue.use(HalJsonVuex(store, axios))
 ```
 
-```
+```js
 // Use it in a computed or method or lifecycle hook of a Vue component
 let someEntity = this.api.get('/some/endpoint')
 this.api.reload(someEntity)
