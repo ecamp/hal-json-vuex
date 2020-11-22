@@ -114,6 +114,13 @@ Vue.use(HalJsonVuex(store, axios, { apiName: 'backend' }))
 let someEntity = this.backend.get('/some/endpoint')
 ```
 
+### avoidNPlusOneRequests
+When accessing the elements of an embedded collection, and some of the elements of the collection have not been loaded from the API before, this library will automatically try to avoid N+1 queries by eager fetching the whole collection.
+In case you run into problems with this behaviour with your API, you can disable it by setting the `avoidNPlusOneRequests` option to false:
+```js
+Vue.use(HalJsonVuex(store, axios, { avoidNPlusOneRequests: false }))
+```
+
 ### forceRequestedSelfLink
 When requesting an entity, some HAL JSON APIs will not always return the same `self` link as it was in the request.
 An example would be if the API added a `page=0` query parameter to the `self` link of a collection, even if the request was done without that parameter:

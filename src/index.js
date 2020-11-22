@@ -33,15 +33,16 @@ export class ServerException extends Error {
  */
 function HalJsonVuex (store, axios, options) {
   const defaultOptions = {
-    forceRequestedSelfLink: false,
     apiName: 'api',
+    avoidNPlusOneRequests: true,
+    forceRequestedSelfLink: false,
     nuxtInject: null
   }
   const opts = { ...defaultOptions, ...options }
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get, isUnknown)
+  const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get, isUnknown, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 
