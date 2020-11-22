@@ -179,12 +179,22 @@ export default function StoreValueProxy (apiRoot, get) {
    * @param items          array of items, which can be mixed primitive values and entity references
    * @param reloadUri      URI of the entity containing the embedded collection (for reloading)
    * @param reloadProperty property in the containing entity under which the embedded collection is saved
+   * @param loadPromise    a promise that will resolve when the parent entity has finished (re-)loading
    * @returns object the imitated collection object
    */
-  function embeddedCollectionProxy (items, reloadUri, reloadProperty) {
-    const result = addItemsGetter({ _meta: { reload: { uri: reloadUri, property: reloadProperty } } }, items)
-    result._meta.load = Promise.resolve(result)
-    return result
+  function embeddedCollectionProxy (items, reloadUri, reloadProperty, loadPromise) {
+    return addItemsGetter(
+      {
+        _meta: {
+          load: loadPromise.then(loadedParent => {
+            const result = addItemsGetter({ _meta: { reload: { uri: reloadUri, property: reloadProperty } } }, loadedParent[reloadProperty])
+            result._meta.load = Promise.resolve(result)
+            return result
+          }),
+          reload: { uri: reloadUri, property: reloadProperty }
+        }
+      },
+      items)
   }
 
   /**
@@ -239,7 +249,7 @@ export default function StoreValueProxy (apiRoot, get) {
       if (key === 'items' && isCollection(data)) {
         addItemsGetter(result, data[key])
       } else if (Array.isArray(value)) {
-        result[key] = () => embeddedCollectionProxy(value, data._meta.self, key)
+        result[key] = () => embeddedCollectionProxy(value, data._meta.self, key, data._meta.load)
       } else if (isEntityReference(value)) {
         result[key] = () => get(value.href)
       } else if (isTemplatedLink(value)) {
