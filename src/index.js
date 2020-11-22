@@ -173,10 +173,7 @@ function HalJsonVuex (store, axios, options) {
       dataFinishedLoading = store.state[opts.apiName][uri]._meta.load
     }
 
-    // We mutate the store state here without telling Vuex about it, so it won't complain and won't make load reactive.
-    // The promise is needed in the store for some special cases when a loading entity is requested a second time with
-    // this.api.get(...) or this.api.reload(...).
-    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(dataFinishedLoading)
+    setLoadPromiseOnStore(uri, dataFinishedLoading)
 
     return store.state[opts.apiName][uri]
   }
@@ -353,6 +350,22 @@ function HalJsonVuex (store, axios, options) {
       embeddedStandaloneCollectionKey: 'items'
     })
     store.commit('add', normalizedData)
+
+    Object.keys(normalizedData).forEach(uri => {
+      setLoadPromiseOnStore(uri)
+    })
+  }
+
+  /**
+   * Mutate the store state without telling Vuex about it, so it won't complain and won't make the load promise
+   * reactive.
+   * The promise is needed in the store for some special cases when a loading entity is requested a second time with
+   * this.api.get(...) or this.api.reload(...), or when an embedded collection is reloaded.
+   * @param uri
+   * @param promise
+   */
+  function setLoadPromiseOnStore (uri, promise = null) {
+    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(promise || Promise.resolve(store.state[opts.apiName][uri]))
   }
 
   /**

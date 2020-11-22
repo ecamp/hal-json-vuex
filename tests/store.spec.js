@@ -497,7 +497,7 @@ describe('API store', () => {
     // then
     expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
     await letNetworkRequestFinish()
-    expect(vm.$store.state.api['/campTypes/20']).toEqual(campType.storeState)
+    expect(vm.$store.state.api['/campTypes/20']).toMatchObject(campType.storeState)
     done()
   })
 
@@ -537,7 +537,7 @@ describe('API store', () => {
     // then
     expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
     await letNetworkRequestFinish()
-    expect(vm.$store.state.api['/campTypes/20']).toEqual(campTypeData.storeState)
+    expect(vm.$store.state.api['/campTypes/20']).toMatchObject(campTypeData.storeState)
     done()
   })
 
@@ -601,8 +601,8 @@ describe('API store', () => {
         }
       ]
     }
-    axiosMock.onGet('http://localhost/camps/1').reply(200, campData.serverResponse)
-    axiosMock.onGet('http://localhost/camps/1').reply(200, campData.serverResponse2)
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, campData.serverResponse)
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, campData.serverResponse2)
     vm.api.get('/camps/1').activityTypes()
     await letNetworkRequestFinish()
     const embeddedCollection = vm.api.get('/camps/1').activityTypes()
