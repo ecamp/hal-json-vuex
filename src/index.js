@@ -140,6 +140,10 @@ function HalJsonVuex (store, axios, options) {
       : storeValueProxy(storeData)
   }
 
+  function isUnknown (uri) {
+    return !(uri in store.state[opts.apiName])
+  }
+
   /**
    * Loads the entity specified by the URI from the Vuex store, or from the API if necessary. If applicable,
    * sets the load promise on the entity in the Vuex store.
@@ -149,7 +153,7 @@ function HalJsonVuex (store, axios, options) {
    *                    backend request is still ongoing.
    */
   function load (uri, forceReload) {
-    const existsInStore = (uri in store.state[opts.apiName])
+    const existsInStore = !isUnknown(uri)
     const isLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
 
     if (!existsInStore) {
@@ -231,7 +235,7 @@ function HalJsonVuex (store, axios, options) {
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform PATCH, "${uriOrEntity}" is not an entity or URI`))
     }
-    const existsInStore = (uri in store.state[opts.apiName])
+    const existsInStore = !isUnknown(uri)
 
     if (!existsInStore) {
       store.commit('addEmpty', uri)
@@ -431,7 +435,7 @@ function HalJsonVuex (store, axios, options) {
     }
   }
 
-  const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href }
+  const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href, isUnknown }
 
   function install (Vue) {
     if (this.installed) return
