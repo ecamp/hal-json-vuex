@@ -1,6 +1,7 @@
 ### Unreleased
 - Fixed a bug involving the load promise of embedded collections
-- Added a new method `isUnknown` which can be used to determine whether an URI has never been requested from the API before (except if it was purged in the meantime).
+- Added a new method `isUnknown` which can be used to determine whether an URI has never been requested from the API before (except if it was purged in the meantime)
+- Automatically avoid n+1 queries when accessing embedded collections (#7)
 
 ### 1.1.0
 - Add experimental support for using the plugin in Nuxt.js applications

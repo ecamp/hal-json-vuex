@@ -41,7 +41,7 @@ function HalJsonVuex (store, axios, options) {
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get)
+  const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get, isUnknown)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 

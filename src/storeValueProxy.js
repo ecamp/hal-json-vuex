@@ -1,6 +1,6 @@
 import urltemplate from 'url-template'
 
-export default function StoreValueProxy (apiRoot, get) {
+export default function StoreValueProxy (apiRoot, get, isUnknown) {
   function isEqualIgnoringOrder (array, other) {
     return array.length === other.length && array.every(elem => other.includes(elem))
   }
@@ -25,8 +25,8 @@ export default function StoreValueProxy (apiRoot, get) {
     return isEqualIgnoringOrder(Object.keys(object), ['href'])
   }
 
-  function containsLoadingEntityReference (array) {
-    return array.some(entry => isEntityReference(entry) && get(entry.href)._meta.loading)
+  function containsUnknownEntityReference (array) {
+    return array.some(entry => isEntityReference(entry) && isUnknown(entry.href))
   }
 
   /**
@@ -128,22 +128,36 @@ export default function StoreValueProxy (apiRoot, get) {
     return array.filter(entry => !entry._meta.deleting)
   }
 
-  /**
-   * Given an array, replaces any entity references in the array with the entity loaded from the Vuex store
-   * (or from the API if necessary), and returns that as a new array. In case some of the entity references in
-   * the array have not finished loading yet, returns a loadingArrayProxy instead.
-   * @param array   possibly mixed array of values and references
-   * @returns array the new array with replaced items, or a loadingArrayProxy if any of the array elements
-   *                is still loading.
-   */
-  function mapArrayOfEntityReferences (array) {
-    const arrayWithReplacedReferences = array.map(entry => {
+  function replaceEntityReferences (array) {
+    return array.map(entry => {
       if (isEntityReference(entry)) {
         return get(entry.href)
       }
       return entry
     })
-    if (containsLoadingEntityReference(array)) {
+  }
+
+  /**
+   * Given an array, replaces any entity references in the array with the entity loaded from the Vuex store
+   * (or from the API if necessary), and returns that as a new array. In case some of the entity references in
+   * the array have not finished loading yet, returns a loadingArrayProxy instead.
+   * @param array            possibly mixed array of values and references
+   * @param fetchAllUri      optional URI that allows fetching all array items in a single network request, if known
+   * @param fetchAllProperty property in the entity from fetchAllUri that will contain the array
+   * @returns array the new array with replaced items, or a loadingArrayProxy if any of the array elements
+   *                is still loading.
+   */
+  function mapArrayOfEntityReferences (array, fetchAllUri = null, fetchAllProperty = null) {
+    if (!containsUnknownEntityReference(array)) {
+      return replaceEntityReferences(array)
+    }
+
+    if (fetchAllUri) {
+      const completelyLoaded = get({ _meta: { reload: { uri: fetchAllUri, property: fetchAllProperty } } }, true)
+        ._meta.load.then(() => replaceEntityReferences(array))
+      return loadingArrayProxy(completelyLoaded)
+    } else {
+      const arrayWithReplacedReferences = replaceEntityReferences(array)
       const arrayCompletelyLoaded = Promise.all(array.map(entry => {
         if (isEntityReference(entry)) {
           return get(entry.href)._meta.load
@@ -151,8 +165,6 @@ export default function StoreValueProxy (apiRoot, get) {
         return Promise.resolve(entry)
       }))
       return loadingArrayProxy(arrayCompletelyLoaded, arrayWithReplacedReferences)
-    } else {
-      return arrayWithReplacedReferences
     }
   }
 
@@ -160,13 +172,15 @@ export default function StoreValueProxy (apiRoot, get) {
    * Defines a property getter for the items property of a given target object.
    * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
    * lazy, since that potentially fetches a large number of entities from the API.
-   * @param target   object on which the items getter should be defined
-   * @param items    array of items, which can be mixed primitive values and entity references
+   * @param target      object on which the items getter should be defined
+   * @param items       array of items, which can be mixed primitive values and entity references
+   * @param fetchAllUri optional URI that allows fetching all collection items in a single network request, if known
+   * @param property    optional property name inside the entity fetched at fetchAllUri that contains the collection
    * @returns object the target object with the added getter
    */
-  function addItemsGetter (target, items) {
-    Object.defineProperty(target, 'items', { get: () => filterDeleting(mapArrayOfEntityReferences(items)) })
-    Object.defineProperty(target, 'allItems', { get: () => mapArrayOfEntityReferences(items) })
+  function addItemsGetter (target, items, fetchAllUri = null, property = null) {
+    Object.defineProperty(target, 'items', { get: () => filterDeleting(mapArrayOfEntityReferences(items, fetchAllUri, property)) })
+    Object.defineProperty(target, 'allItems', { get: () => mapArrayOfEntityReferences(items, fetchAllUri, property) })
     return target
   }
 
@@ -187,14 +201,16 @@ export default function StoreValueProxy (apiRoot, get) {
       {
         _meta: {
           load: loadPromise.then(loadedParent => {
-            const result = addItemsGetter({ _meta: { reload: { uri: reloadUri, property: reloadProperty } } }, loadedParent[reloadProperty])
+            const result = addItemsGetter({ _meta: { reload: { uri: reloadUri, property: reloadProperty } } }, loadedParent[reloadProperty], reloadUri, reloadProperty)
             result._meta.load = Promise.resolve(result)
             return result
           }),
           reload: { uri: reloadUri, property: reloadProperty }
         }
       },
-      items)
+      items,
+      reloadUri,
+      reloadProperty)
   }
 
   /**
@@ -247,7 +263,7 @@ export default function StoreValueProxy (apiRoot, get) {
       const value = data[key]
       if (key === 'allItems' && isCollection(data)) return
       if (key === 'items' && isCollection(data)) {
-        addItemsGetter(result, data[key])
+        addItemsGetter(result, data[key], data._meta.self, key)
       } else if (Array.isArray(value)) {
         result[key] = () => embeddedCollectionProxy(value, data._meta.self, key, data._meta.load)
       } else if (isEntityReference(value)) {
