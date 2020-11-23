@@ -3,6 +3,7 @@ var webpack = require('webpack');
 var nodeExternals = require('webpack-node-externals');
 
 module.exports = {
+  devtool: 'source-map',
   externals: [nodeExternals()],
   entry: [
     './src/index'
