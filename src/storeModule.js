@@ -23,6 +23,22 @@ export const mutations = {
     })
   },
   /**
+   * Marks a single entity in the Vuex store as reloading, meaning a reloading network request is currently ongoin.
+   * @param state Vuex state
+   * @param uri   URI of the entity that is currently being reloaded
+   */
+  reloading (state, uri) {
+    if (state[uri]) Vue.set(state[uri]._meta, 'reloading', true)
+  },
+  /**
+   * Marks a single entity in the Vuex store as normal again, after it has been marked as reloading before.
+   * @param state Vuex state
+   * @param uri   URI of the entity that is currently being reloaded
+   */
+  reloadingFailed (state, uri) {
+    if (state[uri]) Vue.set(state[uri]._meta, 'reloading', false)
+  },
+  /**
    * Removes a single entity from the Vuex store.
    * @param state Vuex state
    * @param uri   URI of the entity to be removed

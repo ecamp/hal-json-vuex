@@ -155,19 +155,27 @@ function HalJsonVuex (store, axios, options) {
    */
   function load (uri, forceReload) {
     const existsInStore = !isUnknown(uri)
-    const isLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
 
-    if (!existsInStore) {
-      store.commit('addEmpty', uri)
-    }
+    const isLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
     if (isLoading) {
       // Reuse the loading entity and load promise that is already waiting for a pending API request
       return store.state[opts.apiName][uri]
     }
 
+    if (!existsInStore) {
+      store.commit('addEmpty', uri)
+    } else if (forceReload) {
+      store.commit('reloading', uri)
+    }
+
     let dataFinishedLoading = Promise.resolve(store.state[opts.apiName][uri])
-    if (!existsInStore || forceReload) {
+    if (!existsInStore) {
       dataFinishedLoading = loadFromApi(uri)
+    } else if (forceReload) {
+      dataFinishedLoading = loadFromApi(uri).catch(error => {
+        store.commit('reloadingFailed', uri)
+        throw error
+      })
     } else if (store.state[opts.apiName][uri]._meta.load) {
       // reuse the existing promise from the store if possible
       dataFinishedLoading = store.state[opts.apiName][uri]._meta.load
