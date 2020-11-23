@@ -156,8 +156,9 @@ function HalJsonVuex (store, axios, options) {
   function load (uri, forceReload) {
     const existsInStore = !isUnknown(uri)
 
-    const isLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
-    if (isLoading) {
+    const isAlreadyLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
+    const isAlreadyReloading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).reloading
+    if (isAlreadyLoading || (forceReload && isAlreadyReloading)) {
       // Reuse the loading entity and load promise that is already waiting for a pending API request
       return store.state[opts.apiName][uri]
     }

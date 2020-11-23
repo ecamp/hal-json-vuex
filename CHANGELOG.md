@@ -1,5 +1,8 @@
 ### Unreleased
 
+### 1.2.1
+- Avoid sending a reload request as long as an equal reload request is still ongoing
+
 ### 1.2.0
 - Fixed a bug involving the load promise of embedded collections
 - Added a new method `isUnknown` which can be used to determine whether an URI has never been requested from the API before (except if it was purged in the meantime)

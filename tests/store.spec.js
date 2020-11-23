@@ -427,6 +427,46 @@ describe('API store', () => {
         done()
       })
 
+      it('refuses to send out the same reload request again before the ongoing one has completed', async done => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
+          id: 1,
+          _links: {
+            self: {
+              href: '/camps/1'
+            }
+          }
+        })
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
+          id: 2,
+          _links: {
+            self: {
+              href: '/camps/1'
+            }
+          }
+        })
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
+          id: 3,
+          _links: {
+            self: {
+              href: '/camps/1'
+            }
+          }
+        })
+        const loaded = vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+        vm.api.reload(loaded)
+
+        // when
+        const load = vm.api.reload(loaded)
+
+        // then
+        await letNetworkRequestFinish()
+        const result = await load
+        expect(result).toMatchObject({ id: 2, _meta: { self: 'http://localhost/camps/1' } })
+        done()
+      })
+
       it('throws when trying to access _meta in an invalid object', () => {
         // given
 
