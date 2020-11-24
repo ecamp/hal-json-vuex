@@ -760,6 +760,82 @@ describe('API store', () => {
         done()
       })
 
+      if (avoidNPlusOneRequests) {
+        it('falls back to loading each entry individually if the parent of the embedded collection doesn\'t return the collection element data', async done => {
+          // given
+          const bookResponse = {
+            id: 555,
+            _embedded: {
+              chapters: [
+                { _links: { self: { href: '/chapters/1028' } } },
+                { _links: { self: { href: '/chapters/1031' } } },
+                { _links: { self: { href: '/chapters/1038' } } }
+              ]
+            },
+            _links: {
+              self: {
+                href: '/books/555'
+              }
+            }
+          }
+          const userResponse = {
+            id: 1,
+            _embedded: {
+              lastReadBook: bookResponse
+            },
+            _links: {
+              self: {
+                href: '/users/1'
+              }
+            }
+          }
+          const chapter1Response = {
+            id: 1028,
+            name: 'The first chapter',
+            _links: {
+              self: {
+                href: '/chapters/1028'
+              }
+            }
+          }
+          const chapter2Response = {
+            id: 1028,
+            name: 'The second chapter',
+            _links: {
+              self: {
+                href: '/chapters/1031'
+              }
+            }
+          }
+          const chapter3Response = {
+            id: 1028,
+            name: 'The final chapter',
+            _links: {
+              self: {
+                href: '/chapters/1038'
+              }
+            }
+          }
+          axiosMock.onGet('http://localhost/users/1').replyOnce(200, userResponse)
+
+          const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
+          await letNetworkRequestFinish()
+
+          axiosMock.onGet('http://localhost/books/555').replyOnce(200, bookResponse)
+          axiosMock.onGet('http://localhost/chapters/1028').replyOnce(200, chapter1Response)
+          axiosMock.onGet('http://localhost/chapters/1031').replyOnce(200, chapter2Response)
+          axiosMock.onGet('http://localhost/chapters/1038').replyOnce(200, chapter3Response)
+
+          // when
+          const result = lastReadBookChapters.items
+
+          // then
+          await letNetworkRequestFinish()
+          // expect no errors
+          done()
+        })
+      }
+
       it('deletes an URI from the store and reloads all entities referencing it', async done => {
         // given
         axiosMock.onGet('http://localhost/groups/99').replyOnce(200, multipleReferencesToUser)
