@@ -42,7 +42,7 @@ function HalJsonVuex (store, axios, options) {
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const { wrap, StoreValue, LoadingStoreValue } = storeValueCreator(axios.defaults.baseURL, get, isUnknown, opts)
+  const { wrap, StoreValue, LoadingStoreValue } = storeValueCreator(axios.defaults.baseURL, { get, reload, post, patch, del, isUnknown }, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 

@@ -43,7 +43,7 @@ function createResolvedPromise (value) {
   return promise
 }
 
-export default function storeValueCreator (apiRoot, get, isUnknown, opts = {}) {
+export default function storeValueCreator (apiRoot, { get, reload, post, patch, del, isUnknown }, opts = {}) {
   /**
    * Takes data from the Vuex store and makes it more usable in frontend components. The data stored
    * in the Vuex store should always be JSON serializable according to
@@ -117,7 +117,7 @@ export default function storeValueCreator (apiRoot, get, isUnknown, opts = {}) {
       }
 
       if (opts.avoidNPlusOneRequests) {
-        const completelyLoaded = get({ _meta: { reload: { uri: fetchAllUri, property: fetchAllProperty } } }, true)._meta.load
+        const completelyLoaded = reload({ _meta: { reload: { uri: fetchAllUri, property: fetchAllProperty } } }, true)
           .then(() => this.replaceEntityReferences(array))
         return new LoadingStoreCollection(completelyLoaded)
       } else {
@@ -179,6 +179,26 @@ export default function storeValueCreator (apiRoot, get, isUnknown, opts = {}) {
       // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
       this._meta = { ...data._meta, load: loadedPromise, self: apiRoot + data._meta.self }
     }
+
+    $reload () {
+      return reload(this._meta.self)
+    }
+
+    $loadItems () {
+      return this._meta.load
+    }
+
+    $post (data) {
+      return post(this._meta.self, data)
+    }
+
+    $patch (data) {
+      return patch(this._meta.self, data)
+    }
+
+    $del () {
+      return del(this._meta.self)
+    }
   }
 
   /**
@@ -202,6 +222,14 @@ export default function storeValueCreator (apiRoot, get, isUnknown, opts = {}) {
         reload: { uri: reloadUri, property: reloadProperty }
       }
       this.addItemsGetter(items, reloadUri, reloadProperty)
+    }
+
+    $loadItems () {
+      return new Promise((resolve) => {
+        const items = this.items
+        if (items instanceof LoadingStoreCollection) items._meta.load.then(result => resolve(result))
+        else resolve(items)
+      })
     }
   }
 
@@ -274,6 +302,7 @@ export default function storeValueCreator (apiRoot, get, isUnknown, opts = {}) {
     constructor (arrayLoaded, existingContent = []) {
       const singleResultFunctions = ['find']
       const arrayResultFunctions = ['map', 'flatMap', 'filter']
+      this._meta = { load: arrayLoaded }
       singleResultFunctions.forEach(func => {
         existingContent[func] = (...args) => {
           const resultLoaded = arrayLoaded.then(array => array[func](...args))
