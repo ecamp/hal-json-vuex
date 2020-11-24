@@ -297,7 +297,7 @@ describe('API store', () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingProxy = vm.api.get('/camps/1')
-        expect(loadingProxy[Symbol.for('isLoadingProxy')]).toBe(true)
+        expect(loadingProxy[Symbol.for('isLoadingStoreValue')]).toBe(true)
 
         // when
         loadingProxy._meta.load.then(loadedData => {
@@ -316,7 +316,7 @@ describe('API store', () => {
         vm.api.get('/camps/1')
         await letNetworkRequestFinish()
         const camp = vm.api.get('/camps/1')
-        expect(camp[Symbol('isLoadingProxy')]).not.toBe(true)
+        expect(camp[Symbol('isLoadingStoreValue')]).not.toBe(true)
 
         // when
         camp._meta.load.then(loadedData => {

@@ -1,7 +1,7 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
 import { normalizeEntityUri } from './normalizeUri'
-import StoreValueProxyCreator from './storeValueProxy'
+import storeValueCreator from './storeValueCreator'
 import storeModule from './storeModule'
 
 /**
@@ -42,7 +42,7 @@ function HalJsonVuex (store, axios, options) {
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get, isUnknown, opts)
+  const wrap = storeValueCreator(axios.defaults.baseURL, get, isUnknown, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 
@@ -127,7 +127,7 @@ function HalJsonVuex (store, axios, options) {
       ? normalizeEntityUri(uriOrEntity._meta.reload.uri, axios.defaults.baseURL)
       : normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
-      if (uriOrEntity[Symbol.for('isLoadingProxy')]) {
+      if (uriOrEntity[Symbol.for('isLoadingStoreValue')]) {
         // A loadingProxy is safe to return without breaking the UI.
         return uriOrEntity
       }
@@ -137,8 +137,8 @@ function HalJsonVuex (store, axios, options) {
 
     const storeData = load(uri, forceReload)
     return forceReloadingEmbeddedCollection
-      ? storeValueProxy(storeData)[uriOrEntity._meta.reload.property]()
-      : storeValueProxy(storeData)
+      ? wrap(storeData)[uriOrEntity._meta.reload.property]()
+      : wrap(storeData)
   }
 
   function isUnknown (uri) {
