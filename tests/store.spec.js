@@ -293,14 +293,14 @@ describe('API store', () => {
         done()
       })
 
-      it('returns the correct object when awaiting._meta.load on a loadingProxy', async done => {
+      it('returns the correct object when awaiting._meta.load on a LoadingStoreValue', async done => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
-        const loadingProxy = vm.api.get('/camps/1')
-        expect(loadingProxy[Symbol.for('isLoadingStoreValue')]).toBe(true)
+        const loadingStoreValue = vm.api.get('/camps/1')
+        expect(loadingStoreValue).toBeInstanceOf(vm.api.LoadingStoreValue)
 
         // when
-        loadingProxy._meta.load.then(loadedData => {
+        loadingStoreValue._meta.load.then(loadedData => {
           // then
           expect(loadedData).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
 
@@ -316,7 +316,7 @@ describe('API store', () => {
         vm.api.get('/camps/1')
         await letNetworkRequestFinish()
         const camp = vm.api.get('/camps/1')
-        expect(camp[Symbol('isLoadingStoreValue')]).not.toBe(true)
+        expect(camp).not.toBeInstanceOf(vm.api.LoadingStoreValue)
 
         // when
         camp._meta.load.then(loadedData => {
@@ -1203,11 +1203,11 @@ describe('API store', () => {
         done()
       })
 
-      it('sets property loading on LoadingProxy to true', async done => {
+      it('sets property loading on LoadingStoreValue to true', async done => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
-        const loadingProxy = vm.api.get('/camps/1')
-        expect(loadingProxy.loading).toBe(true)
+        const loadingStoreValue = vm.api.get('/camps/1')
+        expect(loadingStoreValue.loading).toBe(true)
         done()
       })
 

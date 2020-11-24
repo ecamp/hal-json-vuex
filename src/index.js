@@ -42,7 +42,7 @@ function HalJsonVuex (store, axios, options) {
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const wrap = storeValueCreator(axios.defaults.baseURL, get, isUnknown, opts)
+  const { wrap, StoreValue, LoadingStoreValue } = storeValueCreator(axios.defaults.baseURL, get, isUnknown, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 
@@ -127,8 +127,8 @@ function HalJsonVuex (store, axios, options) {
       ? normalizeEntityUri(uriOrEntity._meta.reload.uri, axios.defaults.baseURL)
       : normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
-      if (uriOrEntity[Symbol.for('isLoadingStoreValue')]) {
-        // A loadingProxy is safe to return without breaking the UI.
+      if (uriOrEntity instanceof LoadingStoreValue) {
+        // A LoadingStoreValue is safe to return without breaking the UI.
         return uriOrEntity
       }
       // We don't know anything about the requested object, something is wrong.
@@ -189,7 +189,7 @@ function HalJsonVuex (store, axios, options) {
 
   /**
    * Loads the entity specified by the URI from the API and stores it into the Vuex store. Returns a promise
-   * that resolves to the raw data stored in the Vuex store (needs to be wrapped into a storeValueProxy before
+   * that resolves to the raw data stored in the Vuex store (needs to be wrapped into a StoreValue before
    * being usable in Vue components).
    * @param uri       URI of the entity to load from the API
    * @returns Promise resolves to the raw data stored in the Vuex store after the API request completes, or
@@ -379,7 +379,7 @@ function HalJsonVuex (store, axios, options) {
 
   /**
    * Sets a flag on the given promise after completion, so that users of the promise can tell whether it is still
-   * pending or not. This is needed so storeValueProxy can break infinite recursion.
+   * pending or not. This is needed so StoreValue can break infinite recursion.
    * @param promise   to be marked as done once it completes
    * @returns Promise the modified argument
    */
@@ -458,7 +458,7 @@ function HalJsonVuex (store, axios, options) {
     }
   }
 
-  const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href, isUnknown }
+  const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href, isUnknown, StoreValue, LoadingStoreValue }
 
   function install (Vue) {
     if (this.installed) return

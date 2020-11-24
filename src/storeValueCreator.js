@@ -226,9 +226,6 @@ export default function storeValueCreator (apiRoot, get, isUnknown, opts = {}) {
     constructor (entityLoaded, uri = null) {
       const handler = {
         get: function (target, prop, _) {
-          if (prop === Symbol.for('isLoadingStoreValue')) {
-            return true
-          }
           if (prop === Symbol.toPrimitive) {
             return () => ''
           }
@@ -293,5 +290,5 @@ export default function storeValueCreator (apiRoot, get, isUnknown, opts = {}) {
     }
   }
 
-  return wrap
+  return { wrap, StoreValue, LoadingStoreValue }
 }
