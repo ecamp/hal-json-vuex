@@ -3,23 +3,7 @@ import urltemplate from 'url-template'
 import { normalizeEntityUri } from './normalizeUri'
 import StoreValueProxyCreator from './storeValueProxy'
 import storeModule from './storeModule'
-
-/**
- * Error class for returning server exceptions (attaches response object to error)
- * @param response        Axios response object
- * @param ...params       Any other parameters from default Error constructor (message, etc.)
- */
-export class ServerException extends Error {
-  constructor (response, ...params) {
-    super(...params)
-
-    if (!this.message) {
-      this.message = 'Server error ' + response.status + ' (' + response.statusText + ')'
-    }
-    this.name = 'ServerException'
-    this.response = response
-  }
-}
+import ServerException from './ServerException.ts'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:

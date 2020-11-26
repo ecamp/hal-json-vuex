@@ -4,6 +4,10 @@
     "node": true,
     "jest": true
   },
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
   "extends": [
     "plugin:vue/recommended",
     "@vue/standard"
