@@ -1,0 +1,49 @@
+{
+    "compilerOptions": {
+        "target": "es2018",
+        "module": "esnext",
+        "strict": true,
+        "importHelpers": true,
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": ".",
+        "rootDir": ".",
+        "outDir": "dist",
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
+        "removeComments": false,
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "strictNullChecks": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "lib": [
+            "esnext",
+            "dom",
+            "es2017"
+        ],
+        "paths": {
+            "@/*": [
+                "src/*"
+            ],
+            "test/*": [
+                "tests/*"
+            ]
+        },
+        "types": [
+            "node",
+            "jest"
+        ]
+    },
+    "include": [
+        "src",
+        "tests"
+    ],
+    "exclude": [
+        "node_modules"
+    ]
+}
