@@ -1,7 +1,7 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
 import { normalizeEntityUri } from './normalizeUri'
-import storeValueCreator from './storeValueCreator'
+import StoreValueCreator, { StoreValue, LoadingStoreValue } from './storeValueCreator'
 import storeModule from './storeModule'
 import QueryablePromise from './QueryablePromise'
 
@@ -39,11 +39,11 @@ function HalJsonVuex (store, axios, options) {
     forceRequestedSelfLink: false,
     nuxtInject: null
   }
-  const opts = { ...defaultOptions, ...options }
+  const opts = { ...defaultOptions, ...options, apiRoot: axios.defaults.baseURL }
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const { wrap, StoreValue, LoadingStoreValue } = storeValueCreator(axios.defaults.baseURL, { get, reload, post, patch, del, isUnknown }, opts)
+  const storeValueCreator = new StoreValueCreator({ get, reload, post, patch, del, isUnknown }, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 
@@ -138,8 +138,8 @@ function HalJsonVuex (store, axios, options) {
 
     const storeData = load(uri, forceReload)
     return forceReloadingEmbeddedCollection
-      ? wrap(storeData)[uriOrEntity._meta.reload.property]()
-      : wrap(storeData)
+      ? storeValueCreator.wrap(storeData)[uriOrEntity._meta.reload.property]()
+      : storeValueCreator.wrap(storeData)
   }
 
   function isUnknown (uri) {
@@ -190,7 +190,7 @@ function HalJsonVuex (store, axios, options) {
 
   /**
    * Loads the entity specified by the URI from the API and stores it into the Vuex store. Returns a promise
-   * that resolves to the raw data stored in the Vuex store (needs to be wrapped into a StoreValue before
+   * that resolves to the raw data stored in the Vuex store (needs to be storeValueCreator.wrapped into a StoreValue before
    * being usable in Vue components).
    * @param uri       URI of the entity to load from the API
    * @returns Promise resolves to the raw data stored in the Vuex store after the API request completes, or
