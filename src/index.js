@@ -1,7 +1,9 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
 import { normalizeEntityUri } from './normalizeUri'
-import StoreValueCreator, { StoreValue, LoadingStoreValue } from './storeValueCreator'
+import StoreValueCreator from './StoreValueCreator'
+import StoreValue from './StoreValue'
+import LoadingStoreValue from './LoadingStoreValue'
 import storeModule from './storeModule'
 import QueryablePromise from './QueryablePromise'
 
