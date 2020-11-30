@@ -1,47 +1,8 @@
 import urltemplate from 'url-template'
 
-function isEqualIgnoringOrder (array, other) {
-  return array.length === other.length && array.every(elem => other.includes(elem))
-}
+import { isTemplatedLink, isEntityReference, isCollection } from './halHelpers.js'
 
-/**
- * A templated link in the Vuex store looks like this: { href: '/some/uri{/something}', templated: true }
- * @param object         to be examined
- * @returns boolean      true if the object looks like a templated link, false otherwise
- */
-function isTemplatedLink (object) {
-  if (!object) return false
-  return isEqualIgnoringOrder(Object.keys(object), ['href', 'templated']) && (object.templated === true)
-}
-
-/**
- * An entity reference in the Vuex store looks like this: { href: '/some/uri' }
- * @param object    to be examined
- * @returns boolean true if the object looks like an entity reference, false otherwise
- */
-function isEntityReference (object) {
-  if (!object) return false
-  return isEqualIgnoringOrder(Object.keys(object), ['href'])
-}
-
-/**
- * A standalone collection in the Vuex store has an items property that is an array.
- * @param object    to be examined
- * @returns boolean true if the object looks like a standalone collection, false otherwise
- */
-function isCollection (object) {
-  return !!(object && Array.isArray(object.items))
-}
-
-/**
- * Creates a resolved Promise; sets the Done-Flag
- * @param value Promise return value
- */
-function createResolvedPromise (value) {
-  const promise = Promise.resolve(value)
-  promise[Symbol.for('done')] = true
-  return promise
-}
+import QueryablePromise from './QueryablePromise.js'
 
 export default function storeValueCreator (apiRoot, { get, reload, post, patch, del, isUnknown }, opts = {}) {
   /**
@@ -174,7 +135,7 @@ export default function storeValueCreator (apiRoot, { get, reload, post, patch, 
       // Use a trivial load promise to break endless recursion, except if we are currently reloading the data from the API
       const loadedPromise = data._meta.load && !data._meta.load[Symbol.for('done')]
         ? data._meta.load.then(reloadedData => wrap(reloadedData))
-        : createResolvedPromise(this)
+        : QueryablePromise.resolve(this)
 
       // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
       this._meta = { ...data._meta, load: loadedPromise, self: apiRoot + data._meta.self }

@@ -3,6 +3,7 @@ import urltemplate from 'url-template'
 import { normalizeEntityUri } from './normalizeUri'
 import storeValueCreator from './storeValueCreator'
 import storeModule from './storeModule'
+import QueryablePromise from './QueryablePromise'
 
 /**
  * Error class for returning server exceptions (attaches response object to error)
@@ -73,7 +74,7 @@ function HalJsonVuex (store, axios, options) {
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
-    return markAsDoneWhenResolved(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
+    return new QueryablePromise(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {
@@ -248,7 +249,7 @@ function HalJsonVuex (store, axios, options) {
       store.commit('addEmpty', uri)
     }
 
-    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
+    store.state[opts.apiName][uri]._meta.load = new QueryablePromise(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -304,7 +305,7 @@ function HalJsonVuex (store, axios, options) {
       return Promise.reject(new Error(`Could not perform DELETE, "${uriOrEntity}" is not an entity or URI`))
     }
     store.commit('deleting', uri)
-    return markAsDoneWhenResolved(axios.delete(axios.defaults.baseURL + uri).then(
+    return new QueryablePromise(axios.delete(axios.defaults.baseURL + uri).then(
       () => deleted(uri),
       (error) => {
         store.commit('deletingFailed', uri)
@@ -342,7 +343,9 @@ function HalJsonVuex (store, axios, options) {
     return Promise.all(findEntitiesReferencing(uri)
       // don't reload entities that are already being deleted, to break circular dependencies
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
-      .map(outdatedEntity => reload(outdatedEntity))
+
+      // reload entities but ignore any errors (such as 404 errors during reloading)
+      .map(outdatedEntity => reload(outdatedEntity).catch(() => {}))
     ).then(() => purge(uri))
   }
 
@@ -374,19 +377,7 @@ function HalJsonVuex (store, axios, options) {
    * @param promise
    */
   function setLoadPromiseOnStore (uri, promise = null) {
-    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(promise || Promise.resolve(store.state[opts.apiName][uri]))
-  }
-
-  /**
-   * Sets a flag on the given promise after completion, so that users of the promise can tell whether it is still
-   * pending or not. This is needed so StoreValue can break infinite recursion.
-   * @param promise   to be marked as done once it completes
-   * @returns Promise the modified argument
-   */
-  function markAsDoneWhenResolved (promise) {
-    // empty catch is important so that our then handler runs in all cases
-    promise.catch(() => {}).then(() => { promise[Symbol.for('done')] = true })
-    return promise
+    store.state[opts.apiName][uri]._meta.load = promise ? new QueryablePromise(promise) : QueryablePromise.resolve(store.state[opts.apiName][uri])
   }
 
   /**
@@ -440,8 +431,7 @@ function HalJsonVuex (store, axios, options) {
         // 404 Entity not found error
         store.commit('deleting', uri)
         deleted(uri).then(() => {}) // no need to wait for delete operation to finish
-        // return new ServerException(response, `Could not perform operation, "${uri}" has been deleted`)
-        return new Error(`Could not perform operation, "${uri}" has been deleted`)
+        return new ServerException(response, `Could not perform operation, "${uri}" has been deleted`)
       } else if (response.status === 403) {
         // 403 Permission error
         return new ServerException(response, 'No permission to perform operation')
