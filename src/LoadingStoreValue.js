@@ -43,6 +43,15 @@ class LoadingStoreValue {
           // ._meta.load is supposed to resolve to the whole object, not just the ._meta part of it
           return new LoadingStoreValue(entityLoaded, absoluteSelf)
         }
+        if (['$reload'].includes(prop)) {
+          // Skip reloading entities that are already loading
+          return () => entityLoaded
+        }
+        if (['$loadItems', '$post', '$patch', '$del'].includes(prop)) {
+          // It is important to call entity[prop] without first saving it into a variable, because saving to a
+          // variable would change the value of `this` inside the function
+          return (...args) => entityLoaded.then(entity => entity[prop](...args))
+        }
         const propertyLoaded = entityLoaded.then(entity => entity[prop])
         if (['items', 'allItems'].includes(prop)) {
           return new LoadingStoreCollection(propertyLoaded)
