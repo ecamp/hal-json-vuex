@@ -1,9 +1,12 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
 import { normalizeEntityUri } from './normalizeUri'
-import StoreValueProxyCreator from './storeValueProxy'
+import StoreValueCreator from './StoreValueCreator'
+import StoreValue from './StoreValue'
+import LoadingStoreValue from './LoadingStoreValue'
 import storeModule from './storeModule'
 import ServerException from './ServerException.ts'
+import QueryablePromise from './QueryablePromise'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
@@ -22,11 +25,11 @@ function HalJsonVuex (store, axios, options) {
     forceRequestedSelfLink: false,
     nuxtInject: null
   }
-  const opts = { ...defaultOptions, ...options }
+  const opts = { ...defaultOptions, ...options, apiRoot: axios.defaults.baseURL }
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const storeValueProxy = StoreValueProxyCreator(axios.defaults.baseURL, get, isUnknown, opts)
+  const storeValueCreator = new StoreValueCreator({ get, reload, post, patch, del, isUnknown }, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 
@@ -57,7 +60,7 @@ function HalJsonVuex (store, axios, options) {
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
-    return markAsDoneWhenResolved(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
+    return new QueryablePromise(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {
@@ -111,8 +114,8 @@ function HalJsonVuex (store, axios, options) {
       ? normalizeEntityUri(uriOrEntity._meta.reload.uri, axios.defaults.baseURL)
       : normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
-      if (uriOrEntity[Symbol.for('isLoadingProxy')]) {
-        // A loadingProxy is safe to return without breaking the UI.
+      if (uriOrEntity instanceof LoadingStoreValue) {
+        // A LoadingStoreValue is safe to return without breaking the UI.
         return uriOrEntity
       }
       // We don't know anything about the requested object, something is wrong.
@@ -121,8 +124,8 @@ function HalJsonVuex (store, axios, options) {
 
     const storeData = load(uri, forceReload)
     return forceReloadingEmbeddedCollection
-      ? storeValueProxy(storeData)[uriOrEntity._meta.reload.property]()
-      : storeValueProxy(storeData)
+      ? storeValueCreator.wrap(storeData)[uriOrEntity._meta.reload.property]()
+      : storeValueCreator.wrap(storeData)
   }
 
   function isUnknown (uri) {
@@ -173,7 +176,7 @@ function HalJsonVuex (store, axios, options) {
 
   /**
    * Loads the entity specified by the URI from the API and stores it into the Vuex store. Returns a promise
-   * that resolves to the raw data stored in the Vuex store (needs to be wrapped into a storeValueProxy before
+   * that resolves to the raw data stored in the Vuex store (needs to be storeValueCreator.wrapped into a StoreValue before
    * being usable in Vue components).
    * @param uri       URI of the entity to load from the API
    * @returns Promise resolves to the raw data stored in the Vuex store after the API request completes, or
@@ -232,7 +235,7 @@ function HalJsonVuex (store, axios, options) {
       store.commit('addEmpty', uri)
     }
 
-    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
+    store.state[opts.apiName][uri]._meta.load = new QueryablePromise(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -288,7 +291,7 @@ function HalJsonVuex (store, axios, options) {
       return Promise.reject(new Error(`Could not perform DELETE, "${uriOrEntity}" is not an entity or URI`))
     }
     store.commit('deleting', uri)
-    return markAsDoneWhenResolved(axios.delete(axios.defaults.baseURL + uri).then(
+    return new QueryablePromise(axios.delete(axios.defaults.baseURL + uri).then(
       () => deleted(uri),
       (error) => {
         store.commit('deletingFailed', uri)
@@ -326,7 +329,9 @@ function HalJsonVuex (store, axios, options) {
     return Promise.all(findEntitiesReferencing(uri)
       // don't reload entities that are already being deleted, to break circular dependencies
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
-      .map(outdatedEntity => reload(outdatedEntity))
+
+      // reload entities but ignore any errors (such as 404 errors during reloading)
+      .map(outdatedEntity => reload(outdatedEntity).catch(() => {}))
     ).then(() => purge(uri))
   }
 
@@ -358,19 +363,7 @@ function HalJsonVuex (store, axios, options) {
    * @param promise
    */
   function setLoadPromiseOnStore (uri, promise = null) {
-    store.state[opts.apiName][uri]._meta.load = markAsDoneWhenResolved(promise || Promise.resolve(store.state[opts.apiName][uri]))
-  }
-
-  /**
-   * Sets a flag on the given promise after completion, so that users of the promise can tell whether it is still
-   * pending or not. This is needed so storeValueProxy can break infinite recursion.
-   * @param promise   to be marked as done once it completes
-   * @returns Promise the modified argument
-   */
-  function markAsDoneWhenResolved (promise) {
-    // empty catch is important so that our then handler runs in all cases
-    promise.catch(() => {}).then(() => { promise[Symbol.for('done')] = true })
-    return promise
+    store.state[opts.apiName][uri]._meta.load = promise ? new QueryablePromise(promise) : QueryablePromise.resolve(store.state[opts.apiName][uri])
   }
 
   /**
@@ -424,8 +417,7 @@ function HalJsonVuex (store, axios, options) {
         // 404 Entity not found error
         store.commit('deleting', uri)
         deleted(uri).then(() => {}) // no need to wait for delete operation to finish
-        // return new ServerException(response, `Could not perform operation, "${uri}" has been deleted`)
-        return new Error(`Could not perform operation, "${uri}" has been deleted`)
+        return new ServerException(response, `Could not perform operation, "${uri}" has been deleted`)
       } else if (response.status === 403) {
         // 403 Permission error
         return new ServerException(response, 'No permission to perform operation')
@@ -442,7 +434,7 @@ function HalJsonVuex (store, axios, options) {
     }
   }
 
-  const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href, isUnknown }
+  const halJsonVuex = { post, get, reload, del, patch, purge, purgeAll, href, isUnknown, StoreValue, LoadingStoreValue }
 
   function install (Vue) {
     if (this.installed) return
