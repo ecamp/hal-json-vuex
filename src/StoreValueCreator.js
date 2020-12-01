@@ -1,4 +1,4 @@
-import StoreValue from './StoreValue.js'
+import StoreValue from './StoreValue.ts'
 import LoadingStoreValue from './LoadingStoreValue.js'
 
 class StoreValueCreator {

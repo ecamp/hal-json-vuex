@@ -3,8 +3,8 @@
  * Based on: http://stackoverflow.com/questions/21485545/is-there-a-way-to-tell-if-an-es6-promise-is-fulfilled-rejected-resolved
  * But modified according to the specs of promises : https://promisesaplus.com/
  */
-class QueryablePromise {
-  constructor (promise) {
+class QueryablePromise<T> {
+  constructor (promise: Promise<T>) {
     // Don't modify any promise that has been already modified
     if (Symbol.for('isPending') in promise) return promise
 
@@ -38,7 +38,7 @@ class QueryablePromise {
   /**
    * Returns a resolved Promise and immediately mark it as 'done'
    */
-  static resolve (value) {
+  static resolve<T> (value: T): Promise<T> {
     const promise = Promise.resolve(value)
 
     promise[Symbol.for('isFulfilled')] = true

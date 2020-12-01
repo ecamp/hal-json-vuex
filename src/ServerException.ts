@@ -10,8 +10,8 @@ export default class ServerException extends Error {
      * @param response Axios reponse object
      * @param params Standard Error parameters
      */
-    public constructor (response: AxiosResponse, ...params: any[]) {
-      super(...params)
+    public constructor (response: AxiosResponse, message?: string) {
+      super(message)
 
       if (!this.message) {
         this.message = 'Server error ' + response.status + ' (' + response.statusText + ')'

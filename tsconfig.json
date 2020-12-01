@@ -1,10 +1,14 @@
 {
     "compilerOptions": {
-        "target": "es2018",
-        "module": "esnext",
+        "lib": [
+            "ES2019"
+        ],
+        "module": "commonjs",
+        "target": "ES2019",
         "strict": true,
         "importHelpers": true,
         "moduleResolution": "node",
+        "allowJs": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "baseUrl": ".",
@@ -14,18 +18,13 @@
         "declaration": true,
         "declarationMap": true,
         "removeComments": false,
-        "noImplicitAny": true,
+        "noImplicitAny": false,
         "noImplicitReturns": true,
         "noImplicitThis": true,
-        "noUnusedLocals": true,
+        "noUnusedLocals": false,
         "noUnusedParameters": true,
         "strictNullChecks": true,
         "suppressImplicitAnyIndexErrors": true,
-        "lib": [
-            "esnext",
-            "dom",
-            "es2017"
-        ],
         "paths": {
             "@/*": [
                 "src/*"
