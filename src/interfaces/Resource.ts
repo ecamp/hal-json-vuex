@@ -2,8 +2,9 @@ import QueryablePromise from '../QueryablePromise'
 
 interface Resource {
     _meta: {
-        self: string
+        self: string | null
         load: QueryablePromise<Resource>
+        loading: boolean
     }
 
     $reload: () => QueryablePromise<Resource>

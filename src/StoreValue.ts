@@ -7,7 +7,7 @@ import Resource from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
 import StoreData from './interfaces/StoreData'
 import StoreValueCreator from './StoreValueCreator.js'
-import { InternalConfig } from './interfaces/Config.js'
+import { InternalConfig } from './interfaces/Config'
 
 /**
  * Creates an actual StoreValue, by wrapping the given Vuex store storeData. The storeData must not be loading.
@@ -19,6 +19,7 @@ class StoreValue extends CanHaveItems implements Resource {
   public _meta: {
     self: string,
     load: QueryablePromise<Resource>
+    loading: boolean
   }
 
   private storeData: StoreData

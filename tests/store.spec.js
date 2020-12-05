@@ -289,7 +289,8 @@ describe('API store', () => {
         const meta = vm.api.get(loadingObject)._meta
 
         // then
-        expect(`${meta}`).toEqual('')
+        expect(meta.loading).toEqual(true)
+        expect(meta.self).toEqual(null)
         done()
       })
 
@@ -1207,7 +1208,7 @@ describe('API store', () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingStoreValue = vm.api.get('/camps/1')
-        expect(loadingStoreValue.loading).toBe(true)
+        expect(loadingStoreValue._meta.loading).toBe(true)
         done()
       })
 

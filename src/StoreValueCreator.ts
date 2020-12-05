@@ -1,8 +1,16 @@
-import StoreValue from './StoreValue.ts'
-import LoadingStoreValue from './LoadingStoreValue.js'
+import StoreValue from './StoreValue'
+import LoadingStoreValue from './LoadingStoreValue'
+import ApiActions from './interfaces/ApiActions'
+import { InternalConfig } from './interfaces/Config'
+import StoreData from './interfaces/StoreData'
+import Resource from './interfaces/Resource'
+import { wrapPromise } from './QueryablePromise'
 
 class StoreValueCreator {
-  constructor ({ get, reload, post, patch, del, isUnknown }, config = {}) {
+  private config: InternalConfig
+  private apiActions: ApiActions
+
+  constructor ({ get, reload, post, patch, del, isUnknown }: ApiActions, config: InternalConfig = {}) {
     this.apiActions = { get, reload, post, patch, del, isUnknown }
     this.config = config
   }
@@ -34,11 +42,11 @@ class StoreValueCreator {
    * @param data                entity data from the Vuex store
    * @returns object            wrapped entity ready for use in a frontend component
    */
-  wrap (data) {
+  wrap (data: StoreData): Resource {
     const meta = data._meta || { load: Promise.resolve() }
 
     if (meta.loading) {
-      const entityLoaded = meta.load.then(loadedData => new StoreValue(loadedData, this.apiActions, this, this.config))
+      const entityLoaded = wrapPromise(meta.load.then(loadedData => new StoreValue(loadedData, this.apiActions, this, this.config)))
       return new LoadingStoreValue(entityLoaded, this.config.apiRoot + meta.self)
     }
 
