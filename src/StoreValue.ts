@@ -18,7 +18,7 @@ import { InternalConfig } from './interfaces/Config.js'
 class StoreValue extends CanHaveItems implements Resource {
   public _meta: {
     self: string,
-    load: Promise<Resource>
+    load: QueryablePromise<Resource>
   }
 
   private storeData: StoreData
@@ -34,9 +34,6 @@ class StoreValue extends CanHaveItems implements Resource {
 
     Object.keys(storeData).forEach(key => {
       const value = storeData[key]
-
-      // TODO: Why is the next line needed.? Store data should never contain a property 'allItems'. Or can it?
-      if (key === 'allItems' && isCollection(storeData)) return
 
       // storeData is a collection: add keys to retrieve collection items
       if (key === 'items' && isCollection(storeData)) {
@@ -62,34 +59,34 @@ class StoreValue extends CanHaveItems implements Resource {
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadPromise = storeData._meta.load && !storeData._meta.load[Symbol.for('done')]
-      ? storeData._meta.load.then(reloadedData => storeValueCreator.wrap(reloadedData))
-      : QueryablePromise.resolve(this)
+      ? storeData._meta.load.then(reloadedData => (storeValueCreator.wrap(reloadedData) as Resource))
+      : QueryablePromise.resolve(this as Resource)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
     this._meta = {
       ...storeData._meta,
-      load: loadPromise as Promise<Resource>,
+      load: loadPromise as QueryablePromise<Resource>,
       self: this.config.apiRoot + storeData._meta.self
     }
   }
 
-  $reload (): Promise<Resource> {
+  $reload (): QueryablePromise<Resource> {
     return this.apiActions.reload(this._meta.self)
   }
 
-  $loadItems (): Promise<Resource> {
+  $loadItems (): QueryablePromise<Resource> {
     return this._meta.load
   }
 
-  $post (data: unknown): Promise<Resource> {
+  $post (data: unknown): QueryablePromise<Resource> {
     return this.apiActions.post(this._meta.self, data)
   }
 
-  $patch (data: unknown): Promise<Resource> {
+  $patch (data: unknown): QueryablePromise<Resource> {
     return this.apiActions.patch(this._meta.self, data)
   }
 
-  $del (): Promise<Resource> {
+  $del (): QueryablePromise<Resource> {
     return this.apiActions.del(this._meta.self)
   }
 }
