@@ -6,7 +6,7 @@ import StoreValue from './StoreValue.ts'
 import LoadingStoreValue from './LoadingStoreValue'
 import storeModule from './storeModule'
 import ServerException from './ServerException.ts'
-import QueryablePromise from './QueryablePromise'
+import { createResolvedPromise, wrapPromise } from './QueryablePromise'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
@@ -60,7 +60,7 @@ function HalJsonVuex (store, axios, options) {
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
-    return new QueryablePromise(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
+    return wrapPromise(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {
@@ -75,7 +75,7 @@ function HalJsonVuex (store, axios, options) {
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  function reload (uriOrEntity) {
+  async function reload (uriOrEntity) {
     return get(uriOrEntity, true)._meta.load
   }
 
@@ -235,7 +235,7 @@ function HalJsonVuex (store, axios, options) {
       store.commit('addEmpty', uri)
     }
 
-    store.state[opts.apiName][uri]._meta.load = new QueryablePromise(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
+    store.state[opts.apiName][uri]._meta.load = wrapPromise(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -291,7 +291,7 @@ function HalJsonVuex (store, axios, options) {
       return Promise.reject(new Error(`Could not perform DELETE, "${uriOrEntity}" is not an entity or URI`))
     }
     store.commit('deleting', uri)
-    return new QueryablePromise(axios.delete(axios.defaults.baseURL + uri).then(
+    return wrapPromise(axios.delete(axios.defaults.baseURL + uri).then(
       () => deleted(uri),
       (error) => {
         store.commit('deletingFailed', uri)
@@ -363,7 +363,7 @@ function HalJsonVuex (store, axios, options) {
    * @param promise
    */
   function setLoadPromiseOnStore (uri, promise = null) {
-    store.state[opts.apiName][uri]._meta.load = promise ? new QueryablePromise(promise) : QueryablePromise.resolve(store.state[opts.apiName][uri])
+    store.state[opts.apiName][uri]._meta.load = promise ? wrapPromise(promise) : createResolvedPromise(store.state[opts.apiName][uri])
   }
 
   /**

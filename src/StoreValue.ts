@@ -1,6 +1,6 @@
 import urltemplate from 'url-template'
 import { isTemplatedLink, isEntityReference, isCollection } from './halHelpers.js'
-import QueryablePromise from './QueryablePromise'
+import { QueryablePromise, createResolvedPromise, wrapPromise } from './QueryablePromise'
 import EmbeddedCollection from './EmbeddedCollection.js'
 import CanHaveItems from './CanHaveItems.js'
 import Resource from './interfaces/Resource'
@@ -58,14 +58,14 @@ class StoreValue extends CanHaveItems implements Resource {
     })
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
-    const loadPromise = storeData._meta.load && !storeData._meta.load[Symbol.for('done')]
-      ? storeData._meta.load.then(reloadedData => (storeValueCreator.wrap(reloadedData) as Resource))
-      : QueryablePromise.resolve(this as Resource)
+    const loadPromise = storeData._meta.load && storeData._meta.load.isPending()
+      ? wrapPromise(storeData._meta.load.then(reloadedData => (storeValueCreator.wrap(reloadedData) as Resource)))
+      : createResolvedPromise(this)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
     this._meta = {
       ...storeData._meta,
-      load: loadPromise as QueryablePromise<Resource>,
+      load: loadPromise,
       self: this.config.apiRoot + storeData._meta.self
     }
   }
