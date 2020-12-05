@@ -8,7 +8,7 @@
     "clean": "cross-env rimraf dist coverage lib",
     "coverage": "cross-env npm run build && jest --coverage",
     "lint": "cross-env eslint src --ext .js,.ts",
-    "test": "cross-env npm run lint && npm run build && jest",
+    "test": "jest",
     "test:debug": "node --inspect-brk ./node_modules/.bin/jest -i"
   },
   "engines": {

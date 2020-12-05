@@ -26,7 +26,7 @@ class LoadingStoreValue implements Resource {
     loading: boolean
   }
 
-  private loadPromise: QueryablePromise<Resource>
+  private loadResourceSafely: Promise<Resource>
 
   constructor (entityLoaded: QueryablePromise<Resource>, absoluteSelf: string | null = null) {
     this._meta = {
@@ -35,7 +35,9 @@ class LoadingStoreValue implements Resource {
       loading: true
     }
 
-    this.loadPromise = entityLoaded
+    // safe load: if API call fails, suppress errors and present this Proxy again to the chain
+    const loadResourceSafely = entityLoaded.catch(() => this)
+    this.loadResourceSafely = loadResourceSafely
 
     const handler = {
       get: function (target: LoadingStoreValue, prop: string | number | symbol) {
@@ -50,19 +52,14 @@ class LoadingStoreValue implements Resource {
           return undefined
         }
 
-        // proxy for collection items
-        const propertyLoaded = entityLoaded.then(entity => entity[prop]).catch(() => {}) // eslint-disable-line @typescript-eslint/no-empty-function
-        if (['items', 'allItems'].includes(prop as string)) {
-          return new LoadingStoreCollection(propertyLoaded)
-        }
-
         // proxy to properties that actually exist on LoadingStoreValue (_meta, $reload, etc.)
         if (Reflect.has(target, prop)) {
           return Reflect.get(target, prop)
         }
 
         // Proxy to all other unknown properties: return a function that yields another LoadingStoreValue and renders as empty string
-        const result = templateParams => new LoadingStoreValue(wrapPromise(propertyLoaded.then(property => property(templateParams)._meta.load)))
+        const loadProperty = loadResourceSafely.then(resource => resource[prop])
+        const result = templateParams => new LoadingStoreValue(wrapPromise(loadProperty.then(property => property(templateParams)._meta.load)))
         return result
       }
     }
@@ -73,25 +70,35 @@ class LoadingStoreValue implements Resource {
     return ''
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get items (): any {
+    return new LoadingStoreCollection(this.loadResourceSafely.then(entity => entity.items))
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  get allItems (): any {
+    return new LoadingStoreCollection(this.loadResourceSafely.then(entity => entity.allItems))
+  }
+
   public $reload (): QueryablePromise<Resource> {
     // Skip reloading entities that are already loading
-    return this.loadPromise
+    return this._meta.load
   }
 
   public $loadItems (): QueryablePromise<Resource> {
-    return this.loadPromise
+    return this._meta.load
   }
 
   public $post (data: unknown): QueryablePromise<Resource> {
-    return wrapPromise(this.loadPromise.then(resource => resource.$post(data)))
+    return wrapPromise(this._meta.load.then(resource => resource.$post(data)))
   }
 
   public $patch (data: unknown): QueryablePromise<Resource> {
-    return wrapPromise(this.loadPromise.then(resource => resource.$patch(data)))
+    return wrapPromise(this._meta.load.then(resource => resource.$patch(data)))
   }
 
   public $del (): QueryablePromise<Resource> {
-    return wrapPromise(this.loadPromise.then(resource => resource.$del()))
+    return wrapPromise(this._meta.load.then(resource => resource.$del()))
   }
 }
 

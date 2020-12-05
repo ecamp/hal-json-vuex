@@ -14,6 +14,7 @@ interface Resource {
     $del: () => QueryablePromise<Resource>
 
     items?: Array<Resource>
+    allItems?: Array<Resource>
 }
 
 export default Resource
