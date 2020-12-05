@@ -43,7 +43,7 @@ class CanHaveItems {
     if (this.config.avoidNPlusOneRequests) {
       const completelyLoaded = this.apiActions.reload({ _meta: { reload: { uri: fetchAllUri, property: fetchAllProperty } } }, true)
         .then(() => this.replaceEntityReferences(array))
-      return new LoadingStoreCollection(completelyLoaded)
+      return LoadingStoreCollection.create(completelyLoaded)
     } else {
       const arrayWithReplacedReferences = this.replaceEntityReferences(array)
       const arrayCompletelyLoaded = Promise.all(array.map(entry => {
@@ -52,7 +52,7 @@ class CanHaveItems {
         }
         return Promise.resolve(entry)
       }))
-      return new LoadingStoreCollection(arrayCompletelyLoaded, arrayWithReplacedReferences)
+      return LoadingStoreCollection.create(arrayCompletelyLoaded, arrayWithReplacedReferences)
     }
   }
 

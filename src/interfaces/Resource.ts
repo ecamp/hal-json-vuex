@@ -7,11 +7,11 @@ interface Resource {
         loading: boolean
     }
 
-    $reload: () => QueryablePromise<Resource>
-    $loadItems: () => QueryablePromise<Resource>
-    $post: (data: unknown) => QueryablePromise<Resource>
-    $patch: (data: unknown) => QueryablePromise<Resource>
-    $del: () => QueryablePromise<Resource>
+    $reload: () => Promise<Resource>
+    $loadItems: () => Promise<Resource>
+    $post: (data: unknown) => Promise<Resource>
+    $patch: (data: unknown) => Promise<Resource>
+    $del: () => Promise<Resource>
 
     items?: Array<Resource>
     allItems?: Array<Resource>

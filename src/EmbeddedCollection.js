@@ -27,6 +27,7 @@ class EmbeddedCollection extends CanHaveItems {
   $loadItems () {
     return new Promise((resolve) => {
       const items = this.items
+      // TODO: this is probably broken as LoadingStoreCollection has no constructor anymore
       if (items instanceof LoadingStoreCollection) items._meta.load.then(result => resolve(result))
       else resolve(items)
     })

@@ -71,23 +71,23 @@ class StoreValue extends CanHaveItems implements Resource {
     }
   }
 
-  $reload (): QueryablePromise<Resource> {
+  $reload (): Promise<Resource> {
     return this.apiActions.reload(this._meta.self)
   }
 
-  $loadItems (): QueryablePromise<Resource> {
+  $loadItems (): Promise<Resource> {
     return this._meta.load
   }
 
-  $post (data: unknown): QueryablePromise<Resource> {
+  $post (data: unknown): Promise<Resource> {
     return this.apiActions.post(this._meta.self, data)
   }
 
-  $patch (data: unknown): QueryablePromise<Resource> {
+  $patch (data: unknown): Promise<Resource> {
     return this.apiActions.patch(this._meta.self, data)
   }
 
-  $del (): QueryablePromise<Resource> {
+  $del (): Promise<Resource> {
     return this.apiActions.del(this._meta.self)
   }
 }

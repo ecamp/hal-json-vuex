@@ -28,10 +28,10 @@ class LoadingStoreValue implements Resource {
 
   private loadResourceSafely: Promise<Resource>
 
-  constructor (entityLoaded: QueryablePromise<Resource>, absoluteSelf: string | null = null) {
+  constructor (entityLoaded: Promise<Resource>, absoluteSelf: string | null = null) {
     this._meta = {
       self: absoluteSelf,
-      load: entityLoaded,
+      load: wrapPromise(entityLoaded),
       loading: true
     }
 
@@ -57,9 +57,9 @@ class LoadingStoreValue implements Resource {
           return Reflect.get(target, prop)
         }
 
-        // Proxy to all other unknown properties: return a function that yields another LoadingStoreValue and renders as empty string
+        // Proxy to all other unknown properties: return a function that yields another LoadingStoreValue
         const loadProperty = loadResourceSafely.then(resource => resource[prop])
-        const result = templateParams => new LoadingStoreValue(wrapPromise(loadProperty.then(property => property(templateParams)._meta.load)))
+        const result = templateParams => new LoadingStoreValue(loadProperty.then(property => property(templateParams)._meta.load))
         return result
       }
     }
@@ -70,34 +70,32 @@ class LoadingStoreValue implements Resource {
     return ''
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get items (): any {
-    return new LoadingStoreCollection(this.loadResourceSafely.then(entity => entity.items))
+  get items (): Array<Resource> {
+    return LoadingStoreCollection.create(this.loadResourceSafely.then(entity => entity.items))
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  get allItems (): any {
-    return new LoadingStoreCollection(this.loadResourceSafely.then(entity => entity.allItems))
+  get allItems (): Array<Resource> {
+    return LoadingStoreCollection.create(this.loadResourceSafely.then(entity => entity.allItems))
   }
 
-  public $reload (): QueryablePromise<Resource> {
+  public $reload (): Promise<Resource> {
     // Skip reloading entities that are already loading
     return this._meta.load
   }
 
-  public $loadItems (): QueryablePromise<Resource> {
+  public $loadItems (): Promise<Resource> {
     return this._meta.load
   }
 
-  public $post (data: unknown): QueryablePromise<Resource> {
+  public $post (data: unknown):Promise<Resource> {
     return wrapPromise(this._meta.load.then(resource => resource.$post(data)))
   }
 
-  public $patch (data: unknown): QueryablePromise<Resource> {
+  public $patch (data: unknown): Promise<Resource> {
     return wrapPromise(this._meta.load.then(resource => resource.$patch(data)))
   }
 
-  public $del (): QueryablePromise<Resource> {
+  public $del (): Promise<Resource> {
     return wrapPromise(this._meta.load.then(resource => resource.$del()))
   }
 }
