@@ -5,6 +5,7 @@ type StoreData = {
         self: string
         load: QueryablePromise<StoreData>
         loading: boolean
+        deleting: boolean
     }
 }
 

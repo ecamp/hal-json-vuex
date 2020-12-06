@@ -4,7 +4,7 @@ import StoreData from './interfaces/StoreData'
 import { MutationTree } from 'vuex/types'
 
 export const state = {}
-type State = Record<string, StoreData>
+export type State = Record<string, StoreData>
 
 export const mutations: MutationTree<State> = {
   /**
