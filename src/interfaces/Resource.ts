@@ -16,7 +16,7 @@ interface Resource {
     $loadItems: () => Promise<Resource>
     $post: (data: unknown) => Promise<Resource>
     $patch: (data: unknown) => Promise<Resource>
-    $del: () => Promise<Resource>
+    $del: () => Promise<string | void>
 
     items?: Array<Resource>
     allItems?: Array<Resource>

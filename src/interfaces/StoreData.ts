@@ -6,6 +6,7 @@ type StoreData = {
         load: QueryablePromise<StoreData>
         loading: boolean
         deleting: boolean
+        reloading: boolean
     }
 }
 

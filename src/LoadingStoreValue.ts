@@ -88,15 +88,15 @@ class LoadingStoreValue implements Resource {
   }
 
   public $post (data: unknown):Promise<Resource> {
-    return wrapPromise(this._meta.load.then(resource => resource.$post(data)))
+    return this._meta.load.then(resource => resource.$post(data))
   }
 
   public $patch (data: unknown): Promise<Resource> {
-    return wrapPromise(this._meta.load.then(resource => resource.$patch(data)))
+    return this._meta.load.then(resource => resource.$patch(data))
   }
 
-  public $del (): Promise<Resource> {
-    return wrapPromise(this._meta.load.then(resource => resource.$del()))
+  public $del (): Promise<string | void> {
+    return this._meta.load.then(resource => resource.$del())
   }
 }
 

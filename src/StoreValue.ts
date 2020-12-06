@@ -89,7 +89,7 @@ class StoreValue extends CanHaveItems implements Resource {
     return this.apiActions.patch(this._meta.self, data)
   }
 
-  $del (): Promise<Resource> {
+  $del (): Promise<string | void> {
     return this.apiActions.del(this._meta.self)
   }
 }
