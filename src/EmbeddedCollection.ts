@@ -17,18 +17,17 @@ import StoreData, { Link } from './interfaces/StoreData'
  * @param loadPromise    a promise that will resolve when the parent entity has finished (re-)loading
  */
 class EmbeddedCollection extends CanHaveItems implements EmbeddedCollectionType {
-  // TODO: do we want an interfae for this
-  // TODOL do we want to expose the Resource interface here, such that embedded collections have the same public API indepdendent whether a collection is embedded or not
   public _meta: {
     load: Promise<EmbeddedCollectionType>,
-    reload: { // TODO: do we want/need to expose this eternally? or sufficient if we keep this in the store and expose $reload()?
+    reload: { // TODO: do we want/need to expose this externally? or sufficient if we keep this in the store and expose $reload()?
       uri: string,
       property: string
     }
   }
 
   constructor (items: Array<Link>, reloadUri: string, reloadProperty: string, apiActions: ApiActions, config: InternalConfig, loadParent: Promise<StoreData> | null = null) {
-    super(apiActions, config)
+    super(apiActions, config, items, reloadUri, reloadProperty)
+
     this._meta = {
       load: loadParent
         ? loadParent.then(parentResource => new EmbeddedCollection(parentResource[reloadProperty], reloadUri, reloadProperty, apiActions, config))
@@ -38,7 +37,6 @@ class EmbeddedCollection extends CanHaveItems implements EmbeddedCollectionType 
         property: reloadProperty
       }
     }
-    this.addItemsGetter(items, reloadUri, reloadProperty)
   }
 
   $loadItems () :Promise<Array<Resource>> {

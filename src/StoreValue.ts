@@ -27,36 +27,38 @@ class StoreValue extends CanHaveItems implements Resource {
   apiActions: ApiActions
 
   constructor (storeData: StoreData, apiActions: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
-    super(apiActions, config)
+    if (isCollection(storeData)) {
+      super(apiActions, config, storeData.items, storeData._meta.self, 'items')
+    } else {
+      super(apiActions, config, [], '', '') // TODO: consider implementing CanHaveItems as mixin, then call super constructor is not necessary for non-collections
+    }
 
     this.apiActions = apiActions
     this.config = config
     this.storeData = storeData
 
-    Object.keys(storeData).forEach(key => {
-      const value = storeData[key]
+    Object.keys(storeData)
+      .filter(key => !['items', '_meta'].includes(key)) // exclude reserved properties
+      .forEach(key => {
+        const value = storeData[key]
 
-      // storeData is a collection: add keys to retrieve collection items
-      if (key === 'items' && isCollection(storeData)) {
-        this.addItemsGetter(storeData.items, storeData._meta.self, key)
+        // storeData[key] is an embedded collection
+        if (Array.isArray(value)) {
+          this[key] = () => new EmbeddedCollection(value, storeData._meta.self, key, this.apiActions, config, storeData._meta.load)
 
-      // storeData[key] is an embedded collection
-      } else if (Array.isArray(value)) {
-        this[key] = () => new EmbeddedCollection(value, storeData._meta.self, key, this.apiActions, config, storeData._meta.load)
+          // storeData[key] is a reference only (contains only href; no data)
+        } else if (isEntityReference(value)) {
+          this[key] = () => this.apiActions.get(value.href)
 
-      // storeData[key] is a reference only (contains only href; no data)
-      } else if (isEntityReference(value)) {
-        this[key] = () => this.apiActions.get(value.href)
+          // storeData[key] is a templated link
+        } else if (isTemplatedLink(value)) {
+          this[key] = templateParams => this.apiActions.get(urltemplate.parse(value.href).expand(templateParams || {}))
 
-      // storeData[key] is a templated link
-      } else if (isTemplatedLink(value)) {
-        this[key] = templateParams => this.apiActions.get(urltemplate.parse(value.href).expand(templateParams || {}))
-
-      // storeData[key] is a primitive (normal entity property)
-      } else {
-        this[key] = value
-      }
-    })
+          // storeData[key] is a primitive (normal entity property)
+        } else {
+          this[key] = value
+        }
+      })
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadPromise = storeData._meta.load && storeData._meta.load.isPending()

@@ -10,38 +10,47 @@ interface Collection {
   allItems: Array<Resource>
 }
 
-// type keyValueObject = Record<string, unknown>
-
 class CanHaveItems implements Collection {
   apiActions: ApiActions
   config: InternalConfig
 
-  items: Array<Resource> = []
-  allItems: Array<Resource> = []
+  private storeItems: Array<Link>
+  private fetchAllUri: string
+  private fetchAllProperty: string
 
-  constructor (apiActions: ApiActions, config: InternalConfig) {
+  /**
+   * @param storeItems       array of items, which can be mixed primitive values and entity references
+   * @param fetchAllUri      URI that allows fetching all collection items in a single network request, if known
+   * @param fetchAllProperty property name inside the entity fetched at fetchAllUri that contains the collection
+   */
+  constructor (apiActions: ApiActions, config: InternalConfig, storeItems: Array<Link>, fetchAllUri: string, fetchAllProperty: string) {
     this.apiActions = apiActions
     this.config = config
+    this.storeItems = storeItems
+    this.fetchAllUri = fetchAllUri
+    this.fetchAllProperty = fetchAllProperty
   }
 
   /**
-     * Defines a property getter for the items property.
-     * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
-     * lazy, since that potentially fetches a large number of entities from the API.
-     * @param items       array of items, which can be mixed primitive values and entity references
-     * @param fetchAllUri URI that allows fetching all collection items in a single network request, if known
-     * @param property    property name inside the entity fetched at fetchAllUri that contains the collection
-     * @returns object the target object with the added getter
-     */
-  addItemsGetter (items: Array<Link>, fetchAllUri: string, property: string): void {
-    Object.defineProperty(this, 'items', { get: () => this.filterDeleting(this.mapArrayOfEntityReferences(items, fetchAllUri, property)) })
-    Object.defineProperty(this, 'allItems', { get: () => this.mapArrayOfEntityReferences(items, fetchAllUri, property) })
+   * Get items excluding ones marked as 'deleting' (eager remove)
+   * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
+   * lazy, since that potentially fetches a large number of entities from the API.
+   */
+  public get items (): Array<Resource> {
+    return this.filterDeleting(this.mapArrayOfEntityReferences(this.storeItems, this.fetchAllUri, this.fetchAllProperty))
+  }
+
+  /**
+   * Get all items including ones marked as 'deleting' (lazy remove)
+   */
+  public get allItems (): Array<Resource> {
+    return this.mapArrayOfEntityReferences(this.storeItems, this.fetchAllUri, this.fetchAllProperty)
   }
 
   /**
    * Filter out items that are mareked as deleting (eager removal)
    */
-  filterDeleting (array: Array<Resource>): Array<Resource> {
+  private filterDeleting (array: Array<Resource>): Array<Resource> {
     return array.filter(entry => !entry._meta.deleting)
   }
 
@@ -55,7 +64,7 @@ class CanHaveItems implements Collection {
      * @returns array          the new array with replaced items, or a LoadingStoreCollection if any of the array
      *                         elements is still loading.
      */
-  mapArrayOfEntityReferences (array: Array<Link>, fetchAllUri: string, fetchAllProperty: string): Array<Resource> {
+  private mapArrayOfEntityReferences (array: Array<Link>, fetchAllUri: string, fetchAllProperty: string): Array<Resource> {
     if (!this.containsUnknownEntityReference(array)) {
       return this.replaceEntityReferences(array)
     }
@@ -84,7 +93,7 @@ class CanHaveItems implements Collection {
   /**
    * Replace each item in array with a proper StoreValue (or LoadingStoreValue)
    */
-  replaceEntityReferences (array: Array<Link>): Array<Resource> {
+  private replaceEntityReferences (array: Array<Link>): Array<Resource> {
     return array.map(entry => {
       if (isEntityReference(entry)) {
         return this.apiActions.get(entry.href)
@@ -96,7 +105,7 @@ class CanHaveItems implements Collection {
   /**
    * Returns true if any of the items within 'array' is not yet known to the API (=has never been loaded)
    */
-  containsUnknownEntityReference (array: Array<Link>): boolean {
+  private containsUnknownEntityReference (array: Array<Link>): boolean {
     return array.some(entry => isEntityReference(entry) && this.apiActions.isUnknown(entry.href))
   }
 }
