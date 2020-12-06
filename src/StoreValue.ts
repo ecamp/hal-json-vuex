@@ -1,12 +1,12 @@
 import urltemplate from 'url-template'
-import { isTemplatedLink, isEntityReference, isCollection } from './halHelpers.js'
+import { isTemplatedLink, isEntityReference, isCollection } from './halHelpers'
 import { QueryablePromise, createResolvedPromise, wrapPromise } from './QueryablePromise'
-import EmbeddedCollection from './EmbeddedCollection.js'
-import CanHaveItems from './CanHaveItems.js'
+import EmbeddedCollection from './EmbeddedCollection'
+import CanHaveItems from './CanHaveItems'
 import Resource from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
 import StoreData from './interfaces/StoreData'
-import StoreValueCreator from './StoreValueCreator.js'
+import StoreValueCreator from './StoreValueCreator'
 import { InternalConfig } from './interfaces/Config'
 
 /**
@@ -26,10 +26,10 @@ class StoreValue extends CanHaveItems implements Resource {
   config: InternalConfig
   apiActions: ApiActions
 
-  constructor (storeData: StoreData, { get, reload, post, patch, del, isUnknown }: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
-    super({ get, reload, isUnknown }, config)
+  constructor (storeData: StoreData, apiActions: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
+    super(apiActions, config)
 
-    this.apiActions = { get, reload, post, patch, del, isUnknown }
+    this.apiActions = apiActions
     this.config = config
     this.storeData = storeData
 
@@ -38,11 +38,11 @@ class StoreValue extends CanHaveItems implements Resource {
 
       // storeData is a collection: add keys to retrieve collection items
       if (key === 'items' && isCollection(storeData)) {
-        this.addItemsGetter(storeData[key], storeData._meta.self, key)
+        this.addItemsGetter(storeData.items, storeData._meta.self, key)
 
       // storeData[key] is an embedded collection
       } else if (Array.isArray(value)) {
-        this[key] = () => new EmbeddedCollection(value, storeData._meta.self, key, { get, reload, isUnknown }, config, storeData._meta.load)
+        this[key] = () => new EmbeddedCollection(value, storeData._meta.self, key, this.apiActions, config, storeData._meta.load)
 
       // storeData[key] is a reference only (contains only href; no data)
       } else if (isEntityReference(value)) {

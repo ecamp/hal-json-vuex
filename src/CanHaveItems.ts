@@ -1,9 +1,26 @@
-import { isEntityReference } from './halHelpers.js'
+import { isEntityReference } from './halHelpers'
 import LoadingStoreCollection from './LoadingStoreCollection'
+import Resource from './interfaces/Resource'
+import ApiActions from './interfaces/ApiActions'
+import { InternalConfig } from './interfaces/Config'
+import { Link } from './interfaces/StoreData'
 
-class CanHaveItems {
-  constructor ({ get, reload, isUnknown }, config) {
-    this.apiActions = { get, reload, isUnknown }
+interface Collection {
+  items: Array<Resource>
+  allItems: Array<Resource>
+}
+
+// type keyValueObject = Record<string, unknown>
+
+class CanHaveItems implements Collection {
+  apiActions: ApiActions
+  config: InternalConfig
+
+  items: Array<Resource> = []
+  allItems: Array<Resource> = []
+
+  constructor (apiActions: ApiActions, config: InternalConfig) {
+    this.apiActions = apiActions
     this.config = config
   }
 
@@ -16,12 +33,15 @@ class CanHaveItems {
      * @param property    property name inside the entity fetched at fetchAllUri that contains the collection
      * @returns object the target object with the added getter
      */
-  addItemsGetter (items, fetchAllUri, property) {
+  addItemsGetter (items: Array<Link>, fetchAllUri: string, property: string): void {
     Object.defineProperty(this, 'items', { get: () => this.filterDeleting(this.mapArrayOfEntityReferences(items, fetchAllUri, property)) })
     Object.defineProperty(this, 'allItems', { get: () => this.mapArrayOfEntityReferences(items, fetchAllUri, property) })
   }
 
-  filterDeleting (array) {
+  /**
+   * Filter out items that are mareked as deleting (eager removal)
+   */
+  filterDeleting (array: Array<Resource>): Array<Resource> {
     return array.filter(entry => !entry._meta.deleting)
   }
 
@@ -35,20 +55,25 @@ class CanHaveItems {
      * @returns array          the new array with replaced items, or a LoadingStoreCollection if any of the array
      *                         elements is still loading.
      */
-  mapArrayOfEntityReferences (array, fetchAllUri, fetchAllProperty) {
+  mapArrayOfEntityReferences (array: Array<Link>, fetchAllUri: string, fetchAllProperty: string): Array<Resource> {
     if (!this.containsUnknownEntityReference(array)) {
       return this.replaceEntityReferences(array)
     }
 
+    // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
     if (this.config.avoidNPlusOneRequests) {
-      const completelyLoaded = this.apiActions.reload({ _meta: { reload: { uri: fetchAllUri, property: fetchAllProperty } } }, true)
+      const completelyLoaded = this.apiActions.reload({ _meta: { reload: { uri: fetchAllUri, property: fetchAllProperty } } })
         .then(() => this.replaceEntityReferences(array))
       return LoadingStoreCollection.create(completelyLoaded)
+
+    // no eager loading: replace each reference (Link) with a StoreValue (Resource)
     } else {
       const arrayWithReplacedReferences = this.replaceEntityReferences(array)
+
+      // TODO: why is the next step needed? Is it not sufficient to only return arrayWithReplacedReferences?
       const arrayCompletelyLoaded = Promise.all(array.map(entry => {
         if (isEntityReference(entry)) {
-          return this.apiActions.get(entry.href)._meta.load
+          return this.apiActions.get(entry.href)._meta.load // also TODO: we generate a StoreValue for each entry again, which was already done above with replaceEntityReferences
         }
         return Promise.resolve(entry)
       }))
@@ -56,16 +81,22 @@ class CanHaveItems {
     }
   }
 
-  replaceEntityReferences (array) {
+  /**
+   * Replace each item in array with a proper StoreValue (or LoadingStoreValue)
+   */
+  replaceEntityReferences (array: Array<Link>): Array<Resource> {
     return array.map(entry => {
       if (isEntityReference(entry)) {
         return this.apiActions.get(entry.href)
       }
-      return entry
+      return entry as Resource // TODO: in which case would this happen? shouldn't 'items' always contain entity references
     })
   }
 
-  containsUnknownEntityReference (array) {
+  /**
+   * Returns true if any of the items within 'array' is not yet known to the API (=has never been loaded)
+   */
+  containsUnknownEntityReference (array: Array<Link>): boolean {
     return array.some(entry => isEntityReference(entry) && this.apiActions.isUnknown(entry.href))
   }
 }
