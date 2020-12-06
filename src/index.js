@@ -1,6 +1,6 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
-import { normalizeEntityUri } from './normalizeUri'
+import normalizeEntityUri from './normalizeEntityUri'
 import StoreValueCreator from './StoreValueCreator'
 import StoreValue from './StoreValue.ts'
 import LoadingStoreValue from './LoadingStoreValue'
