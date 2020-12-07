@@ -71,7 +71,7 @@ describe('API store', () => {
         done()
       })
 
-      it('imports embedded single entity', async done => {
+      it.only('imports embedded single entity', async done => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
 
@@ -80,11 +80,13 @@ describe('API store', () => {
 
         // then
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
+        expect(vm.api.get('/camps/1').campType().name.toString()).toEqual('')
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
         expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
         expect(vm.api.get('/camps/1').campType()._meta.self).toEqual('http://localhost/campTypes/20')
         expect(vm.api.get('/campTypes/20')._meta.self).toEqual('http://localhost/campTypes/20')
+        expect(vm.api.get('/camps/1').campType().name.toString()).toEqual('camp')
         done()
       })
 

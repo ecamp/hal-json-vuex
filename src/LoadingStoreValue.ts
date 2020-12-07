@@ -60,14 +60,11 @@ class LoadingStoreValue implements Resource {
         // Proxy to all other unknown properties: return a function that yields another LoadingStoreValue
         const loadProperty = loadResourceSafely.then(resource => resource[prop])
         const result = templateParams => new LoadingStoreValue(loadProperty.then(property => property(templateParams)._meta.load))
+        result.toString = () => ''
         return result
       }
     }
     return new Proxy(this, handler)
-  }
-
-  public toString (): string {
-    return ''
   }
 
   get items (): Array<Resource> {
