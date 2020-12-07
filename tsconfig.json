@@ -1,7 +1,9 @@
 {
     "compilerOptions": {
         "lib": [
-            "ES2019"
+            "ES2019",
+            "dom",
+            "dom.iterable"
         ],
         "module": "commonjs",
         "target": "ES2019",

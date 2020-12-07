@@ -1,6 +1,5 @@
 import Resource from './interfaces/Resource'
 import StoreData from './interfaces/StoreData'
-import { URLSearchParams } from 'url'
 
 /**
  * Sorts the query parameters in a URI, keeping the values of duplicate keys in order.
