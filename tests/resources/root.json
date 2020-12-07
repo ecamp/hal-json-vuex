@@ -1,0 +1,20 @@
+{
+  "serverResponse": {
+    "this": "is",
+    "the": "root",
+    "_links": {
+      "self": {
+        "href": "/"
+      }
+    }
+  },
+  "storeState": {
+    "": {
+      "this": "is",
+      "the": "root",
+      "_meta": {
+        "self": ""
+      }
+    }
+  }
+}

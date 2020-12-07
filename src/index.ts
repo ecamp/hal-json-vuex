@@ -69,12 +69,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
-    return wrapPromise(axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
+
+    return axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {
       throw handleAxiosError(uri, error)
-    }))
+    })
   }
 
   /**
@@ -109,7 +110,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *   })
    * }
    *
-   * @param uriOrEntity URI (or instance) of an entity to load from the store or API
+   * @param uriOrEntity URI (or instance) of an entity to load from the store or API. If omitted, the root resource of the API is returned.
    * @param forceReload If true, the entity will be fetched from the API even if it is already in the Vuex store.
    *                    Note that the function will still return the old value in this case, but you can
    *                    wait for the new value using the ._meta.load promise.
@@ -117,7 +118,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get (uriOrEntity: string | Resource | EmbeddedCollectionType | StoreData, forceReload = false): Resource {
+  function get (uriOrEntity: string | Resource | EmbeddedCollectionType | StoreData = '', forceReload = false): Resource {
     let forceReloadingEmbeddedCollection = false
     let uri: string | null = null
 
@@ -153,7 +154,9 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * Type guard for EmbeddedCollectionType
    * @param uriOrEntity
    */
-  function isEmbeddedCollectionType (uriOrEntity: string | Resource | EmbeddedCollectionType | StoreData): uriOrEntity is EmbeddedCollectionType {
+  function isEmbeddedCollectionType (uriOrEntity: string | Resource | EmbeddedCollectionType | StoreData | null): uriOrEntity is EmbeddedCollectionType {
+    if (uriOrEntity === null) return false
+
     if (typeof uriOrEntity === 'string') return false
 
     // found an actual EmbeddedCollection instance
@@ -436,7 +439,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     if (typeof data === 'object' && data !== null) {
-      Object.fromEntries(Object.entries(data).map(([prop, value]) => {
+      return Object.fromEntries(Object.entries(data).map(([prop, value]) => {
         const type = Object.prototype.toString.call(value)
         if (type.includes('Function')) {
           value = value()

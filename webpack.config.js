@@ -6,7 +6,7 @@ module.exports = {
   devtool: 'source-map',
   externals: [nodeExternals()],
   entry: [
-    './src/index.js'
+    './src/index.ts'
   ],
   output: {
     path: path.join(__dirname, 'dist'),
