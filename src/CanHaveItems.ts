@@ -81,13 +81,10 @@ class CanHaveItems implements Collection {
     } else {
       const arrayWithReplacedReferences = this.replaceEntityReferences(array)
 
-      // TODO: why is the next step needed? Is it not sufficient to only return arrayWithReplacedReferences?
-      const arrayCompletelyLoaded = Promise.all(array.map(entry => {
-        if (isEntityReference(entry)) {
-          return this.apiActions.get(entry.href)._meta.load // also TODO: we generate a StoreValue for each entry again, which was already done above with replaceEntityReferences
-        }
-        return Promise.resolve(entry)
-      }))
+      const arrayCompletelyLoaded = Promise.all(
+        arrayWithReplacedReferences.map(entry => entry._meta.load)
+      )
+
       return LoadingStoreCollection.create(arrayCompletelyLoaded, arrayWithReplacedReferences)
     }
   }
@@ -96,12 +93,11 @@ class CanHaveItems implements Collection {
    * Replace each item in array with a proper StoreValue (or LoadingStoreValue)
    */
   private replaceEntityReferences (array: Array<Link>): Array<Resource> {
-    return array.map(entry => {
-      if (isEntityReference(entry)) {
-        return this.apiActions.get(entry.href)
-      }
-      return entry as Resource // TODO: in which case would this happen? shouldn't 'items' always contain entity references
-    })
+    return array
+      .filter(entry => isEntityReference(entry))
+      .map(entry => this.apiActions.get(entry.href))
+
+    // return entry as Resource // TODO: in which case would this happen? shouldn't 'items' always contain entity references
   }
 
   /**
