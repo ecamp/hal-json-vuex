@@ -43,7 +43,7 @@ class StoreValueCreator {
    * @returns object            wrapped entity ready for use in a frontend component
    */
   wrap (data: StoreData): Resource {
-    const meta = data._meta || { load: Promise.resolve() }
+    const meta = data._meta || { load: Promise.resolve(), loading: false }
 
     if (meta.loading) {
       const entityLoaded = wrapPromise(meta.load.then(loadedData => new StoreValue(loadedData, this.apiActions, this, this.config)))

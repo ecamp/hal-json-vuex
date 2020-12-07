@@ -19,9 +19,11 @@ class CanHaveItems implements Collection {
   private fetchAllProperty: string
 
   /**
-   * @param storeItems       array of items, which can be mixed primitive values and entity references
-   * @param fetchAllUri      URI that allows fetching all collection items in a single network request, if known
-   * @param fetchAllProperty property name inside the entity fetched at fetchAllUri that contains the collection
+   * @param apiActions        dependency injection of API actions
+   * @param config            dependency injection of config object
+   * @param storeItems        array of items, which can be mixed primitive values and entity references
+   * @param fetchAllUri       URI that allows fetching all collection items in a single network request, if known
+   * @param fetchAllProperty  property name inside the entity fetched at fetchAllUri that contains the collection
    */
   constructor (apiActions: ApiActions, config: InternalConfig, storeItems: Array<Link>, fetchAllUri: string, fetchAllProperty: string) {
     this.apiActions = apiActions
@@ -55,15 +57,15 @@ class CanHaveItems implements Collection {
   }
 
   /**
-     * Given an array, replaces any entity references in the array with the entity loaded from the Vuex store
-     * (or from the API if necessary), and returns that as a new array. In case some of the entity references in
-     * the array have not finished loading yet, returns a LoadingStoreCollection instead.
-     * @param array            possibly mixed array of values and references
-     * @param fetchAllUri      URI that allows fetching all array items in a single network request, if known
-     * @param fetchAllProperty property in the entity from fetchAllUri that will contain the array
-     * @returns array          the new array with replaced items, or a LoadingStoreCollection if any of the array
-     *                         elements is still loading.
-     */
+   * Given an array, replaces any entity references in the array with the entity loaded from the Vuex store
+   * (or from the API if necessary), and returns that as a new array. In case some of the entity references in
+   * the array have not finished loading yet, returns a LoadingStoreCollection instead.
+   * @param array            possibly mixed array of values and references
+   * @param fetchAllUri      URI that allows fetching all array items in a single network request, if known
+   * @param fetchAllProperty property in the entity from fetchAllUri that will contain the array
+   * @returns array          the new array with replaced items, or a LoadingStoreCollection if any of the array
+   *                         elements is still loading.
+   */
   private mapArrayOfEntityReferences (array: Array<Link>, fetchAllUri: string, fetchAllProperty: string): Array<Resource> {
     if (!this.containsUnknownEntityReference(array)) {
       return this.replaceEntityReferences(array)

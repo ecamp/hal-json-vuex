@@ -13,11 +13,6 @@ import { QueryablePromise, wrapPromise } from './QueryablePromise'
  * Using a LoadingStoreValue or a property of a LoadingStoreValue in a view renders to empty strings:
  * let user = new LoadingStoreValue(...)
  * 'The "' + user + '" is called "' + user.name + '"' // gives 'The "" is called ""'
- *
- * @param entityLoaded a Promise that resolves to a StoreValue when the entity has finished
- *                     loading from the API
- * @param absoluteSelf optional fully qualified URI of the entity being loaded, if available. If passed, the
- *                     returned LoadingStoreValue will return it in calls to .self and ._meta.self
  */
 class LoadingStoreValue implements Resource {
   public _meta: {
@@ -28,6 +23,12 @@ class LoadingStoreValue implements Resource {
 
   private loadResourceSafely: Promise<Resource>
 
+  /**
+   * @param entityLoaded a Promise that resolves to a StoreValue when the entity has finished
+   *                     loading from the API
+   * @param absoluteSelf optional fully qualified URI of the entity being loaded, if available. If passed, the
+   *                     returned LoadingStoreValue will return it in calls to .self and ._meta.self
+   */
   constructor (entityLoaded: Promise<Resource>, absoluteSelf: string | null = null) {
     this._meta = {
       self: absoluteSelf,

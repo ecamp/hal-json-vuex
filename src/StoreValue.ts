@@ -10,10 +10,9 @@ import StoreValueCreator from './StoreValueCreator'
 import { InternalConfig } from './interfaces/Config'
 
 /**
- * Creates an actual StoreValue, by wrapping the given Vuex store storeData. The storeData must not be loading.
+ * Represents an actual StoreValue, by wrapping the given Vuex store storeData. The storeData must not be loading.
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
- * @param storeData fully loaded entity storeData from the Vuex store
  */
 class StoreValue extends CanHaveItems implements Resource {
   public _meta: {
@@ -26,6 +25,12 @@ class StoreValue extends CanHaveItems implements Resource {
   config: InternalConfig
   apiActions: ApiActions
 
+  /**
+   * @param storeData fully loaded entity storeData from the Vuex store
+   * @param apiActions inject dependency: API actions
+   * @param storeValueCreator inject dependency StoreValue factory
+   * @param config inject dependency: config options
+   */
   constructor (storeData: StoreData, apiActions: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
     if (isCollection(storeData)) {
       super(apiActions, config, storeData.items, storeData._meta.self, 'items')
