@@ -71,7 +71,7 @@ describe('API store', () => {
         done()
       })
 
-      it.only('imports embedded single entity', async done => {
+      it('imports embedded single entity', async done => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
 

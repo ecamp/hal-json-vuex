@@ -1,5 +1,3 @@
-import QueryablePromise from '../QueryablePromise'
-
 /**
  * Generic interface for a standalone Resource (e.g. a HAl resource with an own store entry and a self link)
  * Can be a collection or a single entity
@@ -7,7 +5,7 @@ import QueryablePromise from '../QueryablePromise'
 interface Resource {
     _meta: {
         self: string | null
-        load: QueryablePromise<Resource>
+        load: Promise<Resource>
         loading: boolean
         deleting?: boolean
     }

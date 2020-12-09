@@ -1,6 +1,5 @@
 import LoadingStoreCollection from './LoadingStoreCollection'
 import Resource from './interfaces/Resource'
-import { QueryablePromise, wrapPromise } from './QueryablePromise'
 
 /**
  * Creates a placeholder for an entity which has not yet finished loading from the API.
@@ -17,11 +16,11 @@ import { QueryablePromise, wrapPromise } from './QueryablePromise'
 class LoadingStoreValue implements Resource {
   public _meta: {
     self: string | null,
-    load: QueryablePromise<Resource>
+    load: Promise<Resource>
     loading: boolean
   }
 
-  private loadResourceSafely: Promise<Resource>
+  private loadResource: Promise<Resource>
 
   /**
    * @param entityLoaded a Promise that resolves to a StoreValue when the entity has finished
@@ -29,16 +28,14 @@ class LoadingStoreValue implements Resource {
    * @param absoluteSelf optional fully qualified URI of the entity being loaded, if available. If passed, the
    *                     returned LoadingStoreValue will return it in calls to .self and ._meta.self
    */
-  constructor (entityLoaded: Promise<Resource>, absoluteSelf: string | null = null) {
+  constructor (loadResource: Promise<Resource>, absoluteSelf: string | null = null) {
     this._meta = {
       self: absoluteSelf,
-      load: wrapPromise(entityLoaded),
+      load: loadResource,
       loading: true
     }
 
-    // safe load: if API call fails, suppress errors and present this Proxy again to the chain
-    const loadResourceSafely = entityLoaded.catch(() => this)
-    this.loadResourceSafely = loadResourceSafely
+    this.loadResource = loadResource
 
     const handler = {
       get: function (target: LoadingStoreValue, prop: string | number | symbol) {
@@ -59,7 +56,7 @@ class LoadingStoreValue implements Resource {
         }
 
         // Proxy to all other unknown properties: return a function that yields another LoadingStoreValue
-        const loadProperty = loadResourceSafely.then(resource => resource[prop])
+        const loadProperty = loadResource.then(resource => resource[prop])
         const result = templateParams => new LoadingStoreValue(loadProperty.then(property => property(templateParams)._meta.load))
         result.toString = () => ''
         return result
@@ -69,11 +66,11 @@ class LoadingStoreValue implements Resource {
   }
 
   get items (): Array<Resource> {
-    return LoadingStoreCollection.create(this.loadResourceSafely.then(entity => entity.items))
+    return LoadingStoreCollection.create(this.loadResource.then(entity => entity.items))
   }
 
   get allItems (): Array<Resource> {
-    return LoadingStoreCollection.create(this.loadResourceSafely.then(entity => entity.allItems))
+    return LoadingStoreCollection.create(this.loadResource.then(entity => entity.allItems))
   }
 
   public $reload (): Promise<Resource> {

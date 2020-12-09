@@ -277,7 +277,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       store.commit('addEmpty', uri)
     }
 
-    const returnedResource = wrapPromise(axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
+    const returnedResource = axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -285,7 +285,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       return get(uri)
     }, (error) => {
       throw handleAxiosError(uri, error)
-    }))
+    })
 
     // TODO: cannot put the promise back to store, because store assumes 'load' to be a promise that resolves to StoreData, but returnedResource resolves to Resource
     // is it really needed?
@@ -409,10 +409,10 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * The promise is needed in the store for some special cases when a loading entity is requested a second time with
    * this.api.get(...) or this.api.reload(...), or when an embedded collection is reloaded.
    * @param uri
-   * @param promise
+   * @param loadStoreData
    */
-  function setLoadPromiseOnStore (uri: string, promise: Promise<StoreData> | null = null) {
-    store.state[opts.apiName][uri]._meta.load = promise ? wrapPromise(promise) : createResolvedPromise(store.state[opts.apiName][uri])
+  function setLoadPromiseOnStore (uri: string, loadStoreData: Promise<StoreData> | null = null) {
+    store.state[opts.apiName][uri]._meta.load = loadStoreData ? wrapPromise(loadStoreData) : createResolvedPromise(store.state[opts.apiName][uri])
   }
 
   /**

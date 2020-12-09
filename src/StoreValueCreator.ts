@@ -4,7 +4,6 @@ import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
 import StoreData from './interfaces/StoreData'
 import Resource from './interfaces/Resource'
-import { wrapPromise } from './QueryablePromise'
 
 class StoreValueCreator {
   private config: InternalConfig
@@ -46,8 +45,8 @@ class StoreValueCreator {
     const meta = data._meta || { load: Promise.resolve(), loading: false }
 
     if (meta.loading) {
-      const entityLoaded = wrapPromise(meta.load.then(loadedData => new StoreValue(loadedData, this.apiActions, this, this.config)))
-      return new LoadingStoreValue(entityLoaded, this.config.apiRoot + meta.self)
+      const loadResource = meta.load.then(storeData => new StoreValue(storeData, this.apiActions, this, this.config))
+      return new LoadingStoreValue(loadResource, this.config.apiRoot + meta.self)
     }
 
     return new StoreValue(data, this.apiActions, this, this.config)
