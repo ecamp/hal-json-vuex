@@ -1,4 +1,4 @@
-import { Link, TemplatedLink, Collection } from './interfaces/StoreData'
+import { Link, TemplatedLink, StoreDataCollection } from './interfaces/StoreData'
 
 type keyValueObject = Record<string, unknown>
 
@@ -35,7 +35,7 @@ function isEntityReference (object: keyValueObject): object is Link {
  * @param object    to be examined
  * @returns boolean true if the object looks like a standalone collection, false otherwise
  */
-function isCollection (object: keyValueObject): object is Collection {
+function isCollection (object: keyValueObject): object is StoreDataCollection {
   return !!(object && Array.isArray(object.items))
 }
 

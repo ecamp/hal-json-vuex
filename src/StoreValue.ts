@@ -4,7 +4,7 @@ import EmbeddedCollection from './EmbeddedCollection'
 import CanHaveItems from './CanHaveItems'
 import Resource from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
-import StoreData from './interfaces/StoreData'
+import { StoreData } from './interfaces/StoreData'
 import StoreValueCreator from './StoreValueCreator'
 import { InternalConfig } from './interfaces/Config'
 
@@ -20,7 +20,7 @@ class StoreValue extends CanHaveItems implements Resource {
     loading: boolean
   }
 
-  private storeData: StoreData
+  _storeData: StoreData
   config: InternalConfig
   apiActions: ApiActions
 
@@ -39,7 +39,7 @@ class StoreValue extends CanHaveItems implements Resource {
 
     this.apiActions = apiActions
     this.config = config
-    this.storeData = storeData
+    this._storeData = storeData
 
     Object.keys(storeData)
       .filter(key => !['items', '_meta'].includes(key)) // exclude reserved properties
@@ -66,7 +66,7 @@ class StoreValue extends CanHaveItems implements Resource {
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadResource = storeData._meta.reloading
-      ? storeData._meta.load.then(reloadedData => storeValueCreator.wrap(reloadedData))
+      ? (storeData._meta.load as Promise<StoreData>).then(reloadedData => storeValueCreator.wrap(reloadedData))
       : Promise.resolve(this)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store

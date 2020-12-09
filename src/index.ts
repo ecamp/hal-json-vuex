@@ -11,7 +11,7 @@ import { ExternalConfig } from './interfaces/Config'
 import { Store } from 'vuex/types'
 import { AxiosInstance, AxiosError } from 'axios'
 import Resource, { EmbeddedCollectionType } from './interfaces/Resource'
-import StoreData from './interfaces/StoreData'
+import StoreData, { Link } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
 import EmbeddedCollection from './EmbeddedCollection'
 
@@ -351,11 +351,12 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     return Array.isArray(value) && value.some(entry => valueIsReferenceTo(entry, uri))
   }
 
-  function valueIsReferenceTo (value: Record<string, unknown>, uri: string): boolean {
+  function valueIsReferenceTo (value: unknown, uri: string): boolean {
     if (value === null) return false
+    if (typeof value !== 'object') return false
 
-    const objectKeys = Object.keys(value)
-    return objectKeys.length === 1 && objectKeys[0] === 'href' && value.href === uri
+    const objectKeys = Object.keys(value as Record<string, unknown>)
+    return objectKeys.length === 1 && objectKeys[0] === 'href' && (value as Link).href === uri
   }
 
   function findEntitiesReferencing (uri: string) : Array<StoreData> {

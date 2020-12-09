@@ -2,8 +2,10 @@ import StoreValue from './StoreValue'
 import LoadingStoreValue from './LoadingStoreValue'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
-import StoreData from './interfaces/StoreData'
+import { StoreData } from './interfaces/StoreData'
 import Resource from './interfaces/Resource'
+import HasItems from './HasItems'
+import { isCollection } from './halHelpers'
 
 class StoreValueCreator {
   private config: InternalConfig
@@ -45,11 +47,14 @@ class StoreValueCreator {
     const meta = data._meta || { load: Promise.resolve(), loading: false }
 
     if (meta.loading) {
-      const loadResource = meta.load.then(storeData => new StoreValue(storeData, this.apiActions, this, this.config))
+      const loadResource = (meta.load as Promise<StoreData>).then(storeData => new StoreValue(storeData, this.apiActions, this, this.config))
       return new LoadingStoreValue(loadResource, this.config.apiRoot + meta.self)
+    } else if (isCollection(data)) {
+      const Collection = HasItems(StoreValue, this.apiActions, this.config)
+      return new Collection(data, this.apiActions, this, this.config)
+    } else {
+      return new StoreValue(data, this.apiActions, this, this.config)
     }
-
-    return new StoreValue(data, this.apiActions, this, this.config)
   }
 }
 
