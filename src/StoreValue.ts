@@ -65,8 +65,8 @@ class StoreValue extends CanHaveItems implements Resource {
       })
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
-    const loadResource = storeData._meta.load && storeData._meta.load.isPending()
-      ? storeData._meta.load.then(reloadedData => (storeValueCreator.wrap(reloadedData) as Resource))
+    const loadResource = storeData._meta.reloading
+      ? storeData._meta.load.then(reloadedData => storeValueCreator.wrap(reloadedData))
       : Promise.resolve(this)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store

@@ -398,6 +398,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     })
     store.commit('add', normalizedData)
 
+    // sets dummy promise which immediately resolves to store data
     Object.keys(normalizedData).forEach(uri => {
       setLoadPromiseOnStore(uri)
     })

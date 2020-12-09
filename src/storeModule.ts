@@ -24,6 +24,8 @@ export const mutations: MutationTree<State> = {
   add (state: State, data: Record<string, unknown>) : void {
     Object.keys(data).forEach(uri => {
       Vue.set(state, uri, data[uri])
+      Vue.set(state[uri]._meta, 'loading', false)
+      Vue.set(state[uri]._meta, 'reloading', false)
     })
   },
   /**
