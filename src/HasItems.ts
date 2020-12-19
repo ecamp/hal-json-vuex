@@ -76,7 +76,10 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
     return array.some(entry => isEntityReference(entry) && apiActions.isUnknown(entry.href))
   }
 
-  return class extends Base {
+  /**
+   * Define actual mixin class
+   */
+  const HasItems = class extends Base {
     fetchAllUri = ''
     fetchAllProperty = ''
 
@@ -96,6 +99,8 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
       return mapArrayOfEntityReferences(this._storeData.items, this.fetchAllUri, this.fetchAllProperty)
     }
   }
+
+  return HasItems
 }
 
 export default HasItems

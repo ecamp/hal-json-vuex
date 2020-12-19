@@ -44,14 +44,21 @@ class StoreValueCreator {
    * @returns object            wrapped entity ready for use in a frontend component
    */
   wrap (data: StoreData): Resource {
+    // build Collection class = StoreValue + HasItems mixin
+    const Collection = HasItems(StoreValue, this.apiActions, this.config)
+
     const meta = data._meta || { load: Promise.resolve(), loading: false }
 
+    // Resource is loading --> return LoadingStoreValue
     if (meta.loading) {
       const loadResource = (meta.load as Promise<StoreData>).then(storeData => new StoreValue(storeData, this.apiActions, this, this.config))
       return new LoadingStoreValue(loadResource, this.config.apiRoot + meta.self)
+
+    // Store data looks like a colleciton --> return Colleciton
     } else if (isCollection(data)) {
-      const Collection = HasItems(StoreValue, this.apiActions, this.config)
-      return new Collection(data, this.apiActions, this, this.config)
+      return new Collection(data, this.apiActions, this, this.config) // these parameters are passed to StoreValue constructor
+
+    // else Store Data looks like an entity --> return normal StoreValue
     } else {
       return new StoreValue(data, this.apiActions, this, this.config)
     }

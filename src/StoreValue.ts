@@ -1,7 +1,6 @@
 import urltemplate from 'url-template'
-import { isTemplatedLink, isEntityReference, isCollection } from './halHelpers'
+import { isTemplatedLink, isEntityReference } from './halHelpers'
 import EmbeddedCollection from './EmbeddedCollection'
-import CanHaveItems from './CanHaveItems'
 import Resource from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
 import { StoreData } from './interfaces/StoreData'
@@ -13,7 +12,7 @@ import { InternalConfig } from './interfaces/Config'
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
  */
-class StoreValue extends CanHaveItems implements Resource {
+class StoreValue implements Resource {
   public _meta: {
     self: string,
     load: Promise<Resource>
@@ -31,12 +30,6 @@ class StoreValue extends CanHaveItems implements Resource {
    * @param config inject dependency: config options
    */
   constructor (storeData: StoreData, apiActions: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
-    if (isCollection(storeData)) {
-      super(apiActions, config, storeData.items, storeData._meta.self, 'items')
-    } else {
-      super(apiActions, config, [], '', '') // TODO: consider implementing CanHaveItems as mixin, then call super constructor is not necessary for non-collections
-    }
-
     this.apiActions = apiActions
     this.config = config
     this._storeData = storeData
