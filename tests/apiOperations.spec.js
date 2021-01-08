@@ -518,4 +518,58 @@ describe('Using dollar methods', () => {
     // expect no errors
     done()
   })
+
+  // TODO fix this
+  it('loads the embedded collection items when $loadItems is called on an entity', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps').replyOnce(200, {
+      _embedded: {
+        items: [{
+          _links: {
+            self: {
+              href: '/items/123'
+            }
+          }
+        }]
+      },
+      _links: {
+        self: {
+          href: '/camps'
+        }
+      }
+    })
+    axiosMock.onGet('http://localhost/camps').replyOnce(200, {
+      _embedded: {
+        items: [{
+          _links: {
+            id: 123,
+            self: {
+              href: '/items/123'
+            }
+          }
+        }]
+      },
+      _links: {
+        self: {
+          href: '/camps'
+        }
+      }
+    })
+
+    vm.api.get('/camps')
+    await letNetworkRequestFinish()
+    const camps = vm.api.get('/camps')
+    expect(camps instanceof StoreValue).toEqual(true)
+
+    // when
+    const r = (() => camps.items)()
+
+    // then
+    await letNetworkRequestFinish()
+    const result =  //camps.items
+      expect(result).toMatchObject({ _meta: { self: 'http://localhost/camps' } })
+    expect(result.items).toHaveLength(1)
+    expect(result.items[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
+    done()
+  })
 })
