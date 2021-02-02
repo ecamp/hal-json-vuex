@@ -54,7 +54,7 @@
     "lodash": "4.17.20",
     "rimraf": "3.0.2",
     "vue": "2.6.12",
-    "vue-axios": "2.1.5",
+    "vue-axios": "3.2.4",
     "vue-template-compiler": "2.6.12",
     "vuex": "3.6.2",
     "webpack": "5.20.0",
