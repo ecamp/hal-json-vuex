@@ -57,7 +57,7 @@
     "vue-axios": "2.1.5",
     "vue-template-compiler": "2.6.12",
     "vuex": "3.6.2",
-    "webpack": "5.20.0",
+    "webpack": "5.20.1",
     "webpack-cli": "4.5.0",
     "webpack-node-externals": "2.5.2"
   }
