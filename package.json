@@ -51,7 +51,7 @@
     "eslint-plugin-standard": "4.1.0",
     "eslint-plugin-vue": "7.6.0",
     "jest": "26.6.3",
-    "lodash": "4.17.20",
+    "lodash": "4.17.21",
     "rimraf": "3.0.2",
     "vue": "2.6.12",
     "vue-axios": "2.1.5",
