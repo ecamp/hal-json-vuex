@@ -1,14 +1,10 @@
 import { isEntityReference } from './halHelpers'
 import LoadingStoreCollection from './LoadingStoreCollection'
 import Resource from './interfaces/Resource'
+import Collection from './interfaces/Collection'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
 import { Link } from './interfaces/StoreData'
-
-interface Collection {
-  items: Array<Resource>
-  allItems: Array<Resource>
-}
 
 class CanHaveItems implements Collection {
   apiActions: ApiActions
