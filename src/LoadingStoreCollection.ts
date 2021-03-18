@@ -6,7 +6,7 @@ class LoadingStoreCollection {
    * Returns a placeholder for an array that has not yet finished loading from the API. The array placeholder
    * will respond to functional calls (like .find(), .map(), etc.) with further LoadingStoreCollections or
    * LoadingStoreValues. If passed the existingContent argument, random access and .length will also work.
-   * @param arrayLoaded     Promise that resolves once the array has finished loading
+   * @param loadArray       Promise that resolves once the array has finished loading
    * @param existingContent optionally set the elements that are already known, for random access
    */
   static create (loadArray: Promise<Array<Resource> | undefined>, existingContent: Array<Resource> = []): Array<Resource> {
