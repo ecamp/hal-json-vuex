@@ -65,12 +65,10 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
     return array
       .filter(entry => isEntityReference(entry))
       .map(entry => apiActions.get(entry.href))
-
-    // return entry as Resource // TODO: in which case would this happen? shouldn't 'items' always contain entity references
   }
 
   /**
-     * Returns true if any of the items within 'array' is not yet known to the API (=has never been loaded)
+     * Returns true if any of the items within 'array' is not yet known to the API (meaning it has never been loaded)
      */
   function containsUnknownEntityReference (array: Array<Link>): boolean {
     return array.some(entry => isEntityReference(entry) && apiActions.isUnknown(entry.href))
