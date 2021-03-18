@@ -5,7 +5,7 @@ import StoreDataCollection, { Link } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
 
-// Check Typescript Handbox fore more explanation of mixin pattern
+// Check Typescript Handbook fore more explanation of mixin pattern
 // https://www.typescriptlang.org/docs/handbook/mixins.html
 
 // Now we use a generic version which can apply a constraint on
@@ -76,31 +76,26 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
     return array.some(entry => isEntityReference(entry) && apiActions.isUnknown(entry.href))
   }
 
-  /**
-   * Define actual mixin class
-   */
-  const HasItems = class extends Base {
+  return class HasItems extends Base {
     fetchAllUri = ''
     fetchAllProperty = ''
 
     /**
-   * Get items excluding ones marked as 'deleting' (eager remove)
-   * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
-   * lazy, since that potentially fetches a large number of entities from the API.
-   */
-    public get items (): Array<Resource> {
+     * Get items excluding ones marked as 'deleting' (eager remove)
+     * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
+     * lazy, since that potentially fetches a large number of entities from the API.
+     */
+    public get items(): Array<Resource> {
       return filterDeleting(mapArrayOfEntityReferences(this._storeData.items, this.fetchAllUri, this.fetchAllProperty))
     }
 
     /**
-   * Get all items including ones marked as 'deleting' (lazy remove)
-   */
-    public get allItems (): Array<Resource> {
+     * Get all items including ones marked as 'deleting' (lazy remove)
+     */
+    public get allItems(): Array<Resource> {
       return mapArrayOfEntityReferences(this._storeData.items, this.fetchAllUri, this.fetchAllProperty)
     }
   }
-
-  return HasItems
 }
 
 export default HasItems
