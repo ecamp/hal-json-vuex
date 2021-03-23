@@ -1,5 +1,5 @@
 // import LoadingStoreCollection from './LoadingStoreCollection'
-import Resource, { EmbeddedCollectionType } from './interfaces/Resource'
+import { EmbeddedCollectionType } from './interfaces/Resource'
 import { Link } from './interfaces/StoreData'
 
 /**
@@ -43,17 +43,6 @@ class EmbeddedCollection implements EmbeddedCollectionType {
       }
     }
   }
-
-  /*
-  $loadItems () :Promise<Array<Resource>> {
-    return new Promise((resolve) => {
-      const items = this._storeData.items
-      // TODO: this is probably broken as LoadingStoreCollection has no constructor anymore
-      // if (items instanceof LoadingStoreCollection) items._meta.load.then(result => resolve(result))
-      // else resolve(items)
-      resolve(items)
-    })
-  } */
 }
 
 export default EmbeddedCollection

@@ -19,6 +19,29 @@ type HasStoreData = GConstructor<{ _storeData: { items: Array<Link> } }>;
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActions, config: InternalConfig, reloadUri?: string, reloadProperty?: string) {
   /**
+   *  Returns a promise that resolves to items, once all items have been loaded
+   */
+  function itemLoader (array: Array<Link>) : Promise<Array<Resource>> {
+    if (!containsUnknownEntityReference(array)) {
+      return Promise.resolve(replaceEntityReferences(array))
+    }
+
+    // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
+    if (config.avoidNPlusOneRequests) {
+      return apiActions.reload({ _meta: { reload: { uri: reloadUri || '', property: reloadProperty || '' } } })
+        .then(() => replaceEntityReferences(array))
+
+      // no eager loading: replace each reference (Link) with a StoreValue (Resource)
+    } else {
+      const arrayWithReplacedReferences = replaceEntityReferences(array)
+
+      return Promise.all(
+        arrayWithReplacedReferences.map(entry => entry._meta.load)
+      )
+    }
+  }
+
+  /**
    * Filter out items that are marked as deleting (eager removal)
    */
   function filterDeleting (array: Array<Resource>): Array<Resource> {
@@ -35,26 +58,19 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
      * @returns array          the new array with replaced items, or a LoadingStoreCollection if any of the array
      *                         elements is still loading.
      */
-  function mapArrayOfEntityReferences (array: Array<Link>, fetchAllUri: string, fetchAllProperty: string): Array<Resource> {
+  function mapArrayOfEntityReferences (array: Array<Link>): Array<Resource> {
     if (!containsUnknownEntityReference(array)) {
       return replaceEntityReferences(array)
     }
 
+    const itemsLoaded = itemLoader(array)
+
     // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
     if (config.avoidNPlusOneRequests) {
-      const completelyLoaded = apiActions.reload({ _meta: { reload: { uri: fetchAllUri, property: fetchAllProperty } } })
-        .then(() => replaceEntityReferences(array))
-      return LoadingStoreCollection.create(completelyLoaded)
-
+      return LoadingStoreCollection.create(itemsLoaded)
       // no eager loading: replace each reference (Link) with a StoreValue (Resource)
     } else {
-      const arrayWithReplacedReferences = replaceEntityReferences(array)
-
-      const arrayCompletelyLoaded = Promise.all(
-        arrayWithReplacedReferences.map(entry => entry._meta.load)
-      )
-
-      return LoadingStoreCollection.create(arrayCompletelyLoaded, arrayWithReplacedReferences)
+      return LoadingStoreCollection.create(itemsLoaded, replaceEntityReferences(array))
     }
   }
 
@@ -75,23 +91,27 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
   }
 
   const HasItems = class extends Base {
-    fetchAllUri = reloadUri || ''
-    fetchAllProperty = reloadProperty || ''
-
     /**
      * Get items excluding ones marked as 'deleting' (eager remove)
      * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
      * lazy, since that potentially fetches a large number of entities from the API.
      */
     public get items (): Array<Resource> {
-      return filterDeleting(mapArrayOfEntityReferences(this._storeData.items, this.fetchAllUri, this.fetchAllProperty))
+      return filterDeleting(mapArrayOfEntityReferences(this._storeData.items))
     }
 
     /**
      * Get all items including ones marked as 'deleting' (lazy remove)
      */
     public get allItems (): Array<Resource> {
-      return mapArrayOfEntityReferences(this._storeData.items, this.fetchAllUri, this.fetchAllProperty)
+      return mapArrayOfEntityReferences(this._storeData.items)
+    }
+
+    /**
+     * Returns a promise that resolves to items, once all items have been loaded
+     */
+    public $loadItems () :Promise<Array<Resource>> {
+      return itemLoader(this._storeData.items)
     }
   }
 

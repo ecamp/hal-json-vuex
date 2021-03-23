@@ -11,11 +11,14 @@ interface Resource {
     }
 
     $reload: () => Promise<Resource>
-    $loadItems: () => Promise<Resource>
     $post: (data: unknown) => Promise<Resource>
     $patch: (data: unknown) => Promise<Resource>
     $del: () => Promise<string | void>
 
+    /**
+     * for collections only
+     */
+    $loadItems?: () => Promise<Array<Resource>>
     items?: Array<Resource>
     allItems?: Array<Resource>
 }

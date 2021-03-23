@@ -146,7 +146,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     const storeData = load(uri, forceReload)
 
     return forceReloadingEmbeddedCollection
-      ? storeValueCreator.wrap(storeData)[(uriOrEntity as EmbeddedCollection)._meta.reload.property]()
+      ? storeValueCreator.wrap(storeData)[(uriOrEntity as EmbeddedCollection)._meta.reload.property]() // TODO: this line doesn't return a Resource, although return type of get() is Resource
       : storeValueCreator.wrap(storeData)
   }
 

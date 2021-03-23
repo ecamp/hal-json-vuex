@@ -1,5 +1,6 @@
 import LoadingStoreCollection from './LoadingStoreCollection'
 import Resource from './interfaces/Resource'
+import Collection from './interfaces/Collection'
 
 /**
  * Creates a placeholder for an entity which has not yet finished loading from the API.
@@ -78,8 +79,8 @@ class LoadingStoreValue implements Resource {
     return this._meta.load
   }
 
-  public $loadItems (): Promise<Resource> {
-    return this._meta.load
+  public $loadItems (): Promise<Array<Resource>> {
+    return this._meta.load.then(resource => (resource as Collection).$loadItems())
   }
 
   public $post (data: unknown):Promise<Resource> {

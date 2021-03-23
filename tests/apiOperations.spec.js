@@ -23,7 +23,6 @@ let vm
 let stateCopy
 
 describe('Using dollar methods', () => {
-
   beforeAll(() => {
     axios.defaults.baseURL = 'http://localhost'
     Vue.use(Vuex)
@@ -313,9 +312,8 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     const result = await load
-    expect(result).toMatchObject({ _meta: { self: 'http://localhost/camps' } })
-    expect(result.items).toHaveLength(1)
-    expect(result.items[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
     done()
   })
 
@@ -349,9 +347,8 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     const result = await load
-    expect(result).toMatchObject({ _meta: { self: 'http://localhost/camps' } })
-    expect(result.items).toHaveLength(1)
-    expect(result.items[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
+    expect(result).toHaveLength(1)
+    expect(result[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
     done()
   })
 
@@ -412,7 +409,7 @@ describe('Using dollar methods', () => {
     const bookResponse = {
       id: 555,
       _embedded: {
-        chapters: [ chapter1Response, chapter2Response, chapter3Response ]
+        chapters: [chapter1Response, chapter2Response, chapter3Response]
       },
       _links: {
         self: {
@@ -433,8 +430,15 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    await load
-    // expect no errors
+    const result = await load
+    expect(result).toHaveLength(3)
+    expect(result[0]).toMatchObject({
+      id: 1028,
+      name: 'The first chapter',
+      _meta: {
+        self: 'http://localhost/chapters/1028'
+      }
+    })
     done()
   })
 
@@ -495,7 +499,7 @@ describe('Using dollar methods', () => {
     const bookResponse = {
       id: 555,
       _embedded: {
-        chapters: [ chapter1Response, chapter2Response, chapter3Response ]
+        chapters: [chapter1Response, chapter2Response, chapter3Response]
       },
       _links: {
         self: {
@@ -514,8 +518,15 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    await load
-    // expect no errors
+    const result = await load
+    expect(result).toHaveLength(3)
+    expect(result[0]).toMatchObject({
+      id: 1028,
+      name: 'The first chapter',
+      _meta: {
+        self: 'http://localhost/chapters/1028'
+      }
+    })
     done()
   })
 })
