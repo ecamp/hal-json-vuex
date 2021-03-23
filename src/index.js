@@ -361,7 +361,7 @@ function HalJsonVuex (store, axios, options) {
       metaKey: '_meta',
       normalizeUri: (uri) => normalizeEntityUri(uri, axios.defaults.baseURL),
       filterReferences: true,
-      embeddedStandaloneCollectionKey: 'items'
+      embeddedStandaloneListKey: 'items'
     })
     store.commit('add', normalizedData)
 
