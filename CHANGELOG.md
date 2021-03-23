@@ -1,5 +1,8 @@
 ### Unreleased
 
+### 1.2.2
+- Fix embedded standalone collections that wouldn't work before
+
 ### 1.2.1
 - Avoid sending a reload request as long as an equal reload request is still ongoing
 - Added source maps to the exported bundle
