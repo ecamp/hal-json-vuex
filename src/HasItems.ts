@@ -1,7 +1,7 @@
 import { isEntityReference } from './halHelpers'
 import LoadingStoreCollection from './LoadingStoreCollection'
 import Resource from './interfaces/Resource'
-import StoreDataCollection, { Link } from './interfaces/StoreData'
+import { Link } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
 
@@ -14,10 +14,10 @@ import { InternalConfig } from './interfaces/Config'
 type GConstructor<T> = new (...args: any[]) => T;
 
 // Ensure property _storeData.items exist
-type HasStoreData = GConstructor<{ _storeData: StoreDataCollection }>;
+type HasStoreData = GConstructor<{ _storeData: { items: Array<Link> } }>;
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActions, config: InternalConfig) {
+function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActions, config: InternalConfig, reloadUri?: string, reloadProperty?: string) {
   /**
    * Filter out items that are marked as deleting (eager removal)
    */
@@ -75,8 +75,8 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
   }
 
   const HasItems = class extends Base {
-    fetchAllUri = ''
-    fetchAllProperty = ''
+    fetchAllUri = reloadUri || ''
+    fetchAllProperty = reloadProperty || ''
 
     /**
      * Get items excluding ones marked as 'deleting' (eager remove)

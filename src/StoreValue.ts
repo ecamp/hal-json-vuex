@@ -3,9 +3,10 @@ import { isTemplatedLink, isEntityReference } from './halHelpers'
 import EmbeddedCollection from './EmbeddedCollection'
 import Resource from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
-import { StoreData } from './interfaces/StoreData'
+import { StoreData, StoreDataEntity } from './interfaces/StoreData'
 import StoreValueCreator from './StoreValueCreator'
 import { InternalConfig } from './interfaces/Config'
+import HasItems from './HasItems'
 
 /**
  * Represents an actual StoreValue, by wrapping the given Vuex store storeData. The storeData must not be loading.
@@ -41,7 +42,14 @@ class StoreValue implements Resource {
 
         // storeData[key] is an embedded collection
         if (Array.isArray(value)) {
-          this[key] = () => new EmbeddedCollection(value, storeData._meta.self, key, this.apiActions, config, storeData._meta.load)
+          // build complete Collection class = EmbeddedCollection + HasItems mixin
+          const EmbeddedCollectionClass = HasItems(EmbeddedCollection, this.apiActions, this.config, storeData._meta.self, key)
+
+          const loadCollection = storeData._meta.load
+            ? (storeData._meta.load as Promise<StoreDataEntity>).then(parentResource => new EmbeddedCollectionClass(parentResource[key], storeData._meta.self, key))
+            : null
+
+          this[key] = () => new EmbeddedCollectionClass(value, storeData._meta.self, key, loadCollection)
 
           // storeData[key] is a reference only (contains only href; no data)
         } else if (isEntityReference(value)) {

@@ -1,9 +1,6 @@
-import CanHaveItems from './CanHaveItems'
 // import LoadingStoreCollection from './LoadingStoreCollection'
 import Resource, { EmbeddedCollectionType } from './interfaces/Resource'
-import ApiActions from './interfaces/ApiActions'
-import { InternalConfig } from './interfaces/Config'
-import StoreData, { Link } from './interfaces/StoreData'
+import { Link } from './interfaces/StoreData'
 
 /**
  * Imitates a full standalone collection with an items property, even if there is no separate URI (as it
@@ -12,13 +9,17 @@ import StoreData, { Link } from './interfaces/StoreData'
  * URI, we need to reload the whole entity containing the embedded collection. Some extra info about the
  * containing entity must therefore be passed to the constrcutor.
  */
-class EmbeddedCollection extends CanHaveItems implements EmbeddedCollectionType {
+class EmbeddedCollection implements EmbeddedCollectionType {
   public _meta: {
     load: Promise<EmbeddedCollectionType>,
     reload: { // TODO: do we want/need to expose this externally? or sufficient if we keep this in the store and expose $reload()?
       uri: string,
       property: string
     }
+  }
+
+  _storeData: {
+    items: Array<Link>
   }
 
   /**
@@ -29,13 +30,13 @@ class EmbeddedCollection extends CanHaveItems implements EmbeddedCollectionType 
    * @param config          dependency injection of config object
    * @param loadParent      a promise that will resolve when the parent entity has finished (re-)loading
    */
-  constructor (items: Array<Link>, reloadUri: string, reloadProperty: string, apiActions: ApiActions, config: InternalConfig, loadParent: Promise<StoreData> | null = null) {
-    super(apiActions, config, items, reloadUri, reloadProperty)
+  constructor (items: Array<Link>, reloadUri: string, reloadProperty: string, loadCollection: Promise<EmbeddedCollectionType> | null = null) {
+    this._storeData = {
+      items
+    }
 
     this._meta = {
-      load: loadParent
-        ? loadParent.then(parentResource => new EmbeddedCollection(parentResource[reloadProperty], reloadUri, reloadProperty, apiActions, config))
-        : Promise.resolve(this),
+      load: loadCollection || Promise.resolve(this),
       reload: {
         uri: reloadUri,
         property: reloadProperty
@@ -43,15 +44,16 @@ class EmbeddedCollection extends CanHaveItems implements EmbeddedCollectionType 
     }
   }
 
+  /*
   $loadItems () :Promise<Array<Resource>> {
     return new Promise((resolve) => {
-      const items = this.items
+      const items = this._storeData.items
       // TODO: this is probably broken as LoadingStoreCollection has no constructor anymore
       // if (items instanceof LoadingStoreCollection) items._meta.load.then(result => resolve(result))
       // else resolve(items)
       resolve(items)
     })
-  }
+  } */
 }
 
 export default EmbeddedCollection
