@@ -74,7 +74,7 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
     return array.some(entry => isEntityReference(entry) && apiActions.isUnknown(entry.href))
   }
 
-  return class HasItems extends Base {
+  const HasItems = class extends Base {
     fetchAllUri = ''
     fetchAllProperty = ''
 
@@ -83,17 +83,19 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
      * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
      * lazy, since that potentially fetches a large number of entities from the API.
      */
-    public get items(): Array<Resource> {
+    public get items (): Array<Resource> {
       return filterDeleting(mapArrayOfEntityReferences(this._storeData.items, this.fetchAllUri, this.fetchAllProperty))
     }
 
     /**
      * Get all items including ones marked as 'deleting' (lazy remove)
      */
-    public get allItems(): Array<Resource> {
+    public get allItems (): Array<Resource> {
       return mapArrayOfEntityReferences(this._storeData.items, this.fetchAllUri, this.fetchAllProperty)
     }
   }
+
+  return HasItems
 }
 
 export default HasItems
