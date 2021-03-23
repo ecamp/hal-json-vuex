@@ -3,7 +3,7 @@ import urltemplate from 'url-template'
 import normalizeEntityUri from './normalizeEntityUri'
 import StoreValueCreator from './StoreValueCreator'
 import StoreValue from './StoreValue'
-import LoadingStoreValue from './LoadingStoreValue'
+import LoadingValue from './LoadingValue'
 import storeModule, { State } from './storeModule'
 import ServerException from './ServerException'
 import { createResolvedPromise, wrapPromise } from './QueryablePromise'
@@ -135,8 +135,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     if (uri === null) {
-      if (uriOrEntity instanceof LoadingStoreValue) {
-        // A LoadingStoreValue is safe to return without breaking the UI.
+      if (uriOrEntity instanceof LoadingValue) {
+        // A LoadingValue is safe to return without breaking the UI.
         return uriOrEntity
       }
       // We don't know anything about the requested object, something is wrong.
@@ -492,7 +492,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   const apiActions: ApiActions = { post, get, reload, del, patch, isUnknown }
-  const halJsonVuex = { ...apiActions, purge, purgeAll, href, StoreValue, LoadingStoreValue }
+  const halJsonVuex = { ...apiActions, purge, purgeAll, href, StoreValue, LoadingValue }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function install (this: any, Vue: any) {

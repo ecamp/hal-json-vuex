@@ -1,10 +1,10 @@
 import StoreValue from './StoreValue'
-import LoadingStoreValue from './LoadingStoreValue'
+import { LoadingResource } from './LoadingValue'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
 import { StoreData } from './interfaces/StoreData'
 import Resource from './interfaces/Resource'
-import HasItems from './HasItems'
+import Collection from './Collection'
 import { isCollection } from './halHelpers'
 
 class StoreValueCreator {
@@ -22,7 +22,7 @@ class StoreValueCreator {
    * https://github.com/vuejs/vuex/issues/757#issuecomment-297668640. Therefore, we wrap the data into
    * a new object, and provide accessor methods for related entities. Such an accessor method fetches the
    * related entity from the Vuex store (or the API if necessary) when called. In case the related entity
-   * is still being loaded from the API, a LoadingStoreValue is returned.
+   * is still being loaded from the API, a LoadingValue is returned.
    *
    * Example:
    * // Data of an entity like it comes from the Vuex store:
@@ -46,16 +46,15 @@ class StoreValueCreator {
   wrap (data: StoreData): Resource {
     const meta = data._meta || { load: Promise.resolve(), loading: false }
 
-    // Resource is loading --> return LoadingStoreValue
+    // Resource is loading --> return LoadingValue
     if (meta.loading) {
-      const loadResource = (meta.load as Promise<StoreData>).then(storeData => new StoreValue(storeData, this.apiActions, this, this.config))
-      return new LoadingStoreValue(loadResource, this.config.apiRoot + meta.self)
+      const loadResource = (meta.load as Promise<StoreData>)
+          .then(storeData => new StoreValue(storeData, this.apiActions, this, this.config))
+      return new LoadingResource(loadResource, this.config.apiRoot + meta.self)
 
-    // Store data looks like a colleciton --> return Colleciton
+    // Store data looks like a collection --> return Collection
     } else if (isCollection(data)) {
-      // build Collection class = StoreValue + HasItems mixin
-      const Collection = HasItems(StoreValue, this.apiActions, this.config)
-      return new Collection(data, this.apiActions, this, this.config) // these parameters are passed to StoreValue constructor
+      return new Collection(data, this.apiActions, this, this.config)
 
     // else Store Data looks like an entity --> return normal StoreValue
     } else {

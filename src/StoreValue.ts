@@ -19,9 +19,8 @@ class StoreValue implements Resource {
     loading: boolean
   }
 
-  _storeData: StoreData
-  config: InternalConfig
-  apiActions: ApiActions
+  protected config: InternalConfig
+  protected apiActions: ApiActions
 
   /**
    * @param storeData fully loaded entity storeData from the Vuex store
@@ -32,7 +31,6 @@ class StoreValue implements Resource {
   constructor (storeData: StoreData, apiActions: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
     this.apiActions = apiActions
     this.config = config
-    this._storeData = storeData
 
     Object.keys(storeData)
       .filter(key => !['items', '_meta'].includes(key)) // exclude reserved properties

@@ -1,5 +1,4 @@
-import CanHaveItems from './CanHaveItems'
-// import LoadingStoreCollection from './LoadingStoreCollection'
+import LoadingArray from './LoadingArray'
 import Resource, { EmbeddedCollectionType } from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
@@ -44,13 +43,9 @@ class EmbeddedCollection extends CanHaveItems implements EmbeddedCollectionType 
   }
 
   $loadItems () :Promise<Array<Resource>> {
-    return new Promise((resolve) => {
-      const items = this.items
-      // TODO: this is probably broken as LoadingStoreCollection has no constructor anymore
-      // if (items instanceof LoadingStoreCollection) items._meta.load.then(result => resolve(result))
-      // else resolve(items)
-      resolve(items)
-    })
+    const items = this.items
+    if (items instanceof LoadingArray) return items.load
+    return Promise.resolve(items)
   }
 }
 

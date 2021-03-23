@@ -8,7 +8,7 @@ import Vue from 'vue'
 import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import StoreValue from '../src/StoreValue'
-import LoadingStoreValue from '../src/LoadingStoreValue'
+import LoadingValue from '@/LoadingValue'
 import EmbeddedCollection from '../src/EmbeddedCollection'
 
 async function letNetworkRequestFinish () {
@@ -90,7 +90,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/camps').networkError()
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingValue)
 
     // when
     const load = camps.$reload()
@@ -152,7 +152,7 @@ describe('Using dollar methods', () => {
     axiosMock.onPost('http://localhost/camps').reply(200, embeddedSingleEntity.serverResponse)
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingValue)
 
     // when
     const load = camps.$post({ some: 'thing' })
@@ -232,7 +232,7 @@ describe('Using dollar methods', () => {
       }
     })
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingValue)
 
     // when
     const load = camps.$patch({ some: 'thing' })
@@ -270,7 +270,7 @@ describe('Using dollar methods', () => {
     axiosMock.onDelete('http://localhost/camps/1').reply(204)
 
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(LoadingStoreValue)
+    expect(camp).toBeInstanceOf(LoadingValue)
 
     // when
     camp.$del()
@@ -341,7 +341,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/camps').networkError()
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingValue)
 
     // when
     const load = camps.$loadItems()
@@ -507,7 +507,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/books/555').replyOnce(200, bookResponse)
 
     const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
-    expect(lastReadBookChapters).toBeInstanceOf(LoadingStoreValue)
+    expect(lastReadBookChapters).toBeInstanceOf(LoadingValue)
 
     // when
     const load = lastReadBookChapters.$loadItems()

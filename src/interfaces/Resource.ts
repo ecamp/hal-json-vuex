@@ -2,6 +2,8 @@
  * Generic interface for a standalone Resource (e.g. a HAl resource with an own store entry and a self link)
  * Can be a collection or a single entity
  */
+import LoadingArray from "@/LoadingArray";
+
 interface Resource {
     _meta: {
         self: string | null
@@ -11,13 +13,15 @@ interface Resource {
     }
 
     $reload: () => Promise<Resource>
-    $loadItems: () => Promise<Resource>
     $post: (data: unknown) => Promise<Resource>
     $patch: (data: unknown) => Promise<Resource>
     $del: () => Promise<string | void>
+}
 
-    items?: Array<Resource>
-    allItems?: Array<Resource>
+interface CollectionResource extends Resource {
+    $loadItems: () => Promise<Resource>
+    items?: Array<Resource> | LoadingArray<Resource>
+    allItems?: Array<Resource> | LoadingArray<Resource>
 }
 
 /**
@@ -33,5 +37,5 @@ type EmbeddedCollectionType = {
     }
 }
 
-export { Resource, EmbeddedCollectionType }
+export { Resource, CollectionResource, EmbeddedCollectionType }
 export default Resource
