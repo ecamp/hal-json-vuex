@@ -12,7 +12,7 @@ import { Link } from './interfaces/StoreData'
 class EmbeddedCollection implements EmbeddedCollectionType {
   public _meta: {
     load: Promise<EmbeddedCollectionType>,
-    reload: { // TODO: do we want/need to expose this externally? or sufficient if we keep this in the store and expose $reload()?
+    reload: {
       uri: string,
       property: string
     }

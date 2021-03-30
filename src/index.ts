@@ -6,7 +6,6 @@ import StoreValue from './StoreValue'
 import LoadingStoreValue from './LoadingStoreValue'
 import storeModule, { State } from './storeModule'
 import ServerException from './ServerException'
-import { createResolvedPromise, wrapPromise } from './QueryablePromise'
 import { ExternalConfig } from './interfaces/Config'
 import { Store } from 'vuex/types'
 import { AxiosInstance, AxiosError } from 'axios'
@@ -119,17 +118,10 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                    system as soon as the API request finishes.
    */
   function get (uriOrEntity: string | Resource | EmbeddedCollectionType | StoreData = '', forceReload = false): Resource {
-    let forceReloadingEmbeddedCollection = false
     let uri: string | null = null
 
     if (isEmbeddedCollectionType(uriOrEntity)) { // = type guard for Embedded Collection
-      if (forceReload && uriOrEntity._meta.reload.uri) {
-        forceReloadingEmbeddedCollection = true
-        uri = normalizeEntityUri(uriOrEntity._meta.reload.uri, axios.defaults.baseURL)
-      } else {
-        // TODO: What should happen in this path? get() on embeddedCollection but no forceReload. Can this even happen?
-        throw new Error(`Cannot GET on an embedded collection "${uriOrEntity}" without forceReload=true`)
-      }
+      uri = normalizeEntityUri(uriOrEntity._meta.reload.uri, axios.defaults.baseURL)
     } else {
       uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     }
@@ -145,8 +137,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
 
     const storeData = load(uri, forceReload)
 
-    return forceReloadingEmbeddedCollection
-      ? storeValueCreator.wrap(storeData)[(uriOrEntity as EmbeddedCollection)._meta.reload.property]() // TODO: this line doesn't return a Resource, although return type of get() is Resource
+    return isEmbeddedCollectionType(uriOrEntity)
+      ? storeValueCreator.wrap(storeData)[(uriOrEntity as EmbeddedCollection)._meta.reload.property]()
       : storeValueCreator.wrap(storeData)
   }
 
@@ -287,11 +279,6 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       throw handleAxiosError(uri, error)
     })
 
-    // TODO: cannot put the promise back to store, because store assumes 'load' to be a promise that resolves to StoreData, but returnedResource resolves to Resource
-    // is it really needed?
-    //
-    // store.state[opts.apiName][uri]._meta.load = returnedResource
-
     return returnedResource
   }
 
@@ -301,14 +288,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * immediately re-fetch the purged entity from the API in order to re-display it.
    * @param uriOrEntity URI (or instance) of an entity which should be removed from the Vuex store
    */
-  function purge (uriOrEntity: string | Resource): string | void {
+  function purge (uriOrEntity: string | Resource): void {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't purge an unknown URI, do nothing
       return
     }
     store.commit('purge', uri)
-    return uri // TODO: or return nothing? what should be the return value of purge, deleted & del?
   }
 
   /**
@@ -331,7 +317,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   resolves when the DELETE request has completed and either all related entites have
    *                    been reloaded from the API, or the failed deletion has been cleaned up.
    */
-  function del (uriOrEntity: string | Resource): Promise<string | void> {
+  function del (uriOrEntity: string | Resource): Promise<void> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't delete an unknown URI, do nothing
@@ -373,7 +359,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param uri       URI of an entity which is not available (anymore) in the backend
    * @returns Promise resolves when the cleanup has completed and the Vuex store is up to date again
    */
-  function deleted (uri: string): Promise<string | void> {
+  function deleted (uri: string): Promise<void> {
     return Promise.all(findEntitiesReferencing(uri)
       // don't reload entities that are already being deleted, to break circular dependencies
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
@@ -414,7 +400,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param loadStoreData
    */
   function setLoadPromiseOnStore (uri: string, loadStoreData: Promise<StoreData> | null = null) {
-    store.state[opts.apiName][uri]._meta.load = loadStoreData ? wrapPromise(loadStoreData) : createResolvedPromise(store.state[opts.apiName][uri])
+    store.state[opts.apiName][uri]._meta.load = loadStoreData || Promise.resolve(store.state[opts.apiName][uri])
   }
 
   /**
@@ -495,9 +481,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   const halJsonVuex = { ...apiActions, purge, purgeAll, href, StoreValue, LoadingStoreValue }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function install (this: any, Vue: any) {
-    if (this.installed) return // TODO: installed was never defined. Where's this coming from?
-
+  function install (Vue: any) {
     if (!opts.nuxtInject) {
       // Normal installation in a Vue app
       Object.defineProperties(Vue.prototype, {

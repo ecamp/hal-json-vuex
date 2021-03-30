@@ -40,7 +40,8 @@ class LoadingStoreValue implements Resource {
 
     const handler = {
       get: function (target: LoadingStoreValue, prop: string | number | symbol) {
-        // TODO docu: Why is this neede?
+        // This is necessary so that Vue's reactivity system understands to treat this LoadingStoreValue
+        // like a normal object.
         if (prop === Symbol.toPrimitive) {
           return () => ''
         }
