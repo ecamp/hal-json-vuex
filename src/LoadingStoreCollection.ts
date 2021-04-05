@@ -14,7 +14,7 @@ class LoadingStoreCollection {
     // this could happen if items is accessed from a LoadingStoreValue, which resolves to a normal entity without 'items'
     const loadArraySafely = loadArray.then(array => array ?? [])
 
-    // proxy array function 'find' to a LadingStoreValue (Resource)
+    // proxy array function 'find' to a LoadingStoreValue (Resource)
     const singleResultFunctions = ['find']
     singleResultFunctions.forEach(func => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,12 +24,12 @@ class LoadingStoreCollection {
       }
     })
 
-    // proxy array functions with multiple results to a LadingStoreCollection (Array<Resource>)
+    // proxy array functions with multiple results to a LoadingStoreCollection (Array<Resource>)
     const arrayResultFunctions = ['map', 'flatMap', 'filter']
     arrayResultFunctions.forEach(func => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       existingContent[func] = (...args: any[]) => {
-        const resultLoaded = loadArraySafely.then(array => array[func](...args) as Array<Resource>)
+        const resultLoaded = loadArraySafely.then(array => array[func](...args) as Array<Resource>) // TODO: return type for .map() is not necessarily an Array<Resource>
         return LoadingStoreCollection.create(resultLoaded)
       }
     })

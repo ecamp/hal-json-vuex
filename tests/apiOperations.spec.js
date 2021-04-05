@@ -311,7 +311,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    const result = await load
+    const result = (await load).items
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
     done()
@@ -346,7 +346,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    const result = await load
+    const result = (await load).items
     expect(result).toHaveLength(1)
     expect(result[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
     done()
@@ -430,7 +430,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    const result = await load
+    const result = (await load).items
     expect(result).toHaveLength(3)
     expect(result[0]).toMatchObject({
       id: 1028,
@@ -518,7 +518,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    const result = await load
+    const result = (await load).items
     expect(result).toHaveLength(3)
     expect(result[0]).toMatchObject({
       id: 1028,

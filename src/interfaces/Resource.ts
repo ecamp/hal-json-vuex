@@ -1,8 +1,10 @@
+import StoreData from './StoreData'
+
 /**
  * Generic interface for a standalone Resource (e.g. a HAl resource with an own store entry and a self link)
  * Can be a collection or a single entity
  */
-interface Resource {
+type Resource = {
     _meta: {
         self: string | null
         load: Promise<Resource>
@@ -10,17 +12,12 @@ interface Resource {
         deleting?: boolean
     }
 
+    _storeData: StoreData
+
     $reload: () => Promise<Resource>
     $post: (data: unknown) => Promise<Resource>
     $patch: (data: unknown) => Promise<Resource>
     $del: () => Promise<string | void>
-
-    /**
-     * for collections only
-     */
-    $loadItems?: () => Promise<Array<Resource>>
-    items?: Array<Resource>
-    allItems?: Array<Resource>
 }
 
 /**
