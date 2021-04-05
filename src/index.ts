@@ -84,8 +84,16 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  async function reload (uriOrEntity: string | Resource | EmbeddedCollectionType | StoreData): Promise<Resource> {
-    return get(uriOrEntity, true)._meta.load
+  async function reload (uriOrEntity: EmbeddedCollectionType): Promise<EmbeddedCollection>;
+  async function reload (uriOrEntity: string | Resource | StoreData): Promise<Resource>;
+
+  async function reload (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionType): Promise<Resource | EmbeddedCollection> {
+    if (isEmbeddedCollectionType(uriOrEntity)) { // = type guard for Embedded Collection
+      return get(uriOrEntity._meta.reload.uri, true)._meta.load // load parent resource
+        .then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection) // ... and unwrap reload property after loading has finished
+    } else {
+      return get(uriOrEntity, true)._meta.load
+    }
   }
 
   /**
@@ -117,14 +125,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get (uriOrEntity: string | Resource | EmbeddedCollectionType | StoreData = '', forceReload = false): Resource {
-    let uri: string | null = null
-
-    if (isEmbeddedCollectionType(uriOrEntity)) { // = type guard for Embedded Collection
-      uri = normalizeEntityUri(uriOrEntity._meta.reload.uri, axios.defaults.baseURL)
-    } else {
-      uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
-    }
+  function get (uriOrEntity: string | Resource | StoreData = '', forceReload = false): Resource {
+    const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
       if (uriOrEntity instanceof LoadingStoreValue) {
@@ -137,9 +139,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
 
     const storeData = load(uri, forceReload)
 
-    return isEmbeddedCollectionType(uriOrEntity)
-      ? storeValueCreator.wrap(storeData)[(uriOrEntity as EmbeddedCollection)._meta.reload.property]()
-      : storeValueCreator.wrap(storeData)
+    return storeValueCreator.wrap(storeData)
   }
 
   /**
@@ -361,10 +361,10 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    */
   function deleted (uri: string): Promise<void> {
     return Promise.all(findEntitiesReferencing(uri)
-      // don't reload entities that are already being deleted, to break circular dependencies
+    // don't reload entities that are already being deleted, to break circular dependencies
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
 
-      // reload outdated entities...
+    // reload outdated entities...
       .map(outdatedEntity => reload(outdatedEntity).catch(() => {
         // ...but ignore any errors (such as 404 errors during reloading)
       }))

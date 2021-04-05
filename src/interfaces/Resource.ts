@@ -12,7 +12,7 @@ type Resource = {
         deleting?: boolean
     }
 
-    _storeData: StoreData
+    _storeData?: StoreData
 
     $reload: () => Promise<Resource>
     $post: (data: unknown) => Promise<Resource>

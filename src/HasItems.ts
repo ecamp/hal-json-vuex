@@ -76,7 +76,7 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
 
       // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
       if (config.avoidNPlusOneRequests && reloadUri) {
-        return apiActions.reload({ _meta: { reload: { uri: reloadUri || '', property: reloadProperty || '' } } }) as unknown as Promise<Collection>
+        return apiActions.reload({ _meta: { reload: { uri: reloadUri || '', property: reloadProperty || '' } } }) as Promise<Collection>
 
       // no eager loading: replace each reference (Link) with a StoreValue (Resource)
       } else {
