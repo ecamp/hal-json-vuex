@@ -31,10 +31,6 @@ type StoreDataCollection = StoreDataMeta & {
 
 type StoreData = StoreDataEntity | StoreDataCollection
 
-type Collection = {
-    items: Array<Link>
-}
-
-export { StoreData, Link, TemplatedLink, Collection, StoreDataEntity, StoreDataCollection }
+export { StoreData, Link, TemplatedLink, StoreDataEntity, StoreDataCollection }
 
 export default StoreData

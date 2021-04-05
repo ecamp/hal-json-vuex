@@ -20,18 +20,5 @@ type Resource = {
     $del: () => Promise<string | void>
 }
 
-/**
- * Subtype for an embeddeed collection with no self link (no standalone store entry, exists only with its parent)
- */
-type EmbeddedCollectionType = {
-    _meta: {
-        load?: Promise<EmbeddedCollectionType>
-        reload: {
-            uri: string
-            property: string
-        }
-    }
-}
-
-export { Resource, EmbeddedCollectionType }
+export { Resource }
 export default Resource

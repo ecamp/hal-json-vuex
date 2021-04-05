@@ -1,5 +1,5 @@
 // import LoadingStoreCollection from './LoadingStoreCollection'
-import { EmbeddedCollectionType } from './interfaces/Resource'
+import { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
 import { Link } from './interfaces/StoreData'
 
 /**
@@ -9,9 +9,9 @@ import { Link } from './interfaces/StoreData'
  * URI, we need to reload the whole entity containing the embedded collection. Some extra info about the
  * containing entity must therefore be passed to the constrcutor.
  */
-class EmbeddedCollection implements EmbeddedCollectionType {
+class EmbeddedCollection implements EmbeddedCollectionMeta {
   public _meta: {
-    load: Promise<EmbeddedCollectionType>,
+    load: Promise<EmbeddedCollectionMeta>,
     reload: {
       uri: string,
       property: string
@@ -30,7 +30,7 @@ class EmbeddedCollection implements EmbeddedCollectionType {
    * @param config          dependency injection of config object
    * @param loadParent      a promise that will resolve when the parent entity has finished (re-)loading
    */
-  constructor (items: Array<Link>, reloadUri: string, reloadProperty: string, loadCollection: Promise<EmbeddedCollectionType> | null = null) {
+  constructor (items: Array<Link>, reloadUri: string, reloadProperty: string, loadCollection: Promise<EmbeddedCollectionMeta> | null = null) {
     this._storeData = {
       items
     }

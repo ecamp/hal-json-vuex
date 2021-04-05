@@ -1,10 +1,8 @@
 import Collection from './Collection'
 
-/**
- * Subtype for an embeddeed collection with no self link (no standalone store entry, exists only with its parent)
- */
- type EmbeddedCollection = Collection & {
+type EmbeddedCollectionMeta = {
     _meta: {
+        load?: Promise<EmbeddedCollectionMeta>
         reload: {
             uri: string
             property: string
@@ -12,5 +10,10 @@ import Collection from './Collection'
     }
 }
 
-export { EmbeddedCollection }
+/**
+ * Subtype for an embedded collection with no self link (no standalone store entry, exists only with its parent)
+ */
+ type EmbeddedCollection = Collection & EmbeddedCollectionMeta
+
+export { EmbeddedCollection, EmbeddedCollectionMeta }
 export default EmbeddedCollection
