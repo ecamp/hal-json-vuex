@@ -68,11 +68,11 @@ class LoadingStoreValue implements Resource {
   }
 
   get items (): Array<Resource> {
-    return LoadingStoreCollection.create(this.loadResource.then(entity => entity.items))
+    return LoadingStoreCollection.create(this.loadResource.then(resource => (resource as Collection).items))
   }
 
   get allItems (): Array<Resource> {
-    return LoadingStoreCollection.create(this.loadResource.then(entity => entity.allItems))
+    return LoadingStoreCollection.create(this.loadResource.then(resource => (resource as Collection).allItems))
   }
 
   public $reload (): Promise<Resource> {
@@ -80,7 +80,7 @@ class LoadingStoreValue implements Resource {
     return this._meta.load
   }
 
-  public $loadItems (): Promise<Array<Resource>> {
+  public $loadItems (): Promise<Collection> {
     return this._meta.load.then(resource => (resource as Collection).$loadItems())
   }
 

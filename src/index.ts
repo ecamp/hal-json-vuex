@@ -13,6 +13,7 @@ import Resource, { EmbeddedCollectionType } from './interfaces/Resource'
 import StoreData, { Link } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
 import EmbeddedCollection from './EmbeddedCollection'
+import EmbeddedCollectionInterface from './interfaces/EmbeddedCollection'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
@@ -84,13 +85,10 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  async function reload (uriOrEntity: EmbeddedCollectionType): Promise<EmbeddedCollection>;
-  async function reload (uriOrEntity: string | Resource | StoreData): Promise<Resource>;
-
-  async function reload (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionType): Promise<Resource | EmbeddedCollection> {
+  async function reload (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionType): Promise<Resource | EmbeddedCollectionInterface> {
     if (isEmbeddedCollectionType(uriOrEntity)) { // = type guard for Embedded Collection
       return get(uriOrEntity._meta.reload.uri, true)._meta.load // load parent resource
-        .then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection) // ... and unwrap reload property after loading has finished
+        .then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollectionInterface) // ... and unwrap reload property after loading has finished
     } else {
       return get(uriOrEntity, true)._meta.load
     }
