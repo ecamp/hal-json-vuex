@@ -36,8 +36,8 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
   }
 
   /**
-     * Returns true if any of the items within 'array' is not yet known to the API (meaning it has never been loaded)
-     */
+   * Returns true if any of the items within 'array' is not yet known to the API (meaning it has never been loaded)
+   */
   function containsUnknownEntityReference (array: Array<Link>): boolean {
     return array.some(entry => isEntityReference(entry) && apiActions.isUnknown(entry.href))
   }
@@ -71,12 +71,12 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
      */
     _itemLoader (array: Array<Link>) : Promise<Collection> {
       if (!containsUnknownEntityReference(array)) {
-        return Promise.resolve(this as unknown as Collection)
+        return Promise.resolve(this as unknown as Collection) // we know that this object must be of type Collection
       }
 
       // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
       if (config.avoidNPlusOneRequests && reloadUri) {
-        return apiActions.reload({ _meta: { reload: { uri: reloadUri || '', property: reloadProperty || '' } } }) as Promise<Collection>
+        return apiActions.reload({ _meta: { reload: { uri: reloadUri || '', property: reloadProperty || '' } } }) as Promise<Collection> // we know that reload resolves to a type Collection
 
       // no eager loading: replace each reference (Link) with a StoreValue (Resource)
       } else {
@@ -84,7 +84,7 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
 
         return Promise.all(
           arrayWithReplacedReferences.map(entry => entry._meta.load)
-        ).then(() => this as unknown as Collection)
+        ).then(() => this as unknown as Collection) // we know that this object must be of type Collection
       }
     }
 

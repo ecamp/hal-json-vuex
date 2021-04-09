@@ -1,4 +1,3 @@
-// import LoadingStoreCollection from './LoadingStoreCollection'
 import { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
 import { Link } from './interfaces/StoreData'
 
@@ -26,9 +25,7 @@ class EmbeddedCollection implements EmbeddedCollectionMeta {
    * @param items           array of items, which can be mixed primitive values and entity references
    * @param reloadUri       URI of the entity containing the embedded collection (for reloading)
    * @param reloadProperty  property in the containing entity under which the embedded collection is saved
-   * @param apiActions      dependency injection of API actions
-   * @param config          dependency injection of config object
-   * @param loadParent      a promise that will resolve when the parent entity has finished (re-)loading
+   * @param loadCollection  a promise that will resolve when the parent entity has finished (re-)loading
    */
   constructor (items: Array<Link>, reloadUri: string, reloadProperty: string, loadCollection: Promise<EmbeddedCollectionMeta> | null = null) {
     this._storeData = {
