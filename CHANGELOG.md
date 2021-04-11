@@ -1,5 +1,9 @@
 ### Unreleased
 
+### 2.0.0-alpha.0
+- Convert to TypeScript
+- `$loadItems` now returns a Promise that resolves to the collection again, instead of the items array
+
 ### 1.2.2
 - Fix embedded standalone collections that wouldn't work before
 
