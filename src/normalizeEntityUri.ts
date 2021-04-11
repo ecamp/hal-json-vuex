@@ -1,3 +1,6 @@
+import Resource from './interfaces/Resource'
+import StoreData from './interfaces/StoreData'
+
 /**
  * Sorts the query parameters in a URI, keeping the values of duplicate keys in order.
  * Example:
@@ -6,7 +9,7 @@
  * @param uri      to be processed
  * @returns string URI with sorted query parameters
  */
-function sortQueryParams (uri) {
+function sortQueryParams (uri: string): string {
   const queryStart = uri.indexOf('?')
   if (queryStart === -1) return uri
 
@@ -33,8 +36,7 @@ function sortQueryParams (uri) {
  * @param baseUrl         common URI prefix to remove during normalization
  * @returns {null|string} normalized URI, or null if the uriOrEntity argument was not understood
  */
-export function normalizeEntityUri (uriOrEntity, baseUrl = '') {
-  if (uriOrEntity === undefined) return normalizeUri('', baseUrl)
+function normalizeEntityUri (uriOrEntity: string | Resource | StoreData = '', baseUrl = ''): string | null {
   if (typeof uriOrEntity === 'string') return normalizeUri(uriOrEntity, baseUrl)
   return normalizeUri(((uriOrEntity || {})._meta || {}).self, baseUrl)
 }
@@ -45,7 +47,9 @@ export function normalizeEntityUri (uriOrEntity, baseUrl = '') {
  * @param baseUrl         prefix to remove from the beginning of the URI if present
  * @returns {null|string} normalized URI, or null if uri is not a string
  */
-function normalizeUri (uri, baseUrl) {
+function normalizeUri (uri: unknown, baseUrl: string): string | null {
   if (typeof uri !== 'string') return null
   return sortQueryParams(uri).replace(new RegExp(`^${baseUrl}`), '')
 }
+
+export default normalizeEntityUri

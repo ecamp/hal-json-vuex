@@ -5,8 +5,32 @@
     "jest": true
   },
   "extends": [
+    "eslint:recommended",
     "plugin:vue/recommended",
     "@vue/standard"
+  ],
+  "overrides": [
+    {
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
+      "extends": [
+        "eslint:recommended",
+        "plugin:@typescript-eslint/eslint-recommended",
+        "plugin:@typescript-eslint/recommended",
+        "plugin:vue/recommended",
+        "@vue/standard"
+      ],
+      "parser": "@typescript-eslint/parser",
+      "plugins": [
+        "@typescript-eslint"
+      ],
+      "rules": {
+        "no-redeclare": "off",
+        "@typescript-eslint/no-redeclare": ["error"]
+      }
+    }
   ],
   "rules": {
     "vue/component-tags-order": [

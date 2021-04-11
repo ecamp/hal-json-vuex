@@ -1,15 +1,19 @@
 import Vue from 'vue'
+import StoreData from './interfaces/StoreData'
+
+import { MutationTree } from 'vuex/types'
 
 export const state = {}
+export type State = Record<string, StoreData>
 
-export const mutations = {
+export const mutations: MutationTree<State> = {
   /**
    * Adds a placeholder into the store that indicates that the entity with the given URI is currently being
    * fetched from the API and not yet available.
    * @param state Vuex state
    * @param uri   URI of the object that is being fetched
    */
-  addEmpty (state, uri) {
+  addEmpty (state: State, uri: string) : void {
     Vue.set(state, uri, { _meta: { self: uri, loading: true } })
   },
   /**
@@ -17,9 +21,11 @@ export const mutations = {
    * @param state Vuex state
    * @param data  An object mapping URIs to entities that should be merged into the Vuex state.
    */
-  add (state, data) {
+  add (state: State, data: Record<string, unknown>) : void {
     Object.keys(data).forEach(uri => {
       Vue.set(state, uri, data[uri])
+      Vue.set(state[uri]._meta, 'loading', false)
+      Vue.set(state[uri]._meta, 'reloading', false)
     })
   },
   /**
@@ -27,7 +33,7 @@ export const mutations = {
    * @param state Vuex state
    * @param uri   URI of the entity that is currently being reloaded
    */
-  reloading (state, uri) {
+  reloading (state: State, uri: string) : void {
     if (state[uri]) Vue.set(state[uri]._meta, 'reloading', true)
   },
   /**
@@ -35,7 +41,7 @@ export const mutations = {
    * @param state Vuex state
    * @param uri   URI of the entity that is currently being reloaded
    */
-  reloadingFailed (state, uri) {
+  reloadingFailed (state: State, uri: string) : void {
     if (state[uri]) Vue.set(state[uri]._meta, 'reloading', false)
   },
   /**
@@ -43,15 +49,15 @@ export const mutations = {
    * @param state Vuex state
    * @param uri   URI of the entity to be removed
    */
-  purge (state, uri) {
+  purge (state: State, uri: string) : void {
     Vue.delete(state, uri)
   },
   /**
-   * Removes a single entity from the Vuex store.
+   * Removes all entities from the Vuex store.
    * @param state Vuex state
    * @param uri   URI of the entity to be removed
    */
-  purgeAll (state, uri) {
+  purgeAll (state: State) : void {
     Object.keys(state).forEach(uri => {
       Vue.delete(state, uri)
     })
@@ -61,7 +67,7 @@ export const mutations = {
    * @param state Vuex state
    * @param uri   URI of the entity that is currently being deleted
    */
-  deleting (state, uri) {
+  deleting (state: State, uri: string) : void {
     if (state[uri]) Vue.set(state[uri]._meta, 'deleting', true)
   },
   /**
@@ -69,7 +75,7 @@ export const mutations = {
    * @param state Vuex state
    * @param uri   URI of the entity that failed to be deleted
    */
-  deletingFailed (state, uri) {
+  deletingFailed (state: State, uri: string) : void {
     if (state[uri]) Vue.set(state[uri]._meta, 'deleting', false)
   }
 }

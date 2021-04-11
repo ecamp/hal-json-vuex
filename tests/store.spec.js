@@ -16,6 +16,7 @@ import collectionPage1 from './resources/collection-page1'
 import circularReference from './resources/circular-reference'
 import multipleReferencesToUser from './resources/multiple-references-to-user'
 import templatedLink from './resources/templated-link'
+import root from './resources/root'
 
 async function letNetworkRequestFinish () {
   await new Promise(resolve => {
@@ -29,11 +30,9 @@ let vm
 let stateCopy
 
 describe('API store', () => {
-
   ([true, false]).forEach(avoidNPlusOneRequests => {
     const title = avoidNPlusOneRequests ? 'avoiding n+1 queries' : 'not avoiding n+1 queries'
     describe(title, () => {
-
       beforeAll(() => {
         axios.defaults.baseURL = 'http://localhost'
         Vue.use(Vuex)
@@ -59,6 +58,19 @@ describe('API store', () => {
         axiosMock.restore()
       })
 
+      it('loads the API root', async done => {
+        // given
+        axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
+
+        // when
+        vm.api.get()
+
+        // then
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(root.storeState)
+        done()
+      })
+
       it('imports embedded single entity', async done => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
@@ -68,11 +80,13 @@ describe('API store', () => {
 
         // then
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
+        expect(vm.api.get('/camps/1').campType().name.toString()).toEqual('')
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
         expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
         expect(vm.api.get('/camps/1').campType()._meta.self).toEqual('http://localhost/campTypes/20')
         expect(vm.api.get('/campTypes/20')._meta.self).toEqual('http://localhost/campTypes/20')
+        expect(vm.api.get('/camps/1').campType().name.toString()).toEqual('camp')
         done()
       })
 
@@ -289,7 +303,8 @@ describe('API store', () => {
         const meta = vm.api.get(loadingObject)._meta
 
         // then
-        expect(`${meta}`).toEqual('')
+        expect(meta.loading).toEqual(true)
+        expect(meta.self).toEqual(null)
         done()
       })
 
@@ -474,7 +489,7 @@ describe('API store', () => {
         expect(() => vm.api.get({})._meta)
 
         // then
-        .toThrow(Error)
+          .toThrow(Error)
       })
 
       it('purges and later re-fetches a URI from the store', async done => {
@@ -730,7 +745,7 @@ describe('API store', () => {
         const bookResponse = {
           id: 555,
           _embedded: {
-            chapters: [ chapter1Response, chapter2Response, chapter3Response ]
+            chapters: [chapter1Response, chapter2Response, chapter3Response]
           },
           _links: {
             self: {
@@ -1111,13 +1126,20 @@ describe('API store', () => {
 
       it('posts entity and stores the response into the store', async done => {
         // given
-        axiosMock.onPost('http://localhost/camps').reply(200, embeddedSingleEntity.serverResponse)
+        const axiosPostSpy = jest.fn(function (config) {
+          return [
+            200,
+            embeddedSingleEntity.serverResponse
+          ]
+        })
+        axiosMock.onPost('http://localhost/camps').reply(axiosPostSpy)
 
         // when
         const load = vm.api.post('/camps', { some: 'thing' })
 
         // then
         await letNetworkRequestFinish()
+        expect(axiosPostSpy).toHaveBeenCalledWith(expect.objectContaining({ data: JSON.stringify({ some: 'thing' }) })) // verify correct data has been sent to axios
         expect(await load).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
         expect(vm.api.get('/camps/1')).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
         expect(vm.api.get('/campTypes/20')).toMatchObject({
@@ -1207,7 +1229,7 @@ describe('API store', () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingStoreValue = vm.api.get('/camps/1')
-        expect(loadingStoreValue.loading).toBe(true)
+        expect(loadingStoreValue._meta.loading).toBe(true)
         done()
       })
 

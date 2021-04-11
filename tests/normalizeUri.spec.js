@@ -1,4 +1,4 @@
-import { normalizeEntityUri } from '../src/normalizeUri'
+import normalizeEntityUri from '../src/normalizeEntityUri'
 
 describe('URI normalizing', () => {
   it('sorts query parameters correctly', () => {
