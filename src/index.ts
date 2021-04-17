@@ -416,7 +416,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
           if (value._meta && value._meta.self) {
             return name ? { [name.replace(/ies/, 'y') + 'Id']: value.id } : { id: value.id }
           } else {
-            return preparePostData(value, name)
+            return preparePostData(value)
           }
         } else {
           return value
@@ -434,7 +434,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
           if (value._meta && value._meta.self) {
             return [prop + 'Id', value.id]
           } else {
-            return [prop, preparePostData(value, prop)]
+            return [prop, preparePostData(value)]
           }
         } else {
           return [prop, value]
