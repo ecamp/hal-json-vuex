@@ -142,7 +142,7 @@ GET /all/my/books
 ```
 This can lead to problems, because in your component template you might be requesting `/all/my/books` but that URI never appears in your Vuex store, causing an infinite loop of re-fetching the same URI.
 
-In case your backend API does this, you can set the `forceRequestedSelfLink` option to true, and the top-level `self` link in all responses will be overwritten to the link that was actually requested.
+In case your API does this, you can set the `forceRequestedSelfLink` option to true, and the top-level `self` link in all responses will be overwritten to the link that was actually requested.
 ```js
 Vue.use(HalJsonVuex(store, axios, { forceRequestedSelfLink: true }))
 ```

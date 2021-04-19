@@ -19,11 +19,11 @@ import EmbeddedCollection, { EmbeddedCollectionMeta } from './interfaces/Embedde
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
  *
  * // In a computed or method or lifecycle hook
- * let someEntity = this.api.get('/some/endpoint')
- * this.api.reload(someEntity)
+ * let book = this.api.get('/books/1')
+ * this.api.reload(book)
  *
  * // In the <template> part of a Vue component
- * <li v-for="book in api.get('/all/my/books').items" :key="book._meta.self">...</li>
+ * <li v-for="book in api.get('/books').items" :key="book._meta.self">...</li>
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -57,8 +57,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   /**
-   * Sends a POST request to the backend, in order to create a new entity. Note that this does not
-   * reload any collections that this new entity might be in, the caller has to do that on its own.
+   * Sends a POST request to the API, in order to create a new entity. Note that this does not
+   * reload any collections that this new entity might be in, the caller has to do that on their own.
    * @param uriOrCollection URI (or instance) of a collection in which the entity should be created
    * @param data            Payload to be sent in the POST request
    * @returns Promise       resolves when the POST request has completed and the entity is available
@@ -70,7 +70,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
 
-    return axios.post(axios.defaults.baseURL + uri, preparePostData(data)).then(({ data }) => {
+    return axios.post(axios.defaults.baseURL + uri, data).then(({ data }) => {
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {
@@ -97,21 +97,21 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   /**
    * Retrieves an entity from the Vuex store, or from the API in case it is not already fetched or a reload
    * is forced.
-   * This function attempts to hide all backend implementation details such as pagination, linked vs.
+   * This function attempts to hide all API implementation details such as pagination, linked vs.
    * embedded relations and loading state and instead provide an easy-to-use and consistent interface for
    * developing frontend components.
    *
    * Basic usage in a Vue component:
    * computed: {
-   *   allCamps () { return this.api.get('/camp').items }
-   *   oneSpecificCamp () { return this.api.get(`/camp/${this.campId}`) }
-   *   campUri () { return this.oneSpecificCamp._meta.self }
-   *   activityTypes () { return this.oneSpecificCamp.activityTypes() }
+   *   allBooks () { return this.api.get('/books').items }
+   *   oneSpecificBook () { return this.api.get(`/books/${this.bookId}`) }
+   *   bookUri () { return this.oneSpecificBook._meta.self }
+   *   chapters () { return this.oneSpecificBook.chapters() }
    *   user () { return this.api.get().profile() } // Root endpoint ('/') and navigate through self-discovery API
    * },
    * created () {
-   *   this.oneSpecificCamp._meta.load.then(() => {
-   *     // do something now that the camp is loaded from the API
+   *   this.oneSpecificBook._meta.load.then(() => {
+   *     // do something now that the book is loaded from the API
    *   })
    * }
    *
@@ -170,7 +170,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param uri         URI of the entity to load
    * @param forceReload If true, the entity will be fetched from the API even if it is already in the Vuex store.
    * @returns entity    the current entity data from the Vuex store. Note: This may be a reactive dummy if the
-   *                    backend request is still ongoing.
+   *                    API request is still ongoing.
    */
   function load (uri: string, forceReload: boolean): StoreData {
     const existsInStore = !isUnknown(uri)
@@ -250,7 +250,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   /**
-   * Sends a PATCH request to the backend, in order to update some fields in an existing entity.
+   * Sends a PATCH request to the API, in order to update some fields in an existing entity.
    * @param uriOrEntity URI (or instance) of an entity which should be updated
    * @param data        Payload (fields to be updated) to be sent in the PATCH request
    * @returns Promise   resolves when the PATCH request has completed and the updated entity is available
@@ -306,10 +306,10 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * Attempts to permanently delete a single entity using a DELETE request to the API.
    * This function performs the following operations when given the URI of an entity E:
    * 1. Marks E in the Vuex store with the ._meta.deleting flag
-   * 2. Sends a DELETE request to the API in order to delete E from the backend (in case of failure, the
+   * 2. Sends a DELETE request to the API in order to delete E (in case of failure, the
    *    deleted flag is reset and the operation is aborted)
-   * 3. Finds all entities [...R] in the store that reference E (e.g. find the corresponding camp when
-   *    deleting an activity) and reloads them from the API
+   * 3. Finds all entities [...R] in the store that reference E (e.g. find the corresponding book when
+   *    deleting a chapter) and reloads them from the API
    * 4. Purges E from the Vuex store
    * @param uriOrEntity URI (or instance) of an entity which should be deleted
    * @returns Promise   resolves when the DELETE request has completed and either all related entites have
@@ -353,8 +353,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   /**
-   * Cleans up the Vuex store after an entity is found to be deleted (HTTP status 204 or 404) from the backend.
-   * @param uri       URI of an entity which is not available (anymore) in the backend
+   * Cleans up the Vuex store after an entity is found to be deleted (HTTP status 204 or 404) from the API.
+   * @param uri       URI of an entity which is not available (anymore) in the API
    * @returns Promise resolves when the cleanup has completed and the Vuex store is up to date again
    */
   function deleted (uri: string): Promise<void> {
@@ -370,8 +370,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   /**
-   * Normalizes raw data from the backend and stores it into the Vuex store.
-   * @param data HAL JSON data received from the backend
+   * Normalizes raw data from the API and stores it into the Vuex store.
+   * @param data HAL JSON data received from the API
    */
   function storeHalJsonData (data: Record<string, unknown>): void {
     const normalizedData = normalize(data, {
@@ -402,48 +402,6 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   /**
-   * Replace store items with {itemnameId: id}
-   * @param data to be processed
-   * @param name is the name of the entities
-   * @returns cleaned data
-   */
-  function preparePostData (data: unknown, name: string|null = null) {
-    if (data === null) { return null }
-
-    if (Array.isArray(data)) {
-      return data.map(value => {
-        if (value !== null && typeof value === 'object') {
-          if (value._meta && value._meta.self) {
-            return name ? { [name.replace(/ies/, 'y') + 'Id']: value.id } : { id: value.id }
-          } else {
-            return preparePostData(value, name)
-          }
-        } else {
-          return value
-        }
-      })
-    }
-
-    if (typeof data === 'object' && data !== null) {
-      return Object.fromEntries(Object.entries(data).map(([prop, value]) => {
-        const type = Object.prototype.toString.call(value)
-        if (type.includes('Function')) {
-          value = value()
-        }
-        if (value !== null && typeof value === 'object') {
-          if (value._meta && value._meta.self) {
-            return [prop + 'Id', value.id]
-          } else {
-            return [prop, preparePostData(value, prop)]
-          }
-        } else {
-          return [prop, value]
-        }
-      }))
-    }
-  }
-
-  /**
    * Processes error object received from Axios for further usage. Triggers delete chain as side effect.
    * @param uri             Requested URI that triggered the error
    * @param error           Raw error object received from Axios
@@ -462,16 +420,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       } else if (response.status === 403) {
         // 403 Permission error
         return new ServerException(response, 'No permission to perform operation')
-      } else if (response.headers['content-type'] === 'application/problem+json') {
-        // API Problem
-        return new ServerException(response, 'Server-Error ' + response.status + ' (' + response.data.detail + ')')
       } else {
-        // other unknown server error (not of type application/problem+json)
+        // other unknown server error
         return new ServerException(response)
       }
     } else {
-      // another error (most probably connection timeout; no response received)
-      return new Error('Could not connect to server. Check your internet connection and try again.')
+      // another error
+      return error
     }
   }
 

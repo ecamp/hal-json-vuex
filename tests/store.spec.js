@@ -1201,7 +1201,7 @@ describe('API store', () => {
         // when
         const load = vm.api.get('/camps/1')._meta.load
         // then
-        return expect(load).rejects.toThrow('Could not connect to server')
+        await expect(load).rejects.toThrow('Network Error')
       })
 
       it('returns error when `get` encounters network timeout', async () => {
@@ -1210,7 +1210,7 @@ describe('API store', () => {
         // when
         const load = vm.api.get('/camps/1')._meta.load
         // then
-        return expect(load).rejects.toThrow('Could not connect to server')
+        await expect(load).rejects.toThrow('timeout of 0ms exceeded')
       })
 
       it('returns error when `get` encounters 404 Not Found', async () => {
@@ -1271,19 +1271,19 @@ describe('API store', () => {
         const load = vm.api.patch('/camps/1', {})
         // then
         await expect(load).rejects.toThrow('"/camps/1" has been deleted')
-        expect(vm.$store.state.api['/camps/1']).toBeUndefined()
+        await expect(vm.$store.state.api['/camps/1']).toBeUndefined()
       })
 
-      it('returns error when `patch` encounters 403 Forbidden', () => {
+      it('returns error when `patch` encounters 403 Forbidden', async () => {
         // given
         axiosMock.onPatch('http://localhost/camps/1').replyOnce(403)
         // when
         const load = vm.api.patch('/camps/1', {})
         // then
-        return expect(load).rejects.toThrow('No permission')
+        await expect(load).rejects.toThrow('No permission')
       })
 
-      it('returns error when `patch` encounters 422 Unprocessable Entity (Validation error)', () => {
+      it('returns error when `patch` encounters 422 Unprocessable Entity (Validation error)', async () => {
         // given
         axiosMock.onPatch('http://localhost/camps/1').replyOnce(422, {
           validation_messages: { title: { stringLengthTooShort: 'The input is less than 10 characters long' } },
@@ -1299,7 +1299,7 @@ describe('API store', () => {
         const load = vm.api.patch('/camps/1', {})
 
         // then
-        return expect(load).rejects.toThrow('Failed Validation')
+        await expect(load).rejects.toThrow('Server error 422 (undefined)')
       })
     })
   })

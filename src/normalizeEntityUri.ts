@@ -4,8 +4,8 @@ import StoreData from './interfaces/StoreData'
 /**
  * Sorts the query parameters in a URI, keeping the values of duplicate keys in order.
  * Example:
- * sortQueryParams('localhost/api/camps?q=something&dup=true&alpha=0&dup=false')
- * // 'localhost/api/camps?alpha=0&dup=true&dup=false&q=something'
+ * sortQueryParams('localhost/api/books?q=something&dup=true&alpha=0&dup=false')
+ * // 'localhost/api/books?alpha=0&dup=true&dup=false&q=something'
  * @param uri      to be processed
  * @returns string URI with sorted query parameters
  */
