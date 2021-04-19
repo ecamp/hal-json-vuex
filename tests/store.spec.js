@@ -58,7 +58,7 @@ describe('API store', () => {
         axiosMock.restore()
       })
 
-      it('loads the API root', async done => {
+      it('loads the API root', async () => {
         // given
         axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
 
@@ -68,10 +68,9 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(root.storeState)
-        done()
       })
 
-      it('imports embedded single entity', async done => {
+      it('imports embedded single entity', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
 
@@ -87,10 +86,9 @@ describe('API store', () => {
         expect(vm.api.get('/camps/1').campType()._meta.self).toEqual('http://localhost/campTypes/20')
         expect(vm.api.get('/campTypes/20')._meta.self).toEqual('http://localhost/campTypes/20')
         expect(vm.api.get('/camps/1').campType().name.toString()).toEqual('camp')
-        done()
       })
 
-      it('imports reference to single entity', async done => {
+      it('imports reference to single entity', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, referenceToSingleEntity.serverResponse)
 
@@ -102,10 +100,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(referenceToSingleEntity.storeState)
         expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
-        done()
       })
 
-      it('imports embedded collection', async done => {
+      it('imports embedded collection', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedCollection.serverResponse)
 
@@ -123,10 +120,9 @@ describe('API store', () => {
         expect(vm.api.get('/periods/104').camp()._meta.self).toEqual('http://localhost/camps/1')
         expect(vm.api.get('/periods/128')._meta.self).toEqual('http://localhost/periods/128')
         expect(vm.api.get('/periods/128').camp()._meta.self).toEqual('http://localhost/camps/1')
-        done()
       })
 
-      it('imports linked single entity', async done => {
+      it('imports linked single entity', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, linkedSingleEntity.serverResponse)
         const mainLeader = {
@@ -148,10 +144,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(vm.api.get('/camps/1').main_leader()._meta).toMatchObject({ self: 'http://localhost/users/83' })
         expect(vm.api.get('/users/83')._meta.self).toEqual('http://localhost/users/83')
-        done()
       })
 
-      it('imports paginatable collection', async done => {
+      it('imports paginatable collection', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, linkedCollection.serverResponse)
         const activities = {
@@ -205,10 +200,9 @@ describe('API store', () => {
         expect(vm.api.get('/camps/1').activities().items.length).toEqual(2)
         expect(vm.api.get('/camps/1').activities().items[0]._meta.self).toEqual('http://localhost/activities/1234')
         expect(vm.api.get('/camps/1').activities().items[1]._meta.self).toEqual('http://localhost/activities/1236')
-        done()
       })
 
-      it('imports paginatable collection with multiple pages', async done => {
+      it('imports paginatable collection with multiple pages', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1/activities?page=0&page_size=2').reply(200, collectionFirstPage.serverResponse)
         axiosMock.onGet('http://localhost/camps/1/activities?page=1&page_size=2').reply(200, collectionPage1.serverResponse)
@@ -247,10 +241,9 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject({ ...collectionFirstPage.storeState, ...collectionPage1.storeState })
         expect(vm.api.get('/camps/1/activities?page_size=2&page=0').items.length).toEqual(2)
         expect(vm.api.get('/camps/1/activities?page_size=2&page=1').items.length).toEqual(1)
-        done()
       })
 
-      it('allows redundantly using get with an object', async done => {
+      it('allows redundantly using get with an object', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
 
@@ -261,10 +254,9 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
-        done()
       })
 
-      it('allows using get with a loading object with known URI', async done => {
+      it('allows using get with a loading object with known URI', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingObject = vm.api.get('/camps/1')
@@ -276,10 +268,9 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
-        done()
       })
 
-      it('allows using get with a loading object with unknown URI', async done => {
+      it('allows using get with a loading object with unknown URI', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingObject = vm.api.get('/camps/1').campType()
@@ -291,10 +282,9 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
-        done()
       })
 
-      it('allows accessing _meta in a loading object with unknown URI', async done => {
+      it('allows accessing _meta in a loading object with unknown URI', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingObject = vm.api.get('/camps/1').campType()
@@ -305,7 +295,6 @@ describe('API store', () => {
         // then
         expect(meta.loading).toEqual(true)
         expect(meta.self).toEqual(null)
-        done()
       })
 
       it('returns the correct object when awaiting._meta.load on a LoadingStoreValue', async done => {
@@ -325,7 +314,7 @@ describe('API store', () => {
         letNetworkRequestFinish()
       })
 
-      it('returns the correct object when awaiting._meta.load on a loaded object', async done => {
+      it('returns the correct object when awaiting._meta.load on a loaded object', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         vm.api.get('/camps/1')
@@ -334,15 +323,13 @@ describe('API store', () => {
         expect(camp).not.toBeInstanceOf(vm.api.LoadingStoreValue)
 
         // when
-        camp._meta.load.then(loadedData => {
-          // then
-          expect(loadedData).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
+        const loadedData = await camp._meta.load
 
-          done()
-        })
+        // then
+        expect(loadedData).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
       })
 
-      it('returns the correct load promise when reloading an object', async done => {
+      it('returns the correct load promise when reloading an object', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
           id: 1,
@@ -370,10 +357,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         const result = await load
         expect(result).toMatchObject({ id: 2, _meta: { self: 'http://localhost/camps/1' } })
-        done()
       })
 
-      it('returns the correct load promise when prematurely reloading an object', async done => {
+      it('returns the correct load promise when prematurely reloading an object', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
           id: 1,
@@ -399,10 +385,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         const result = await load
         expect(result).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
-        done()
       })
 
-      it('returns the correct load promise when getting an object that is currently reloading', async done => {
+      it('returns the correct load promise when getting an object that is currently reloading', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
           id: 1,
@@ -439,10 +424,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         const result = await load
         expect(result).toMatchObject({ id: 2, _meta: { self: 'http://localhost/camps/1' } })
-        done()
       })
 
-      it('refuses to send out the same reload request again before the ongoing one has completed', async done => {
+      it('refuses to send out the same reload request again before the ongoing one has completed', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
           id: 1,
@@ -479,7 +463,6 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         const result = await load
         expect(result).toMatchObject({ id: 2, _meta: { self: 'http://localhost/camps/1' } })
-        done()
       })
 
       it('throws when trying to access _meta in an invalid object', () => {
@@ -492,7 +475,7 @@ describe('API store', () => {
           .toThrow(Error)
       })
 
-      it('purges and later re-fetches a URI from the store', async done => {
+      it('purges and later re-fetches a URI from the store', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         axiosMock.onGet('http://localhost/campTypes/20').reply(200, embeddedSingleEntity.serverResponse._embedded.campType)
@@ -509,10 +492,9 @@ describe('API store', () => {
         expect(vm.api.get('/camps/1').campType()._meta.loading).toEqual(true)
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
-        done()
       })
 
-      it('purges and later re-fetches an object from the store', async done => {
+      it('purges and later re-fetches an object from the store', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         axiosMock.onGet('http://localhost/campTypes/20').reply(200, embeddedSingleEntity.serverResponse._embedded.campType)
@@ -530,10 +512,9 @@ describe('API store', () => {
         expect(vm.api.get('/camps/1').campType()._meta.loading).toEqual(true)
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
-        done()
       })
 
-      it('reloads a URI from the store', async done => {
+      it('reloads a URI from the store', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const campType = {
@@ -569,10 +550,9 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
         await letNetworkRequestFinish()
         expect(vm.$store.state.api['/campTypes/20']).toMatchObject(campType.storeState)
-        done()
       })
 
-      it('reloads an object from the store', async done => {
+      it('reloads an object from the store', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const campTypeData = {
@@ -609,10 +589,9 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
         await letNetworkRequestFinish()
         expect(vm.$store.state.api['/campTypes/20']).toMatchObject(campTypeData.storeState)
-        done()
       })
 
-      it('reloads an embedded collection from the store by reloading the superordinate object', async done => {
+      it('reloads an embedded collection from the store by reloading the superordinate object', async () => {
         // given
         const campData = {
           serverResponse: {
@@ -685,10 +664,9 @@ describe('API store', () => {
         expect(embeddedCollection._meta.self).toBeUndefined()
         await letNetworkRequestFinish()
         expect(vm.$store.state.api['/camps/1'].activityTypes).toMatchObject(campData.storeState)
-        done()
       })
 
-      it('loads the contents of an embedded collection depending on the avoidNPlusOneQueries flag', async done => {
+      it('loads the contents of an embedded collection depending on the avoidNPlusOneQueries flag', async () => {
         // given
         const userResponse = {
           id: 1,
@@ -772,11 +750,10 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         // expect no errors
-        done()
       })
 
       if (avoidNPlusOneRequests) {
-        it('falls back to loading each entry individually if the parent of the embedded collection doesn\'t return the collection element data', async done => {
+        it('falls back to loading each entry individually if the parent of the embedded collection doesn\'t return the collection element data', async () => {
           // given
           const bookResponse = {
             id: 555,
@@ -847,11 +824,10 @@ describe('API store', () => {
           // then
           await letNetworkRequestFinish()
           // expect no errors
-          done()
         })
       }
 
-      it('deletes an URI from the store and reloads all entities referencing it', async done => {
+      it('deletes an URI from the store and reloads all entities referencing it', async () => {
         // given
         axiosMock.onGet('http://localhost/groups/99').replyOnce(200, multipleReferencesToUser)
         axiosMock.onGet('http://localhost/groups/99').reply(200, {
@@ -882,10 +858,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(axiosMock.history.delete.length).toEqual(1)
         expect(axiosMock.history.get.length).toEqual(3)
-        done()
       })
 
-      it('deletes an object from the store and reloads all entities referencing it', async done => {
+      it('deletes an object from the store and reloads all entities referencing it', async () => {
         // given
         axiosMock.onGet('http://localhost/groups/99').replyOnce(200, multipleReferencesToUser)
         axiosMock.onGet('http://localhost/groups/99').reply(200, {
@@ -917,10 +892,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(axiosMock.history.delete.length).toEqual(1)
         expect(axiosMock.history.get.length).toEqual(3)
-        done()
       })
 
-      it('breaks circular dependencies when deleting an entity in the reference circle', async done => {
+      it('breaks circular dependencies when deleting an entity in the reference circle', async () => {
         // given
         axiosMock.onDelete('http://localhost/periods/1').replyOnce(204)
         axiosMock.onGet('http://localhost/periods/1').replyOnce(200, circularReference.serverResponse)
@@ -937,10 +911,9 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(axiosMock.history.get.length).toBe(2)
-        done()
       })
 
-      it('breaks circular dependencies when deleting an entity outside the reference circle', async done => {
+      it('breaks circular dependencies when deleting an entity outside the reference circle', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/3').replyOnce(200, circularReference.campServerResponse)
         axiosMock.onGet('http://localhost/periods/1').replyOnce(200, circularReference.serverResponse)
@@ -961,10 +934,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(axiosMock.history.get.length).toBe(3)
         await period
-        done()
       })
 
-      it('automatically filters deleting items from standalone collection', async done => {
+      it('automatically filters deleting items from standalone collection', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1/activities').reply(200, collectionFirstPage.serverResponse)
         axiosMock.onDelete('http://localhost/activities/2394').replyOnce(204)
@@ -982,10 +954,9 @@ describe('API store', () => {
         expect(standaloneCollection.items.length).toEqual(1)
         expect(standaloneCollection.allItems.some(item => item._meta.deleting)).toBeTruthy()
         expect(standaloneCollection.allItems.length).toEqual(2)
-        done()
       })
 
-      it('automatically filters deleting items from embedded collection', async done => {
+      it('automatically filters deleting items from embedded collection', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedCollection.serverResponse)
         axiosMock.onDelete('http://localhost/periods/104').replyOnce(204)
@@ -1003,10 +974,9 @@ describe('API store', () => {
         expect(embCollection.items.length).toEqual(1)
         expect(embCollection.allItems.some(item => item._meta.deleting)).toBeTruthy()
         expect(embCollection.allItems.length).toEqual(2)
-        done()
       })
 
-      it('patches entity and stores the response into the store', async done => {
+      it('patches entity and stores the response into the store', async () => {
         // given
         const after = {
           _embedded: {
@@ -1046,10 +1016,9 @@ describe('API store', () => {
           targetGroup: 'Kids',
           _meta: { self: 'http://localhost/campTypes/20' }
         })
-        done()
       })
 
-      it('still returns old instance from store while patch is in progress', async done => {
+      it('still returns old instance from store while patch is in progress', async () => {
         // given
         const before = {
           _embedded: {
@@ -1121,10 +1090,9 @@ describe('API store', () => {
           targetGroup: 'Kids',
           _meta: { self: 'http://localhost/campTypes/20' }
         })
-        done()
       })
 
-      it('posts entity and stores the response into the store', async done => {
+      it('posts entity and stores the response into the store', async () => {
         // given
         const axiosPostSpy = jest.fn(function (config) {
           return [
@@ -1149,10 +1117,9 @@ describe('API store', () => {
           targetGroup: 'Kids',
           _meta: { self: 'http://localhost/campTypes/20' }
         })
-        done()
       })
 
-      it('gets the href of a linked entity without fetching the entity itself', async done => {
+      it('gets the href of a linked entity without fetching the entity itself', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, linkedSingleEntity.serverResponse)
         axiosMock.onGet('http://localhost/users/83').networkError()
@@ -1163,10 +1130,9 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(await load).toEqual('http://localhost/users/83')
-        done()
       })
 
-      it('gets the href of a templated linked entity without fetching the entity itself', async done => {
+      it('gets the href of a templated linked entity without fetching the entity itself', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, templatedLink.linkingServerResponse)
         axiosMock.onGet('http://localhost/users/83').networkError()
@@ -1178,10 +1144,9 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(await load).toEqual('http://localhost/camps/1/users/83')
         expect(vm.$store.state.api).toMatchObject(templatedLink.storeStateBeforeLinkedLoaded)
-        done()
       })
 
-      it('imports templated link to single entity when linking entity is still loading', async done => {
+      it('imports templated link to single entity when linking entity is still loading', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
         axiosMock.onGet('http://localhost/camps/1/users/83').reply(200, templatedLink.linkedServerResponse)
@@ -1198,10 +1163,9 @@ describe('API store', () => {
           name: 'Pflock',
           _meta: { self: 'http://localhost/camps/1/users/83' }
         })
-        done()
       })
 
-      it('imports templated link to single entity when linking entity is already loaded', async done => {
+      it('imports templated link to single entity when linking entity is already loaded', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
         axiosMock.onGet('http://localhost/camps/1/users/83').reply(200, templatedLink.linkedServerResponse)
@@ -1222,18 +1186,16 @@ describe('API store', () => {
           name: 'Pflock',
           _meta: { self: 'http://localhost/camps/1/users/83' }
         })
-        done()
       })
 
-      it('sets property loading on LoadingStoreValue to true', async done => {
+      it('sets property loading on LoadingStoreValue to true', () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingStoreValue = vm.api.get('/camps/1')
         expect(loadingStoreValue._meta.loading).toBe(true)
-        done()
       })
 
-      it('returns error when `get` encounters network error', () => {
+      it('returns error when `get` encounters network error', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').networkError()
         // when
@@ -1242,7 +1204,7 @@ describe('API store', () => {
         return expect(load).rejects.toThrow('Could not connect to server')
       })
 
-      it('returns error when `get` encounters network timeout', () => {
+      it('returns error when `get` encounters network timeout', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').timeoutOnce()
         // when
@@ -1268,31 +1230,31 @@ describe('API store', () => {
         expect(vm.$store.state.api['/camps/1']).toBeUndefined()
       })
 
-      it('returns error when `get` encounters 403 Forbidden', () => {
+      it('returns error when `get` encounters 403 Forbidden', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(403)
         // when
         const load = vm.api.get('/camps/1')._meta.load
         // then
-        return expect(load).rejects.toThrow('No permission')
+        await expect(load).rejects.toThrow('No permission')
       })
 
-      it('returns error when `patch` encounters network error', () => {
+      it('returns error when `patch` encounters network error', async () => {
         // given
         axiosMock.onPatch('http://localhost/camps/1').networkError()
         // when
         const load = vm.api.patch('/camps/1', {})
         // then
-        return expect(load).rejects.toThrow('Could not connect to server')
+        await expect(load).rejects.toThrow('Network Error')
       })
 
-      it('returns error when `patch` encounters network timeout', () => {
+      it('returns error when `patch` encounters network timeout', async () => {
         // given
         axiosMock.onPatch('http://localhost/camps/1').timeoutOnce()
         // when
         const load = vm.api.patch('/camps/1', {})
         // then
-        return expect(load).rejects.toThrow('Could not connect to server')
+        await expect(load).rejects.toThrow('timeout of 0ms exceeded')
       })
 
       it('returns error when `patch` encounters 404 Not Found', async () => {
