@@ -1,5 +1,11 @@
 ### Unreleased
 
+### 2.0.0-alpha.2
+- When deleting an entity, cascade-deleted entities are now cleaned correctly from the store as well
+
+### 2.0.0-alpha.1
+- Dependency updates
+
 ### 2.0.0-alpha.0
 - Convert to TypeScript
 - `$loadItems` now returns a Promise that resolves to the collection again, instead of the items array
