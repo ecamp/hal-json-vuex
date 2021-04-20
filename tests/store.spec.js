@@ -936,6 +936,77 @@ describe('API store', () => {
         await period
       })
 
+      it('transitively reloads cascade deleted entities', async () => {
+        // given
+        axiosMock.onGet('http://localhost/authors/99').replyOnce(200, {
+          id: 99,
+          _links: {
+            self: {
+              href: 'http://localhost/authors/99'
+            }
+          },
+          _embedded: {
+            latestBook: {
+              id: 123,
+              _links: {
+                self: {
+                  href: 'http://localhost/books/123'
+                },
+                author: {
+                  href: 'http://localhost/authors/99'
+                }
+              },
+              _embedded: {
+                chapters: [{
+                  id: 444,
+                  _links: {
+                    self: {
+                      href: 'http://localhost/chapters/444'
+                    },
+                    book: {
+                      href: 'http://localhost/books/123'
+                    }
+                  },
+                  _embedded: {
+                    teaserPage: {
+                      id: 1234,
+                      _links: {
+                        self: {
+                          href: 'http://localhost/pages/1234'
+                        },
+                        chapter: {
+                          href: 'http://localhost/chapters/444'
+                        }
+                      }
+                    }
+                  }
+                }]
+              }
+            }
+          }
+        })
+        axiosMock.onDelete('http://localhost/authors/99').replyOnce(204)
+        axiosMock.onGet('http://localhost/books/123').replyOnce(404)
+        axiosMock.onGet('http://localhost/chapters/444').replyOnce(404)
+        axiosMock.onGet('http://localhost/pages/1234').replyOnce(404)
+        vm.api.get('/authors/99')
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toHaveProperty('/authors/99')
+        expect(vm.$store.state.api).toHaveProperty('/books/123')
+        expect(vm.$store.state.api).toHaveProperty('/chapters/444')
+        expect(vm.$store.state.api).toHaveProperty('/pages/1234')
+
+        // when
+        vm.api.del('/authors/99')
+
+        // then
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).not.toHaveProperty('/authors/99')
+        expect(vm.$store.state.api).not.toHaveProperty('/books/123')
+        expect(vm.$store.state.api).not.toHaveProperty('/chapters/444')
+        expect(vm.$store.state.api).not.toHaveProperty('/pages/1234')
+      })
+
       it('automatically filters deleting items from standalone collection', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1/activities').reply(200, collectionFirstPage.serverResponse)

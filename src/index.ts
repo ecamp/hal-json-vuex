@@ -79,22 +79,6 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   /**
-   * Reloads an entity from the API.
-   *
-   * @param uriOrEntity URI (or instance) of an entity to reload from the API
-   * @returns Promise   Resolves when the GET request has completed and the updated entity is available
-   *                    in the Vuex store.
-   */
-  async function reload (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionMeta): Promise<Resource | EmbeddedCollection> {
-    if (isEmbeddedCollection(uriOrEntity)) { // = type guard for Embedded Collection
-      return get(uriOrEntity._meta.reload.uri, true)._meta.load // load parent resource
-        .then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection) // ... and unwrap reload property after loading has finished
-    } else {
-      return get(uriOrEntity, true)._meta.load
-    }
-  }
-
-  /**
    * Retrieves an entity from the Vuex store, or from the API in case it is not already fetched or a reload
    * is forced.
    * This function attempts to hide all API implementation details such as pagination, linked vs.
@@ -116,14 +100,11 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * }
    *
    * @param uriOrEntity URI (or instance) of an entity to load from the store or API. If omitted, the root resource of the API is returned.
-   * @param forceReload If true, the entity will be fetched from the API even if it is already in the Vuex store.
-   *                    Note that the function will still return the old value in this case, but you can
-   *                    wait for the new value using the ._meta.load promise.
    * @returns entity    Entity from the store. Note that when fetching an object for the first time, a reactive
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get (uriOrEntity: string | Resource | StoreData = '', forceReload = false): Resource {
+  function get (uriOrEntity: string | Resource | StoreData = ''): Resource {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
@@ -135,9 +116,45 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       throw new Error(`Could not perform GET, "${uriOrEntity}" is not an entity or URI`)
     }
 
-    const storeData = load(uri, forceReload)
+    setLoadPromiseOnStore(uri, load(uri, false))
+    return storeValueCreator.wrap(store.state[opts.apiName][uri])
+  }
 
-    return storeValueCreator.wrap(storeData)
+  /**
+   * Reloads an entity from the API and returns a Promise that resolves when the reload has finished.
+   * This function contains protection against duplicate network requests, so while a reload is running,
+   * no second reload for the same URI will be triggered.
+   * Reloading does not set the ._meta.loading boolean flag.
+   *
+   * @param uriOrEntity URI (or instance) of an entity to reload from the API
+   * @returns Promise   Resolves when the GET request has completed and the updated entity is available
+   *                    in the Vuex store.
+   */
+  async function reload (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionMeta): Promise<Resource | EmbeddedCollection> {
+    // For embedded collections which have no self link, reload the parent entity instead
+    const uri = normalizeEntityUri(isEmbeddedCollection(uriOrEntity) ? uriOrEntity._meta.reload.uri : uriOrEntity, axios.defaults.baseURL)
+
+    if (uri === null) {
+      if (uriOrEntity instanceof LoadingStoreValue) {
+        // A LoadingStoreValue is safe to return without breaking the UI.
+        return uriOrEntity
+      }
+      // We don't know anything about the requested object, something is wrong.
+      throw new Error(`Could not perform reload, "${uriOrEntity}" is not an entity or URI`)
+    }
+
+    const loadPromise = load(uri, true)
+    // Catch all errors for the Promise that is saved to the store, to avoid unhandled promise rejections.
+    // The errors are still available to catch on the promise returned by reload.
+    setLoadPromiseOnStore(uri, loadPromise.catch(() => {
+      return store.state[opts.apiName][uri]
+    }))
+
+    const resourcePromise = loadPromise.then(storeData => storeValueCreator.wrap(storeData))
+    return isEmbeddedCollection(uriOrEntity)
+      // For embedded collections which had to reload the parent entity, unwrap the embedded collection after loading has finished
+      ? resourcePromise.then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection)
+      : resourcePromise
   }
 
   /**
@@ -172,14 +189,14 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns entity    the current entity data from the Vuex store. Note: This may be a reactive dummy if the
    *                    API request is still ongoing.
    */
-  function load (uri: string, forceReload: boolean): StoreData {
+  function load (uri: string, forceReload: boolean): Promise<StoreData> {
     const existsInStore = !isUnknown(uri)
 
     const isAlreadyLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
     const isAlreadyReloading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).reloading
     if (isAlreadyLoading || (forceReload && isAlreadyReloading)) {
       // Reuse the loading entity and load promise that is already waiting for a pending API request
-      return store.state[opts.apiName][uri]
+      return store.state[opts.apiName][uri]._meta.load
     }
 
     if (!existsInStore) {
@@ -188,22 +205,17 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       store.commit('reloading', uri)
     }
 
-    let dataFinishedLoading: Promise<StoreData> = Promise.resolve(store.state[opts.apiName][uri])
     if (!existsInStore) {
-      dataFinishedLoading = loadFromApi(uri)
+      return loadFromApi(uri, 'fetch')
     } else if (forceReload) {
-      dataFinishedLoading = loadFromApi(uri).catch(error => {
+      return loadFromApi(uri, 'reload').catch(error => {
         store.commit('reloadingFailed', uri)
         throw error
       })
-    } else if (store.state[opts.apiName][uri]._meta.load) {
-      // reuse the existing promise from the store if possible
-      dataFinishedLoading = store.state[opts.apiName][uri]._meta.load
     }
 
-    setLoadPromiseOnStore(uri, dataFinishedLoading)
-
-    return store.state[opts.apiName][uri]
+    // Reuse the existing promise from the store if possible
+    return store.state[opts.apiName][uri]._meta.load || Promise.resolve(store.state[opts.apiName][uri])
   }
 
   /**
@@ -211,23 +223,19 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * that resolves to the raw data stored in the Vuex store (needs to be storeValueCreator.wrapped into a StoreValue before
    * being usable in Vue components).
    * @param uri       URI of the entity to load from the API
+   * @param operation description of the operation triggering this load, e.g. fetch or reload, for error reporting
    * @returns Promise resolves to the raw data stored in the Vuex store after the API request completes, or
    *                  rejects when the API request fails
    */
-  function loadFromApi (uri: string): Promise<StoreData> {
-    return new Promise((resolve, reject) => {
-      axios.get(axios.defaults.baseURL + uri).then(
-        ({ data }) => {
-          if (opts.forceRequestedSelfLink) {
-            data._links.self.href = uri
-          }
-          storeHalJsonData(data)
-          resolve(store.state[opts.apiName][uri])
-        },
-        (error) => {
-          reject(handleAxiosError(uri, error))
-        }
-      )
+  function loadFromApi (uri: string, operation: string): Promise<StoreData> {
+    return axios.get(axios.defaults.baseURL + uri).then(({ data }) => {
+      if (opts.forceRequestedSelfLink) {
+        data._links.self.href = uri
+      }
+      storeHalJsonData(data)
+      return store.state[opts.apiName][uri]
+    }, error => {
+      throw handleAxiosError(operation, uri, error)
     })
   }
 
@@ -359,12 +367,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    */
   function deleted (uri: string): Promise<void> {
     return Promise.all(findEntitiesReferencing(uri)
-    // don't reload entities that are already being deleted, to break circular dependencies
+      // don't reload entities that are already being deleted, to break circular dependencies
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
 
-    // reload outdated entities...
+      // reload outdated entities...
       .map(outdatedEntity => reload(outdatedEntity).catch(() => {
         // ...but ignore any errors (such as 404 errors during reloading)
+        // handleAxiosError will take care of recursively deleting cascade-deleted entities
       }))
     ).then(() => purge(uri))
   }
