@@ -1,4 +1,4 @@
-import { AxiosResponse } from 'axios'
+import {AxiosError, AxiosResponse} from 'axios'
 
 /**
  * Error class for returning server exceptions (attaches Axios response object to error)
@@ -8,14 +8,11 @@ export default class ServerException extends Error {
 
     /**
      * @param response Axios reponse object
-     * @param params Standard Error parameters
+     * @param message  Error message to prepend to the response message
+     * @param error
      */
-    public constructor (response: AxiosResponse, message?: string) {
-      super(message)
-
-      if (!this.message) {
-        this.message = 'Server error ' + response.status + ' (' + response.statusText + ')'
-      }
+    public constructor (response: AxiosResponse, message: string, error: AxiosError) {
+      super(message + ' (status ' + response.status + '): ' + error.message)
       this.name = 'ServerException'
       this.response = response
     }

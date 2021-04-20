@@ -1201,7 +1201,7 @@ describe('API store', () => {
         // when
         const load = vm.api.get('/camps/1')._meta.load
         // then
-        await expect(load).rejects.toThrow('Network Error')
+        await expect(load).rejects.toThrow('Error trying to fetch \"/camps/1\": Network Error')
       })
 
       it('returns error when `get` encounters network timeout', async () => {
@@ -1210,10 +1210,30 @@ describe('API store', () => {
         // when
         const load = vm.api.get('/camps/1')._meta.load
         // then
-        await expect(load).rejects.toThrow('timeout of 0ms exceeded')
+        await expect(load).rejects.toThrow('Error trying to fetch \"/camps/1\": timeout of 0ms exceeded')
       })
 
       it('returns error when `get` encounters 404 Not Found', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(404)
+
+        // when
+        const load = vm.api.get('/camps/1')._meta.load
+        // then
+        await expect(load).rejects.toThrow('Could not fetch \"/camps/1\" (status 404): Request failed with status code 404')
+        expect(vm.$store.state.api['/camps/1']).toBeUndefined()
+      })
+
+      it('returns error when `get` encounters 403 Forbidden', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(403)
+        // when
+        const load = vm.api.get('/camps/1')._meta.load
+        // then
+        await expect(load).rejects.toThrow('No permission to fetch \"/camps/1\" (status 403): Request failed with status code 403')
+      })
+
+      it('returns error when `reload` encounters 404 Not Found', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, { id: 1, _links: { self: { href: '/camps/1' } } })
         axiosMock.onGet('http://localhost/camps/1').replyOnce(404)
@@ -1226,17 +1246,8 @@ describe('API store', () => {
         // when
         const load = vm.api.reload('/camps/1')
         // then
-        await expect(load).rejects.toThrow('"/camps/1" has been deleted')
+        await expect(load).rejects.toThrow('Could not reload \"/camps/1\" (status 404): Request failed with status code 404')
         expect(vm.$store.state.api['/camps/1']).toBeUndefined()
-      })
-
-      it('returns error when `get` encounters 403 Forbidden', async () => {
-        // given
-        axiosMock.onGet('http://localhost/camps/1').replyOnce(403)
-        // when
-        const load = vm.api.get('/camps/1')._meta.load
-        // then
-        await expect(load).rejects.toThrow('No permission')
       })
 
       it('returns error when `patch` encounters network error', async () => {
@@ -1245,7 +1256,7 @@ describe('API store', () => {
         // when
         const load = vm.api.patch('/camps/1', {})
         // then
-        await expect(load).rejects.toThrow('Network Error')
+        await expect(load).rejects.toThrow('Error trying to patch \"/camps/1\": Network Error')
       })
 
       it('returns error when `patch` encounters network timeout', async () => {
@@ -1254,7 +1265,7 @@ describe('API store', () => {
         // when
         const load = vm.api.patch('/camps/1', {})
         // then
-        await expect(load).rejects.toThrow('timeout of 0ms exceeded')
+        await expect(load).rejects.toThrow('Error trying to patch \"/camps/1\": timeout of 0ms exceeded')
       })
 
       it('returns error when `patch` encounters 404 Not Found', async () => {
@@ -1270,7 +1281,7 @@ describe('API store', () => {
         // when
         const load = vm.api.patch('/camps/1', {})
         // then
-        await expect(load).rejects.toThrow('"/camps/1" has been deleted')
+        await expect(load).rejects.toThrow('Could not patch \"/camps/1\" (status 404): Request failed with status code 404')
         await expect(vm.$store.state.api['/camps/1']).toBeUndefined()
       })
 
@@ -1280,7 +1291,7 @@ describe('API store', () => {
         // when
         const load = vm.api.patch('/camps/1', {})
         // then
-        await expect(load).rejects.toThrow('No permission')
+        await expect(load).rejects.toThrow('No permission to patch \"/camps/1\" (status 403): Request failed with status code 403')
       })
 
       it('returns error when `patch` encounters 422 Unprocessable Entity (Validation error)', async () => {
@@ -1299,7 +1310,7 @@ describe('API store', () => {
         const load = vm.api.patch('/camps/1', {})
 
         // then
-        await expect(load).rejects.toThrow('Server error 422 (undefined)')
+        await expect(load).rejects.toThrow('Error trying to patch \"/camps/1\" (status 422): Request failed with status code 422')
       })
     })
   })

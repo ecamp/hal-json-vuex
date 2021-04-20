@@ -74,7 +74,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {
-      throw handleAxiosError(uri, error)
+      throw handleAxiosError('post to', uri, error)
     })
   }
 
@@ -274,7 +274,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       storeHalJsonData(data)
       return get(uri)
     }, (error) => {
-      throw handleAxiosError(uri, error)
+      throw handleAxiosError('patch', uri, error)
     })
 
     return returnedResource
@@ -326,7 +326,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       () => deleted(uri),
       (error) => {
         store.commit('deletingFailed', uri)
-        throw handleAxiosError(uri, error)
+        throw handleAxiosError('delete', uri, error)
       }
     )
   }
@@ -403,11 +403,12 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
 
   /**
    * Processes error object received from Axios for further usage. Triggers delete chain as side effect.
+   * @param operation       Describes the action that was ongoing while the error happened, e.g. get or reload
    * @param uri             Requested URI that triggered the error
    * @param error           Raw error object received from Axios
    * @returns Error         Return new error object with human understandable error message
    */
-  function handleAxiosError (uri: string, error: AxiosError): Error {
+  function handleAxiosError (operation: string, uri: string, error: AxiosError): Error {
     // Server Error (response received but with error code)
     if (error.response) {
       const response = error.response
@@ -416,16 +417,17 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
         // 404 Entity not found error
         store.commit('deleting', uri)
         deleted(uri) // no need to wait for delete operation to finish
-        return new ServerException(response, `Could not perform operation, "${uri}" has been deleted`)
+        return new ServerException(response, `Could not ${operation} "${uri}"`, error)
       } else if (response.status === 403) {
         // 403 Permission error
-        return new ServerException(response, 'No permission to perform operation')
+        return new ServerException(response, `No permission to ${operation} "${uri}"`, error)
       } else {
         // other unknown server error
-        return new ServerException(response)
+        return new ServerException(response, `Error trying to ${operation} "${uri}"`, error)
       }
     } else {
       // another error
+      error.message = `Error trying to ${operation} "${uri}": ${error.message}`
       return error
     }
   }
