@@ -1,5 +1,6 @@
 import EmbeddedCollection from './EmbeddedCollection'
-import Resource, { EmbeddedCollectionMeta } from './Resource'
+import Resource from './Resource'
+import { EmbeddedCollectionMeta } from './EmbeddedCollection'
 import StoreData from './StoreData'
 
 interface ApiActions {
