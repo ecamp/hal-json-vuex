@@ -1,5 +1,8 @@
 ### Unreleased
 
+### 2.0.0-alpha.6
+- Bugfix: `href` and `$href` can now also be used on the root API endpoint
+
 ### 2.0.0-alpha.5
 - `$href` can now be used directly on entities, just like `$post`, `$patch` etc.
 

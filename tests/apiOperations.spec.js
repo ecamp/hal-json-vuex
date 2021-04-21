@@ -9,6 +9,7 @@ import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import linkedCollection from './resources/linked-collection'
 import templatedLink from './resources/templated-link'
+import rootWithLink from './resources/root-with-link'
 import StoreValue from '../src/StoreValue'
 import LoadingStoreValue from '../src/LoadingStoreValue'
 import EmbeddedCollection from '../src/EmbeddedCollection'
@@ -267,7 +268,6 @@ describe('Using dollar methods', () => {
   it('$href returns a relation URI', async done => {
     // given
     axiosMock.onGet('http://localhost/camps/1').reply(200, linkedCollection.serverResponse)
-    axiosMock.onDelete('http://localhost/camps/1/activities').reply(500)
 
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
@@ -286,7 +286,6 @@ describe('Using dollar methods', () => {
   it('$href returns a relation URI filled in with template parameters', async done => {
     // given
     axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
-    axiosMock.onDelete('http://localhost/camps/1/activities').reply(500)
 
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
@@ -299,6 +298,24 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     expect(hrefPromise).resolves.toEqual('http://localhost/camps/1/users/999')
+    done()
+  })
+
+  it('$href also works on the root API endpoint', async done => {
+    // given
+    axiosMock.onGet('http://localhost/').reply(200, rootWithLink.serverResponse)
+
+    vm.api.get()
+    await letNetworkRequestFinish()
+    const root = vm.api.get()
+    expect(root).toBeInstanceOf(StoreValue)
+
+    // when
+    const hrefPromise = root.$href('books')
+
+    // then
+    await letNetworkRequestFinish()
+    expect(hrefPromise).resolves.toEqual('http://localhost/books')
     done()
   })
 

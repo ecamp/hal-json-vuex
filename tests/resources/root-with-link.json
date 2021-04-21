@@ -1,0 +1,28 @@
+{
+  "serverResponse": {
+    "this": "is",
+    "the": "root",
+    "_links": {
+      "self": {
+        "href": "/"
+      },
+      "books": {
+        "href": "http://localhost/books{/id}",
+        "templated": true
+      }
+    }
+  },
+  "storeState": {
+    "": {
+      "this": "is",
+      "the": "root",
+      "books": {
+        "href": "/books{/id}",
+        "templated": true
+      },
+      "_meta": {
+        "self": ""
+      }
+    }
+  }
+}
