@@ -1,6 +1,6 @@
 ### Unreleased
 
-### 2.0.0-alpha.4
+### 2.0.0-alpha.5
 - `$href` can now be used directly on entities, just like `$post`, `$patch` etc.
 
 ### 2.0.0-alpha.2
