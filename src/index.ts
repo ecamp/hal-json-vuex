@@ -248,8 +248,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise      resolves to the URI of the related entity.
    */
   async function href (uriOrEntity: string | Resource, relation: string, templateParams = {}): Promise<string | undefined> {
-    const self = normalizeEntityUri(await get(uriOrEntity)._meta.load, axios.defaults.baseURL)
-    const rel = self ? store.state[opts.apiName][self][relation] : null
+    const selfUri = normalizeEntityUri(await get(uriOrEntity)._meta.load, axios.defaults.baseURL)
+    const rel = selfUri ? store.state[opts.apiName][selfUri][relation] : null
     if (!rel || !rel.href) return undefined
     if (rel.templated) {
       return urltemplate.parse(rel.href).expand(templateParams)
