@@ -18,6 +18,8 @@ type Resource = {
     $post: (data: unknown) => Promise<Resource>
     $patch: (data: unknown) => Promise<Resource>
     $del: () => Promise<string | void>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    $href: (relation: string, templateParams: any) => Promise<string | undefined>
 }
 
 export { Resource }

@@ -11,8 +11,8 @@ class StoreValueCreator {
   private config: InternalConfig
   private apiActions: ApiActions
 
-  constructor ({ get, reload, post, patch, del, isUnknown }: ApiActions, config: InternalConfig = {}) {
-    this.apiActions = { get, reload, post, patch, del, isUnknown }
+  constructor ({ get, reload, post, patch, href, del, isUnknown }: ApiActions, config: InternalConfig = {}) {
+    this.apiActions = { get, reload, post, patch, href, del, isUnknown }
     this.config = config
   }
 

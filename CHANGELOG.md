@@ -1,5 +1,8 @@
 ### Unreleased
 
+### 2.0.0-alpha.4
+- `$href` can now be used directly on entities, just like `$post`, `$patch` etc.
+
 ### 2.0.0-alpha.2
 - When deleting an entity, cascade-deleted entities are now cleaned correctly from the store as well
 

@@ -93,6 +93,10 @@ class StoreValue implements Resource {
   $del (): Promise<string | void> {
     return this.apiActions.del(this._meta.self)
   }
+
+  $href (relation: string, templateParams = {}): Promise<string | undefined> {
+    return this.apiActions.href(this, relation, templateParams)
+  }
 }
 
 export default StoreValue

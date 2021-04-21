@@ -8,6 +8,7 @@ interface ApiActions {
     post: (uriOrEntity: string | Resource, data: unknown) =>Promise<Resource>
     patch: (uriOrEntity: string | Resource, data: unknown) => Promise<Resource>
     del: (uriOrEntity: string | Resource) => Promise<string | void>
+    href: (uriOrEntity: string | Resource, relation: string, templateParams) => Promise<string | undefined>
     isUnknown: (uri: string) => boolean
 }
 

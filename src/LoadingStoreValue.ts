@@ -95,6 +95,10 @@ class LoadingStoreValue implements Resource {
   public $del (): Promise<string | void> {
     return this._meta.load.then(resource => resource.$del())
   }
+
+  public $href (relation: string, templateParams = {}): Promise<string | undefined> {
+    return this._meta.load.then(resource => resource.$href(relation, templateParams))
+  }
 }
 
 export default LoadingStoreValue
