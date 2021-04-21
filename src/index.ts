@@ -38,7 +38,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const storeValueCreator = new StoreValueCreator({ get, reload, post, patch, del, isUnknown }, opts)
+  const storeValueCreator = new StoreValueCreator({ get, reload, post, patch, del, href, isUnknown }, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 
@@ -441,7 +441,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
   }
 
-  const apiActions: ApiActions = { post, get, reload, del, patch, isUnknown }
+  const apiActions: ApiActions = { post, get, reload, del, patch, href, isUnknown }
   const halJsonVuex = { ...apiActions, purge, purgeAll, href, StoreValue, LoadingStoreValue }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

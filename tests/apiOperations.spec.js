@@ -7,6 +7,8 @@ import Vuex from 'vuex'
 import Vue from 'vue'
 import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
+import linkedCollection from './resources/linked-collection'
+import templatedLink from './resources/templated-link'
 import StoreValue from '../src/StoreValue'
 import LoadingStoreValue from '../src/LoadingStoreValue'
 import EmbeddedCollection from '../src/EmbeddedCollection'
@@ -259,6 +261,44 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     expect(store.state.api).not.toHaveProperty('/camps/1')
+    done()
+  })
+
+  it('$href returns a relation URI', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').reply(200, linkedCollection.serverResponse)
+    axiosMock.onDelete('http://localhost/camps/1/activities').reply(500)
+
+    vm.api.get('/camps/1')
+    await letNetworkRequestFinish()
+    const camp = vm.api.get('/camps/1')
+    expect(camp).toBeInstanceOf(StoreValue)
+
+    // when
+    const hrefPromise = camp.$href('activities')
+
+    // then
+    await letNetworkRequestFinish()
+    expect(hrefPromise).resolves.toEqual('http://localhost/camps/1/activities')
+    done()
+  })
+
+  it('$href returns a relation URI filled in with template parameters', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
+    axiosMock.onDelete('http://localhost/camps/1/activities').reply(500)
+
+    vm.api.get('/camps/1')
+    await letNetworkRequestFinish()
+    const camp = vm.api.get('/camps/1')
+    expect(camp).toBeInstanceOf(StoreValue)
+
+    // when
+    const hrefPromise = camp.$href('users', { id: 999 })
+
+    // then
+    await letNetworkRequestFinish()
+    expect(hrefPromise).resolves.toEqual('http://localhost/camps/1/users/999')
     done()
   })
 
