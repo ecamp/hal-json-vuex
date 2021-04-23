@@ -1,6 +1,6 @@
 {
   "name": "hal-json-vuex",
-  "version": "2.0.0-alpha.5",
+  "version": "2.0.0-alpha.6",
   "description": "Use a HAL JSON API with Vuex",
   "main": "dist/bundle.js",
   "scripts": {
