@@ -18,6 +18,9 @@ import multipleReferencesToUser from './resources/multiple-references-to-user'
 import templatedLink from './resources/templated-link'
 import root from './resources/root'
 
+import LoadingStoreValue from '../src/LoadingStoreValue'
+import StoreValue from '../src/StoreValue'
+
 async function letNetworkRequestFinish () {
   await new Promise(resolve => {
     setTimeout(() => resolve())
@@ -68,6 +71,24 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(root.storeState)
+      })
+
+      it('can serialize StoreValue object', async done => {
+        // given
+        axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
+
+        // when
+        const loadingObject = vm.api.get()
+
+        // then (loading)
+        expect(loadingObject).toBeInstanceOf(LoadingStoreValue)
+        expect(loadingObject.toJSON()).toEqual('{}')
+
+        // then (loaded)
+        const loadedObject = await loadingObject._meta.load
+        expect(loadedObject).toBeInstanceOf(StoreValue)
+        expect(loadedObject.toJSON()).toEqual('{"this":"is","the":"root","_meta":{"self":"","loading":false,"reloading":false,"load":"{}"}}')
+        done()
       })
 
       it('imports embedded single entity', async () => {

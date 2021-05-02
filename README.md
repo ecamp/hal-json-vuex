@@ -102,6 +102,8 @@ let someEntity = this.$api.get('/some/endpoint')
 <li v-for="book in $api.get('/all/my/books').items" :key="book._meta.self">...</li>
 ```
 
+**Known limitations:** The current implementation has so far only be tested to generate static HTML on server side (nuxt config `injectScripts` set to `false`) without client side SPA. Serialization of Vuex store data & hydration on client side will probably not work without errors.
+
 # Available options
 
 ### apiName
