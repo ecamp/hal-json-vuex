@@ -48,7 +48,7 @@ class LoadingStoreValue implements Resource {
 
         // This is necessary so that Vue's reactivity system understands to treat this LoadingStoreValue
         // like a normal object.
-        if (['then', 'toJSON', Symbol.toStringTag, 'state', 'getters', '$options', '_isVue', '__file', 'render', 'constructor'].includes(prop as string)) {
+        if (['then', Symbol.toStringTag, 'state', 'getters', '$options', '_isVue', '__file', 'render', 'constructor'].includes(prop as string)) {
           return undefined
         }
 
@@ -98,6 +98,10 @@ class LoadingStoreValue implements Resource {
 
   public $href (relation: string, templateParams = {}): Promise<string | undefined> {
     return this._meta.load.then(resource => resource.$href(relation, templateParams))
+  }
+
+  public toJSON (): string {
+    return '{}'
   }
 }
 
