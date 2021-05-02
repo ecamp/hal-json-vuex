@@ -10,7 +10,7 @@ import { ExternalConfig } from './interfaces/Config'
 import { Store } from 'vuex/types'
 import { AxiosInstance, AxiosError } from 'axios'
 import Resource from './interfaces/Resource'
-import StoreData, { Link } from './interfaces/StoreData'
+import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
 import EmbeddedCollectionClass from './EmbeddedCollection'
 import EmbeddedCollection, { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
@@ -407,7 +407,9 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param loadStoreData
    */
   function setLoadPromiseOnStore (uri: string, loadStoreData: Promise<StoreData> | null = null) {
-    store.state[opts.apiName][uri]._meta.load = loadStoreData || Promise.resolve(store.state[opts.apiName][uri])
+    const promise: SerializablePromise<StoreData> = loadStoreData || Promise.resolve(store.state[opts.apiName][uri])
+    promise.toJSON = () => '{}' // avoid warning in Nuxt when serializing the complete Vuex store ("Cannot stringify arbitrary non-POJOs Promise")
+    store.state[opts.apiName][uri]._meta.load = promise
   }
 
   /**

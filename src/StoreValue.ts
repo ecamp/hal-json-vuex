@@ -97,6 +97,16 @@ class StoreValue implements Resource {
   $href (relation: string, templateParams = {}): Promise<string | undefined> {
     return this.apiActions.href(this, relation, templateParams)
   }
+
+  /**
+   * Serialize object to JSON
+   * this avoid warnings in Nuxt "Cannot stringify arbitrary non-POJOs"
+   */
+  toJSON (): string {
+    // for the lack of any better alternative, return store data as JSON
+    // alternatively: could also return '{}', as the data cannot be used directly, anyway
+    return JSON.stringify(this._storeData)
+  }
 }
 
 export default StoreValue
