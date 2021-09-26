@@ -1,8 +1,11 @@
-var path = require('path')
-var webpack = require('webpack')
-var nodeExternals = require('webpack-node-externals')
+import path, { dirname } from 'path'
+import { fileURLToPath } from 'url'
+import webpack from 'webpack'
+import nodeExternals from 'webpack-node-externals'
 
-module.exports = {
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export default {
   devtool: 'source-map',
   externals: [nodeExternals()],
   entry: [

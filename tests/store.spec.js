@@ -1,5 +1,5 @@
 import { createLocalVue, mount } from '@vue/test-utils'
-import HalJsonVuex from '../src'
+import HalJsonVuex from '../src/index'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
 import VueAxios from 'vue-axios'
