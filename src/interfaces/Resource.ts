@@ -15,7 +15,7 @@ type Resource = {
     _storeData?: StoreData
 
     $reload: () => Promise<Resource>
-    $post: (data: unknown) => Promise<Resource>
+    $post: (data: unknown) => Promise<Resource | null>
     $patch: (data: unknown) => Promise<Resource>
     $del: () => Promise<string | void>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

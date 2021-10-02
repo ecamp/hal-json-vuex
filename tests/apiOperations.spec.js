@@ -139,6 +139,34 @@ describe('Using dollar methods', () => {
     done()
   })
 
+  it('$posts entity and handles response 204 "No Content" fine', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps').reply(200, {
+      _embedded: {
+        items: []
+      },
+      _links: {
+        self: {
+          href: '/camps'
+        }
+      }
+    })
+    axiosMock.onPost('http://localhost/camps').reply(204, undefined)
+
+    vm.api.get('/camps')
+    await letNetworkRequestFinish()
+    const camps = vm.api.get('/camps')
+    expect(camps).toBeInstanceOf(StoreValue)
+
+    // when
+    const load = camps.$post({ some: 'thing' })
+
+    // then
+    await letNetworkRequestFinish()
+    expect(await load).toBeNull()
+    done()
+  })
+
   it('$posts onto loading entity and stores the response into the store', async done => {
     // given
     axiosMock.onGet('http://localhost/camps').reply(200, {

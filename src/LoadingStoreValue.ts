@@ -84,7 +84,7 @@ class LoadingStoreValue implements Resource {
     return this._meta.load.then(resource => (resource as Collection).$loadItems())
   }
 
-  public $post (data: unknown):Promise<Resource> {
+  public $post (data: unknown): Promise<Resource | null> {
     return this._meta.load.then(resource => resource.$post(data))
   }
 

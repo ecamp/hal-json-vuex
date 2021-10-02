@@ -64,13 +64,16 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise       resolves when the POST request has completed and the entity is available
    *                        in the Vuex store.
    */
-  function post (uriOrCollection: string | Resource, data: unknown): Promise<Resource> {
+  function post (uriOrCollection: string | Resource, data: unknown): Promise<Resource | null> {
     const uri = normalizeEntityUri(uriOrCollection, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
 
-    return axios.post(axios.defaults.baseURL + uri, data).then(({ data }) => {
+    return axios.post(axios.defaults.baseURL + uri, data).then(({ data, status }) => {
+      if (status === 204) {
+        return null
+      }
       storeHalJsonData(data)
       return get(data._links.self.href)
     }, (error) => {

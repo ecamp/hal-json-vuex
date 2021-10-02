@@ -82,7 +82,7 @@ class StoreValue implements Resource {
     return this.apiActions.reload(this._meta.self)
   }
 
-  $post (data: unknown): Promise<Resource> {
+  $post (data: unknown): Promise<Resource | null> {
     return this.apiActions.post(this._meta.self, data)
   }
 
