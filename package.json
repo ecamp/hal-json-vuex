@@ -2,8 +2,7 @@
   "name": "hal-json-vuex",
   "version": "2.0.0-alpha.6",
   "description": "Use a HAL JSON API with Vuex",
-  "exports": "./dist/bundle.js",
-  "type": "module",
+  "main": "dist/bundle.js",
   "scripts": {
     "build": "cross-env NODE_ENV=production webpack",
     "clean": "cross-env rimraf dist coverage lib",
@@ -14,7 +13,7 @@
     "version": "npm run build"
   },
   "engines": {
-    "node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+    "node": ">=0.12"
   },
   "files": [
     "/dist",
