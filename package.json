@@ -41,7 +41,7 @@
   },
   "homepage": "https://github.com/ecamp/hal-json-vuex#readme",
   "dependencies": {
-    "hal-json-normalizer": "4.0.2",
+    "hal-json-normalizer": "4.0.3",
     "url-template": "2.0.8"
   },
   "devDependencies": {
