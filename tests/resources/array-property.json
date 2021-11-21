@@ -1,0 +1,40 @@
+{
+  "serverResponse": {
+    "id": 1,
+    "arrayProperty": [
+      {
+        "a": 1,
+        "nested": [
+          {
+            "b": 2
+          }
+        ]
+      }
+    ],
+    "emptyArray": [],
+    "_links": {
+      "self": {
+        "href": "/camps/1"
+      }
+    }
+  },
+  "storeState": {
+    "/camps/1": {
+      "id": 1,
+      "arrayProperty": [
+        {
+          "a": 1,
+          "nested": [
+            {
+              "b": 2
+            }
+          ]
+        }
+      ],
+      "emptyArray": [],
+      "_meta": {
+        "self": "/camps/1"
+      }
+    }
+  }
+}

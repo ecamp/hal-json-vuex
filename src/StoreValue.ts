@@ -40,8 +40,8 @@ class StoreValue implements Resource {
       .forEach(key => {
         const value = storeData[key]
 
-        // storeData[key] is an embedded collection
-        if (Array.isArray(value)) {
+        // storeData[key] is an embedded collection (need min. 1 item to detect an embedded collection)
+        if (Array.isArray(value) && value.length > 0 && isEntityReference(value[0])) {
           // build complete Collection class = EmbeddedCollection + HasItems mixin
           const EmbeddedCollectionClass = HasItems(EmbeddedCollection, this.apiActions, this.config, storeData._meta.self, key)
 
