@@ -22,7 +22,7 @@ class StoreValue extends CanHaveItems {
       if (key === 'allItems' && isCollection(data)) return
       if (key === 'items' && isCollection(data)) {
         this.addItemsGetter(data[key], data._meta.self, key)
-      } else if (Array.isArray(value)) {
+      } else if (Array.isArray(value) && value.length > 0 && isEntityReference(value[0])) { // need min. 1 item to detect an embedded collection
         this[key] = () => new EmbeddedCollection(value, data._meta.self, key, { get, reload, isUnknown }, config, data._meta.load)
       } else if (isEntityReference(value)) {
         this[key] = () => this.apiActions.get(value.href)

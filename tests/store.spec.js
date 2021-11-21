@@ -9,6 +9,7 @@ import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import referenceToSingleEntity from './resources/reference-to-single-entity'
 import embeddedCollection from './resources/embedded-collection'
+import embeddedLinkedCollection from './resources/embedded-linked-collection'
 import linkedSingleEntity from './resources/linked-single-entity'
 import linkedCollection from './resources/linked-collection'
 import collectionFirstPage from './resources/collection-firstPage'
@@ -16,6 +17,8 @@ import collectionPage1 from './resources/collection-page1'
 import circularReference from './resources/circular-reference'
 import multipleReferencesToUser from './resources/multiple-references-to-user'
 import templatedLink from './resources/templated-link'
+import objectProperty from './resources/object-property'
+import arrayProperty from './resources/array-property'
 
 async function letNetworkRequestFinish () {
   await new Promise(resolve => {
@@ -29,11 +32,9 @@ let vm
 let stateCopy
 
 describe('API store', () => {
-
   ([true, false]).forEach(avoidNPlusOneRequests => {
     const title = avoidNPlusOneRequests ? 'avoiding n+1 queries' : 'not avoiding n+1 queries'
     describe(title, () => {
-
       beforeAll(() => {
         axios.defaults.baseURL = 'http://localhost'
         Vue.use(Vuex)
@@ -102,6 +103,27 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedCollection.storeState)
+        expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
+        expect(vm.api.get('/camps/1').periods().items[0]._meta.self).toEqual('http://localhost/periods/104')
+        expect(vm.api.get('/camps/1').periods().items[1]._meta.self).toEqual('http://localhost/periods/128')
+        expect(vm.api.get('/periods/104')._meta.self).toEqual('http://localhost/periods/104')
+        expect(vm.api.get('/periods/104').camp()._meta.self).toEqual('http://localhost/camps/1')
+        expect(vm.api.get('/periods/128')._meta.self).toEqual('http://localhost/periods/128')
+        expect(vm.api.get('/periods/128').camp()._meta.self).toEqual('http://localhost/camps/1')
+        done()
+      })
+
+      it('imports embedded collection with link', async done => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedLinkedCollection.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(embeddedLinkedCollection.storeState)
         expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
         expect(vm.api.get('/camps/1').periods().items[0]._meta.self).toEqual('http://localhost/periods/104')
         expect(vm.api.get('/camps/1').periods().items[1]._meta.self).toEqual('http://localhost/periods/128')
@@ -474,7 +496,7 @@ describe('API store', () => {
         expect(() => vm.api.get({})._meta)
 
         // then
-        .toThrow(Error)
+          .toThrow(Error)
       })
 
       it('purges and later re-fetches a URI from the store', async done => {
@@ -730,7 +752,7 @@ describe('API store', () => {
         const bookResponse = {
           id: 555,
           _embedded: {
-            chapters: [ chapter1Response, chapter2Response, chapter3Response ]
+            chapters: [chapter1Response, chapter2Response, chapter3Response]
           },
           _links: {
             self: {
@@ -1316,6 +1338,46 @@ describe('API store', () => {
 
         // then
         return expect(load).rejects.toThrow('Failed Validation')
+      })
+
+      it('can handle object property', async done => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, objectProperty.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+
+        // then
+        expect(vm.$store.state.api).toMatchObject(objectProperty.storeState)
+
+        expect(vm.api.get('/camps/1').objectProperty).toBeInstanceOf(Object)
+        expect(vm.api.get('/camps/1').objectProperty.a).toEqual(1)
+        expect(vm.api.get('/camps/1').objectProperty.nested.b).toEqual(2)
+
+        expect(vm.api.get('/camps/1').emptyObject).toBeInstanceOf(Object)
+        expect(vm.api.get('/camps/1').emptyObject).toEqual({})
+        done()
+      })
+
+      it('can handle array property', async done => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, arrayProperty.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+
+        // then
+        expect(vm.$store.state.api).toMatchObject(arrayProperty.storeState)
+
+        expect(vm.api.get('/camps/1').arrayProperty).toBeInstanceOf(Array)
+        expect(vm.api.get('/camps/1').arrayProperty[0].a).toEqual(1)
+        expect(vm.api.get('/camps/1').arrayProperty[0].nested[0].b).toEqual(2)
+
+        expect(vm.api.get('/camps/1').emptyArray).toBeInstanceOf(Array)
+        expect(vm.api.get('/camps/1').emptyArray).toEqual([])
+        done()
       })
     })
   })
