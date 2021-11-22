@@ -9,6 +9,7 @@ import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import referenceToSingleEntity from './resources/reference-to-single-entity'
 import embeddedCollection from './resources/embedded-collection'
+import embeddedLinkedCollection from './resources/embedded-linked-collection'
 import linkedSingleEntity from './resources/linked-single-entity'
 import linkedCollection from './resources/linked-collection'
 import collectionFirstPage from './resources/collection-firstPage'
@@ -16,6 +17,8 @@ import collectionPage1 from './resources/collection-page1'
 import circularReference from './resources/circular-reference'
 import multipleReferencesToUser from './resources/multiple-references-to-user'
 import templatedLink from './resources/templated-link'
+import objectProperty from './resources/object-property'
+import arrayProperty from './resources/array-property'
 import root from './resources/root'
 
 import LoadingStoreValue from '../src/LoadingStoreValue'
@@ -134,6 +137,26 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
         await letNetworkRequestFinish()
         expect(vm.$store.state.api).toMatchObject(embeddedCollection.storeState)
+        expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
+        expect(vm.api.get('/camps/1').periods().items[0]._meta.self).toEqual('http://localhost/periods/104')
+        expect(vm.api.get('/camps/1').periods().items[1]._meta.self).toEqual('http://localhost/periods/128')
+        expect(vm.api.get('/periods/104')._meta.self).toEqual('http://localhost/periods/104')
+        expect(vm.api.get('/periods/104').camp()._meta.self).toEqual('http://localhost/camps/1')
+        expect(vm.api.get('/periods/128')._meta.self).toEqual('http://localhost/periods/128')
+        expect(vm.api.get('/periods/128').camp()._meta.self).toEqual('http://localhost/camps/1')
+      })
+
+      it('imports embedded collection with link', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedLinkedCollection.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(embeddedLinkedCollection.storeState)
         expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
         expect(vm.api.get('/camps/1').periods().items[0]._meta.self).toEqual('http://localhost/periods/104')
         expect(vm.api.get('/camps/1').periods().items[1]._meta.self).toEqual('http://localhost/periods/128')
@@ -1403,6 +1426,46 @@ describe('API store', () => {
 
         // then
         await expect(load).rejects.toThrow('Error trying to patch \"/camps/1\" (status 422): Request failed with status code 422')
+      })
+
+      it('can handle object property', async done => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, objectProperty.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+
+        // then
+        expect(vm.$store.state.api).toMatchObject(objectProperty.storeState)
+
+        expect(vm.api.get('/camps/1').objectProperty).toBeInstanceOf(Object)
+        expect(vm.api.get('/camps/1').objectProperty.a).toEqual(1)
+        expect(vm.api.get('/camps/1').objectProperty.nested.b).toEqual(2)
+
+        expect(vm.api.get('/camps/1').emptyObject).toBeInstanceOf(Object)
+        expect(vm.api.get('/camps/1').emptyObject).toEqual({})
+        done()
+      })
+
+      it('can handle array property', async done => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, arrayProperty.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+
+        // then
+        expect(vm.$store.state.api).toMatchObject(arrayProperty.storeState)
+
+        expect(vm.api.get('/camps/1').arrayProperty).toBeInstanceOf(Array)
+        expect(vm.api.get('/camps/1').arrayProperty[0].a).toEqual(1)
+        expect(vm.api.get('/camps/1').arrayProperty[0].nested[0].b).toEqual(2)
+
+        expect(vm.api.get('/camps/1').emptyArray).toBeInstanceOf(Array)
+        expect(vm.api.get('/camps/1').emptyArray).toEqual([])
+        done()
       })
     })
   })

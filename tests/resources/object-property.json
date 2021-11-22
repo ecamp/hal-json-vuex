@@ -1,0 +1,32 @@
+{
+  "serverResponse": {
+    "id": 1,
+    "objectProperty": {
+      "a": 1,
+      "nested": {
+        "b": 2
+      }
+    },
+    "emptyObject": {},
+    "_links": {
+      "self": {
+        "href": "/camps/1"
+      }
+    }
+  },
+  "storeState": {
+    "/camps/1": {
+      "id": 1,
+      "objectProperty": {
+        "a": 1,
+        "nested": {
+          "b": 2
+        }
+      },
+      "emptyObject": {},
+      "_meta": {
+        "self": "/camps/1"
+      }
+    }
+  }
+}
