@@ -59,7 +59,16 @@ class LoadingStoreValue implements Resource {
 
         // Proxy to all other unknown properties: return a function that yields another LoadingStoreValue
         const loadProperty = loadResource.then(resource => resource[prop])
-        const result = templateParams => new LoadingStoreValue(loadProperty.then(property => property(templateParams)._meta.load))
+
+        const result = templateParams => new LoadingStoreValue(loadProperty.then(property => {
+          try {
+            return property(templateParams)._meta.load
+          } catch (e) {
+            throw new Error(`Property '${prop.toString()}' on resource ${absoluteSelf} was used like a relation, but no relation with this name was returned by the API (actual return value: ${JSON.stringify(property)})`)
+          }
+        }
+        ))
+
         result.toString = () => ''
         return result
       }
