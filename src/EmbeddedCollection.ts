@@ -12,6 +12,7 @@ import Collection from './interfaces/Collection'
 class EmbeddedCollection implements EmbeddedCollectionMeta {
   public _meta: {
     load: Promise<EmbeddedCollectionMeta>,
+    loading: boolean,
     reload: {
       uri: string,
       property: string
@@ -35,6 +36,7 @@ class EmbeddedCollection implements EmbeddedCollectionMeta {
 
     this._meta = {
       load: loadCollection || Promise.resolve(this),
+      loading: loadCollection !== null,
       reload: {
         uri: reloadUri,
         property: reloadProperty

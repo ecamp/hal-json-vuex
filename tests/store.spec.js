@@ -164,10 +164,12 @@ describe('API store', () => {
 
         // when
         vm.api.get('/camps/1')
+        expect(vm.api.get('/camps/1').periods()._meta.loading).toEqual(true)
+
         await letNetworkRequestFinish()
 
         // then
-        // expect(vm.api.get('/camps/1').periods()._meta.loading).toEqual(false) // TODO: Should embedded collections get a loading property?
+        expect(vm.api.get('/camps/1').periods()._meta.loading).toEqual(false)
         expect(vm.api.get('/camps/1').periods().items).toEqual([])
       })
 

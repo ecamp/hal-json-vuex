@@ -3,6 +3,7 @@ import Collection from './Collection'
 type EmbeddedCollectionMeta = {
     _meta: {
         load?: Promise<EmbeddedCollectionMeta>
+        loading?: boolean,
         reload: {
             uri: string
             property: string

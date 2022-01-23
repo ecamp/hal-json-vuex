@@ -46,7 +46,7 @@ class StoreValue implements Resource {
           // build complete Collection class = EmbeddedCollection + HasItems mixin
           const EmbeddedCollectionClass = HasItems(EmbeddedCollection, this.apiActions, this.config, storeData._meta.self, key)
 
-          const loadCollection = storeData._meta.load
+          const loadCollection = storeData._meta.loading && storeData._meta.load
             ? (storeData._meta.load as Promise<StoreDataEntity>).then(() => {
                 const collection = this.apiActions.get(value.href) as Collection
                 return new EmbeddedCollectionClass(collection, storeData._meta.self, key)
