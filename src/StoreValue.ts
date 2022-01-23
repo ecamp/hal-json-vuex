@@ -49,12 +49,12 @@ class StoreValue implements Resource {
           const loadCollection = storeData._meta.loading && storeData._meta.load
             ? (storeData._meta.load as Promise<StoreDataEntity>).then(() => {
                 const collection = this.apiActions.get(value.href) as Collection
-                return new EmbeddedCollectionClass(collection, storeData._meta.self, key)
+                return new EmbeddedCollectionClass(collection, storeData._meta.self, key, this.apiActions)
               })
             : null
 
           const collection = this.apiActions.get(value.href) as Collection
-          this[key] = () => new EmbeddedCollectionClass(collection, storeData._meta.self, key, loadCollection)
+          this[key] = () => new EmbeddedCollectionClass(collection, storeData._meta.self, key, this.apiActions, loadCollection)
 
           // storeData[key] is a reference only (contains only href; no data)
         } else if (isEntityReference(value)) {

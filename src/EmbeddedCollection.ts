@@ -1,6 +1,8 @@
 import { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
 import { Link } from './interfaces/StoreData'
 import Collection from './interfaces/Collection'
+import ApiActions from './interfaces/ApiActions'
+import Resource from './interfaces/Resource'
 
 /**
  * Imitates a full standalone collection with an items property, even if there is no separate URI (as it
@@ -23,13 +25,15 @@ class EmbeddedCollection implements EmbeddedCollectionMeta {
     items: Array<Link>
   }
 
+  apiActions: ApiActions
+
   /**
    * @param items           array of items, which can be mixed primitive values and entity references
    * @param reloadUri       URI of the entity containing the embedded collection (for reloading)
    * @param reloadProperty  property in the containing entity under which the embedded collection is saved
    * @param loadCollection  a promise that will resolve when the parent entity has finished (re-)loading
    */
-  constructor (collection: Collection, reloadUri: string, reloadProperty: string, loadCollection: Promise<EmbeddedCollectionMeta> | null = null) {
+  constructor (collection: Collection, reloadUri: string, reloadProperty: string, apiActions: ApiActions, loadCollection: Promise<EmbeddedCollectionMeta> | null = null) {
     this._storeData = {
       items: collection._storeData.items
     }
@@ -42,6 +46,12 @@ class EmbeddedCollection implements EmbeddedCollectionMeta {
         property: reloadProperty
       }
     }
+
+    this.apiActions = apiActions
+  }
+
+  $reload (): Promise<Resource> {
+    return this.apiActions.reload(this)
   }
 }
 

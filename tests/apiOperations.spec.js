@@ -8,6 +8,7 @@ import Vue from 'vue'
 import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import linkedCollection from './resources/linked-collection'
+import embeddedCollection from './resources/embedded-collection'
 import templatedLink from './resources/templated-link'
 import rootWithLink from './resources/root-with-link'
 import StoreValue from '../src/StoreValue'
@@ -100,6 +101,40 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     expect(await load).toMatchObject({ id: 2, _meta: { self: 'http://localhost/camps' } })
+    done()
+  })
+
+  it('$reloads embedded collection', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
+      id: 1,
+      _embedded: {
+        periods: []
+      },
+      _links: {
+        self: {
+          href: '/camps/1'
+        }
+      }
+    })
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+
+    vm.api.get('/camps/1')
+    await letNetworkRequestFinish()
+    const camp = vm.api.get('/camps/1')
+    expect(camp).toBeInstanceOf(StoreValue)
+    expect(camp.periods()).toBeInstanceOf(EmbeddedCollection)
+
+    // when
+    const load = camp.periods().$reload()
+
+    // then
+    await letNetworkRequestFinish()
+    const periods = await load
+
+    expect(periods.items.length).toEqual(2)
+    expect(periods).toBeInstanceOf(EmbeddedCollection)
+
     done()
   })
 
