@@ -1486,7 +1486,7 @@ describe('API store', () => {
         done()
       })
 
-      it('throws error when accessing primite property like a relation', async done => {
+      it('throws error when accessing primitive property like a relation', async done => {
         // given
         axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
 
