@@ -1,4 +1,4 @@
-import { Link, TemplatedLink, StoreDataCollection } from './interfaces/StoreData'
+import { Link, VirtualLink, TemplatedLink, StoreDataCollection } from './interfaces/StoreData'
 
 type keyValueObject = Record<string, unknown>
 
@@ -31,6 +31,16 @@ function isEntityReference (object: keyValueObject): object is Link {
 }
 
 /**
+ * A templated link in the Vuex store looks like this: { href: '/some/uri{/something}', templated: true }
+ * @param object         to be examined
+ * @returns boolean      true if the object looks like a templated link, false otherwise
+ */
+function isVirtualLink (object: keyValueObject): object is VirtualLink {
+  if (!object) return false
+  return isEqualIgnoringOrder(Object.keys(object), ['href', 'virtual']) && (object.virtual === true)
+}
+
+/**
  * A standalone collection in the Vuex store has an items property that is an array.
  * @param object    to be examined
  * @returns boolean true if the object looks like a standalone collection, false otherwise
@@ -39,4 +49,4 @@ function isCollection (object: keyValueObject): object is StoreDataCollection {
   return !!(object && Array.isArray(object.items))
 }
 
-export { isTemplatedLink, isEntityReference, isCollection }
+export { isTemplatedLink, isVirtualLink, isEntityReference, isCollection }

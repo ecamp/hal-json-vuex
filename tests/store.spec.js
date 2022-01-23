@@ -9,9 +9,11 @@ import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import referenceToSingleEntity from './resources/reference-to-single-entity'
 import embeddedCollection from './resources/embedded-collection'
-import embeddedLinkedCollection from './resources/embedded-linked-collection'
+import embeddedCollectionStandaloneLink from './resources/embedded-collection-standalone-link'
+import embeddedCollectionLinkArray from './resources/embedded-collection-link-array'
 import linkedSingleEntity from './resources/linked-single-entity'
 import linkedCollection from './resources/linked-collection'
+import linkedEntityArray from './resources/linked-entity-array'
 import collectionFirstPage from './resources/collection-firstPage'
 import collectionPage1 from './resources/collection-page1'
 import circularReference from './resources/circular-reference'
@@ -146,9 +148,32 @@ describe('API store', () => {
         expect(vm.api.get('/periods/128').camp()._meta.self).toEqual('http://localhost/camps/1')
       })
 
-      it('imports embedded collection with link', async () => {
+      it('imports empty embedded collection', async () => {
         // given
-        axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedLinkedCollection.serverResponse)
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
+          id: 1,
+          _embedded: {
+            periods: []
+          },
+          _links: {
+            self: {
+              href: '/camps/1'
+            }
+          }
+        })
+
+        // when
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+
+        // then
+        // expect(vm.api.get('/camps/1').periods()._meta.loading).toEqual(false) // TODO: Should embedded collections get a loading property?
+        expect(vm.api.get('/camps/1').periods().items).toEqual([])
+      })
+
+      it('imports embedded collection with standalone link', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedCollectionStandaloneLink.serverResponse)
 
         // when
         vm.api.get('/camps/1')
@@ -156,7 +181,27 @@ describe('API store', () => {
         // then
         expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
         await letNetworkRequestFinish()
-        expect(vm.$store.state.api).toMatchObject(embeddedLinkedCollection.storeState)
+        expect(vm.$store.state.api).toMatchObject(embeddedCollectionStandaloneLink.storeState)
+        expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
+        expect(vm.api.get('/camps/1').periods().items[0]._meta.self).toEqual('http://localhost/periods/104')
+        expect(vm.api.get('/camps/1').periods().items[1]._meta.self).toEqual('http://localhost/periods/128')
+        expect(vm.api.get('/periods/104')._meta.self).toEqual('http://localhost/periods/104')
+        expect(vm.api.get('/periods/104').camp()._meta.self).toEqual('http://localhost/camps/1')
+        expect(vm.api.get('/periods/128')._meta.self).toEqual('http://localhost/periods/128')
+        expect(vm.api.get('/periods/128').camp()._meta.self).toEqual('http://localhost/camps/1')
+      })
+
+      it('imports embedded collection with link array', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedCollectionLinkArray.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(embeddedCollectionLinkArray.storeState)
         expect(vm.api.get('/camps/1')._meta.self).toEqual('http://localhost/camps/1')
         expect(vm.api.get('/camps/1').periods().items[0]._meta.self).toEqual('http://localhost/periods/104')
         expect(vm.api.get('/camps/1').periods().items[1]._meta.self).toEqual('http://localhost/periods/128')
@@ -188,6 +233,45 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(vm.api.get('/camps/1').main_leader()._meta).toMatchObject({ self: 'http://localhost/users/83' })
         expect(vm.api.get('/users/83')._meta.self).toEqual('http://localhost/users/83')
+      })
+
+      it('imports linked entity array', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, linkedEntityArray.serverResponse)
+
+        const activity1 = {
+          serverResponse: { id: 1, title: 'LS Volleyball', _links: { self: { href: '/activities/1' } } },
+          storeState: { id: 1, title: 'LS Volleyball', _meta: { self: '/activities/1' } }
+        }
+        axiosMock.onGet('http://localhost/activities/1').reply(200, activity1.serverResponse)
+
+        const activity2 = {
+          serverResponse: { id: 2, title: 'LA Blachen', _links: { self: { href: '/activities/2' } } },
+          storeState: { id: 2, title: 'LA Blachen', _meta: { self: '/activities/2' } }
+        }
+        axiosMock.onGet('http://localhost/activities/2').reply(200, activity2.serverResponse)
+
+        // when
+        vm.api.get('/camps/1')
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(linkedEntityArray.storeState)
+
+        expect(vm.api.get('/camps/1').activities().items).toBeInstanceOf(Array)
+        /*
+        expect(vm.api.get('/camps/1').activities().items.length).toEqual(2)
+        expect(vm.api.get('/camps/1').activities().items[0]._meta.self).toEqual('http://localhost/activities/1')
+        expect(vm.api.get('/camps/1').activities().items[1]._meta.self).toEqual('http://localhost/activities/2') */
+
+        await letNetworkRequestFinish()
+
+        expect(vm.$store.state.api['/activities/1']).toMatchObject(activity1.storeState)
+        expect(vm.$store.state.api['/activities/2']).toMatchObject(activity2.storeState)
+        expect(vm.api.get('/camps/1').activities().items.length).toEqual(2)
+        expect(vm.api.get('/camps/1').activities().items[0].title).toEqual('LS Volleyball')
+        expect(vm.api.get('/camps/1').activities().items[1].title).toEqual('LA Blachen')
       })
 
       it('imports paginatable collection', async () => {
@@ -707,7 +791,55 @@ describe('API store', () => {
         // then
         expect(embeddedCollection._meta.self).toBeUndefined()
         await letNetworkRequestFinish()
-        expect(vm.$store.state.api['/camps/1'].activityTypes).toMatchObject(campData.storeState)
+        expect(vm.$store.state.api['/camps/1#activityTypes'].items).toMatchObject(campData.storeState)
+      })
+
+      it('reloads a linked collection without standalone link from the store by reloading the superordinate object', async () => {
+        // given
+        const campServerResponse1 = {
+          id: 20,
+          _links: {
+            self: {
+              href: '/campTypes/20'
+            },
+            activityTypes: [
+              { href: '/activityTypes/123' },
+              { href: '/activityTypes/124' }
+            ]
+          }
+        }
+
+        const campServerResponse2 = {
+          id: 20,
+          _links: {
+            self: {
+              href: '/campTypes/20'
+            },
+            activityTypes: [
+              { href: '/activityTypes/125' }
+            ]
+          }
+        }
+
+        const activityTypeStoreState = [
+          {
+            href: '/activityTypes/125'
+          }
+        ]
+
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, campServerResponse1)
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, campServerResponse2)
+        vm.api.get('/camps/1').activityTypes()
+        await letNetworkRequestFinish()
+        const embeddedCollection = vm.api.get('/camps/1').activityTypes()
+
+        // when
+        vm.api.reload(embeddedCollection)
+
+        // then
+        expect(embeddedCollection._meta.self).toBeUndefined()
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api['/camps/1#activityTypes'].items).toMatchObject(activityTypeStoreState)
       })
 
       it('loads the contents of an embedded collection depending on the avoidNPlusOneQueries flag', async () => {
@@ -901,7 +1033,7 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(axiosMock.history.delete.length).toEqual(1)
-        expect(axiosMock.history.get.length).toEqual(3)
+        expect(axiosMock.history.get.length).toEqual(2)
       })
 
       it('deletes an object from the store and reloads all entities referencing it', async () => {
@@ -935,7 +1067,7 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(axiosMock.history.delete.length).toEqual(1)
-        expect(axiosMock.history.get.length).toEqual(3)
+        expect(axiosMock.history.get.length).toEqual(2)
       })
 
       it('breaks circular dependencies when deleting an entity in the reference circle', async () => {

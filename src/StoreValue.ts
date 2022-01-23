@@ -1,9 +1,10 @@
 import urltemplate from 'url-template'
-import { isTemplatedLink, isEntityReference } from './halHelpers'
+import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
 import EmbeddedCollection from './EmbeddedCollection'
 import Resource from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
 import { StoreData, StoreDataEntity } from './interfaces/StoreData'
+import Collection from './interfaces/Collection'
 import StoreValueCreator from './StoreValueCreator'
 import { InternalConfig } from './interfaces/Config'
 import HasItems from './HasItems'
@@ -40,16 +41,20 @@ class StoreValue implements Resource {
       .forEach(key => {
         const value = storeData[key]
 
-        // storeData[key] is an embedded collection (need min. 1 item to detect an embedded collection)
-        if (Array.isArray(value) && value.length > 0 && isEntityReference(value[0])) {
+        // storeData[key] is a virtual link (=embedded collection)
+        if (isVirtualLink(value)) {
           // build complete Collection class = EmbeddedCollection + HasItems mixin
           const EmbeddedCollectionClass = HasItems(EmbeddedCollection, this.apiActions, this.config, storeData._meta.self, key)
 
           const loadCollection = storeData._meta.load
-            ? (storeData._meta.load as Promise<StoreDataEntity>).then(parentResource => new EmbeddedCollectionClass(parentResource[key], storeData._meta.self, key))
+            ? (storeData._meta.load as Promise<StoreDataEntity>).then(() => {
+                const collection = this.apiActions.get(value.href) as Collection
+                return new EmbeddedCollectionClass(collection, storeData._meta.self, key)
+              })
             : null
 
-          this[key] = () => new EmbeddedCollectionClass(value, storeData._meta.self, key, loadCollection)
+          const collection = this.apiActions.get(value.href) as Collection
+          this[key] = () => new EmbeddedCollectionClass(collection, storeData._meta.self, key, loadCollection)
 
           // storeData[key] is a reference only (contains only href; no data)
         } else if (isEntityReference(value)) {

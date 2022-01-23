@@ -1,5 +1,6 @@
 import { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
 import { Link } from './interfaces/StoreData'
+import Collection from './interfaces/Collection'
 
 /**
  * Imitates a full standalone collection with an items property, even if there is no separate URI (as it
@@ -27,9 +28,9 @@ class EmbeddedCollection implements EmbeddedCollectionMeta {
    * @param reloadProperty  property in the containing entity under which the embedded collection is saved
    * @param loadCollection  a promise that will resolve when the parent entity has finished (re-)loading
    */
-  constructor (items: Array<Link>, reloadUri: string, reloadProperty: string, loadCollection: Promise<EmbeddedCollectionMeta> | null = null) {
+  constructor (collection: Collection, reloadUri: string, reloadProperty: string, loadCollection: Promise<EmbeddedCollectionMeta> | null = null) {
     this._storeData = {
-      items
+      items: collection._storeData.items
     }
 
     this._meta = {

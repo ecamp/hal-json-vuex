@@ -2,6 +2,10 @@ type Link = {
     href: string
 }
 
+type VirtualLink = Link & {
+    virtual?: boolean
+}
+
 type TemplatedLink = Link & {
     templated: string
 }
@@ -35,6 +39,6 @@ type StoreDataCollection = StoreDataMeta & {
 
 type StoreData = StoreDataEntity | StoreDataCollection
 
-export { StoreData, Link, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
+export { StoreData, Link, VirtualLink, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
 
 export default StoreData
