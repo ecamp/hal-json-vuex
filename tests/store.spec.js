@@ -1467,6 +1467,42 @@ describe('API store', () => {
         expect(vm.api.get('/camps/1').emptyArray).toEqual([])
         done()
       })
+
+      it('throws error when accessing non-existing property like a relation', async done => {
+        // given
+        axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
+
+        // when
+        let loadingObject = null
+        loadingObject = vm.api.get().nonexistingProperty()
+
+        // then (loading)
+        expect(loadingObject).toBeInstanceOf(LoadingStoreValue)
+        expect(loadingObject.toJSON()).toEqual('{}')
+
+        // then (loaded)
+        await expect(loadingObject._meta.load).rejects.toThrow("Property 'nonexistingProperty' on resource http://localhost was used like a relation, but no relation with this name was returned by the API (actual return value: undefined)")
+
+        done()
+      })
+
+      it('throws error when accessing primite property like a relation', async done => {
+        // given
+        axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
+
+        // when
+        let loadingObject = null
+        loadingObject = vm.api.get().the()
+
+        // then (loading)
+        expect(loadingObject).toBeInstanceOf(LoadingStoreValue)
+        expect(loadingObject.toJSON()).toEqual('{}')
+
+        // then (loaded)
+        await expect(loadingObject._meta.load).rejects.toThrow("Property 'the' on resource http://localhost was used like a relation, but no relation with this name was returned by the API (actual return value: \"root\")")
+
+        done()
+      })
     })
   })
 })
