@@ -23,8 +23,8 @@ import objectProperty from './resources/object-property'
 import arrayProperty from './resources/array-property'
 import root from './resources/root'
 
-import LoadingStoreValue from '../src/LoadingStoreValue'
-import StoreValue from '../src/StoreValue'
+import LoadingResource from '../src/LoadingResource'
+import Resource from '../src/Resource'
 
 async function letNetworkRequestFinish () {
   await new Promise(resolve => {
@@ -78,7 +78,7 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject(root.storeState)
       })
 
-      it('can serialize StoreValue object', async done => {
+      it('can serialize Resource object', async done => {
         // given
         axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
 
@@ -86,12 +86,12 @@ describe('API store', () => {
         const loadingObject = vm.api.get()
 
         // then (loading)
-        expect(loadingObject).toBeInstanceOf(LoadingStoreValue)
+        expect(loadingObject).toBeInstanceOf(LoadingResource)
         expect(loadingObject.toJSON()).toEqual('{}')
 
         // then (loaded)
         const loadedObject = await loadingObject._meta.load
-        expect(loadedObject).toBeInstanceOf(StoreValue)
+        expect(loadedObject).toBeInstanceOf(Resource)
         expect(loadedObject.toJSON()).toEqual('{"this":"is","the":"root","_meta":{"self":"","loading":false,"reloading":false,"load":"{}"}}')
         done()
       })
@@ -427,14 +427,14 @@ describe('API store', () => {
         expect(meta.self).toEqual(null)
       })
 
-      it('returns the correct object when awaiting._meta.load on a LoadingStoreValue', async done => {
+      it('returns the correct object when awaiting._meta.load on a LoadingResource', async done => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
-        const loadingStoreValue = vm.api.get('/camps/1')
-        expect(loadingStoreValue).toBeInstanceOf(vm.api.LoadingStoreValue)
+        const loadingResource = vm.api.get('/camps/1')
+        expect(loadingResource).toBeInstanceOf(vm.api.LoadingResource)
 
         // when
-        loadingStoreValue._meta.load.then(loadedData => {
+        loadingResource._meta.load.then(loadedData => {
           // then
           expect(loadedData).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
 
@@ -450,7 +450,7 @@ describe('API store', () => {
         vm.api.get('/camps/1')
         await letNetworkRequestFinish()
         const camp = vm.api.get('/camps/1')
-        expect(camp).not.toBeInstanceOf(vm.api.LoadingStoreValue)
+        expect(camp).not.toBeInstanceOf(vm.api.LoadingResource)
 
         // when
         const loadedData = await camp._meta.load
@@ -1437,11 +1437,11 @@ describe('API store', () => {
         })
       })
 
-      it('sets property loading on LoadingStoreValue to true', () => {
+      it('sets property loading on LoadingResource to true', () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
-        const loadingStoreValue = vm.api.get('/camps/1')
-        expect(loadingStoreValue._meta.loading).toBe(true)
+        const loadingResource = vm.api.get('/camps/1')
+        expect(loadingResource._meta.loading).toBe(true)
       })
 
       it('returns error when `get` encounters network error', async () => {
@@ -1611,7 +1611,7 @@ describe('API store', () => {
         loadingObject = vm.api.get().nonexistingProperty()
 
         // then (loading)
-        expect(loadingObject).toBeInstanceOf(LoadingStoreValue)
+        expect(loadingObject).toBeInstanceOf(LoadingResource)
         expect(loadingObject.toJSON()).toEqual('{}')
 
         // then (loaded)
@@ -1629,7 +1629,7 @@ describe('API store', () => {
         loadingObject = vm.api.get().the()
 
         // then (loading)
-        expect(loadingObject).toBeInstanceOf(LoadingStoreValue)
+        expect(loadingObject).toBeInstanceOf(LoadingResource)
         expect(loadingObject.toJSON()).toEqual('{}')
 
         // then (loaded)

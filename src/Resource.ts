@@ -1,20 +1,20 @@
 import urltemplate from 'url-template'
 import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
-import Resource from './interfaces/Resource'
+import ResourceInterface from './interfaces/ResourceInterface'
 import ApiActions from './interfaces/ApiActions'
 import { StoreData } from './interfaces/StoreData'
-import StoreValueCreator from './StoreValueCreator'
+import ResourceCreator from './ResourceCreator'
 import { InternalConfig } from './interfaces/Config'
 
 /**
- * Represents an actual StoreValue, by wrapping the given Vuex store storeData. The storeData must not be loading.
+ * Represents an actual Resource, by wrapping the given Vuex store storeData. The storeData must not be loading.
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
  */
-class StoreValue implements Resource {
+class Resource implements ResourceInterface {
   public _meta: {
     self: string,
-    load: Promise<Resource>
+    load: Promise<ResourceInterface>
     loading: boolean
   }
 
@@ -25,10 +25,10 @@ class StoreValue implements Resource {
   /**
    * @param storeData fully loaded entity storeData from the Vuex store
    * @param apiActions inject dependency: API actions
-   * @param storeValueCreator inject dependency StoreValue factory
+   * @param resourceCreator inject dependency Resource factory
    * @param config inject dependency: config options
    */
-  constructor (storeData: StoreData, apiActions: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
+  constructor (storeData: StoreData, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
     this.apiActions = apiActions
     this.config = config
     this._storeData = storeData
@@ -58,7 +58,7 @@ class StoreValue implements Resource {
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadResource = storeData._meta.reloading
-      ? (storeData._meta.load as Promise<StoreData>).then(reloadedData => storeValueCreator.wrap(reloadedData))
+      ? (storeData._meta.load as Promise<StoreData>).then(reloadedData => resourceCreator.wrap(reloadedData))
       : Promise.resolve(this)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
@@ -69,11 +69,11 @@ class StoreValue implements Resource {
     }
   }
 
-  $reload (): Promise<Resource> {
+  $reload (): Promise<ResourceInterface> {
     return this.apiActions.reload(this)
   }
 
-  $post (data: unknown): Promise<Resource | null> {
+  $post (data: unknown): Promise<ResourceInterface | null> {
     if (this.isVirtual()) {
       throw new Error('$post is not implemented for virtual resources')
     }
@@ -81,7 +81,7 @@ class StoreValue implements Resource {
     return this.apiActions.post(this._meta.self, data)
   }
 
-  $patch (data: unknown): Promise<Resource> {
+  $patch (data: unknown): Promise<ResourceInterface> {
     if (this.isVirtual()) {
       throw new Error('$patch is not implemented for virtual resources')
     }
@@ -120,4 +120,4 @@ class StoreValue implements Resource {
   }
 }
 
-export default StoreValue
+export default Resource

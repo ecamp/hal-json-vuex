@@ -11,8 +11,8 @@ import linkedCollection from './resources/linked-collection'
 import embeddedCollection from './resources/embedded-collection'
 import templatedLink from './resources/templated-link'
 import rootWithLink from './resources/root-with-link'
-import StoreValue from '../src/StoreValue'
-import LoadingStoreValue from '../src/LoadingStoreValue'
+import Resource from '../src/Resource'
+import LoadingResource from '../src/LoadingResource'
 
 async function letNetworkRequestFinish () {
   await new Promise(resolve => {
@@ -68,7 +68,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$reload()
@@ -92,7 +92,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/camps').networkError()
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$reload()
@@ -121,8 +121,8 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(StoreValue)
-    expect(camp.periods()).toBeInstanceOf(StoreValue)
+    expect(camp).toBeInstanceOf(Resource)
+    expect(camp.periods()).toBeInstanceOf(Resource)
 
     // when
     const load = camp.periods().$reload()
@@ -132,7 +132,7 @@ describe('Using dollar methods', () => {
     const periods = await load
 
     expect(periods.items.length).toEqual(2)
-    expect(periods).toBeInstanceOf(StoreValue)
+    expect(periods).toBeInstanceOf(Resource)
 
     done()
   })
@@ -154,7 +154,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$post({ some: 'thing' })
@@ -190,7 +190,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$post({ some: 'thing' })
@@ -216,7 +216,7 @@ describe('Using dollar methods', () => {
     axiosMock.onPost('http://localhost/camps').reply(200, embeddedSingleEntity.serverResponse)
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$post({ some: 'thing' })
@@ -261,7 +261,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$patch({ some: 'thing' })
@@ -296,7 +296,7 @@ describe('Using dollar methods', () => {
       }
     })
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$patch({ some: 'thing' })
@@ -316,7 +316,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(StoreValue)
+    expect(camp).toBeInstanceOf(Resource)
 
     // when
     camp.$del()
@@ -334,7 +334,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(StoreValue)
+    expect(camp).toBeInstanceOf(Resource)
 
     // when
     const hrefPromise = camp.$href('activities')
@@ -352,7 +352,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(StoreValue)
+    expect(camp).toBeInstanceOf(Resource)
 
     // when
     const hrefPromise = camp.$href('users', { id: 999 })
@@ -370,7 +370,7 @@ describe('Using dollar methods', () => {
     vm.api.get()
     await letNetworkRequestFinish()
     const root = vm.api.get()
-    expect(root).toBeInstanceOf(StoreValue)
+    expect(root).toBeInstanceOf(Resource)
 
     // when
     const hrefPromise = root.$href('books')
@@ -388,7 +388,7 @@ describe('Using dollar methods', () => {
     axiosMock.onDelete('http://localhost/camps/1').reply(204)
 
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(LoadingStoreValue)
+    expect(camp).toBeInstanceOf(LoadingResource)
 
     // when
     camp.$del()
@@ -423,7 +423,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$loadItems()
@@ -458,7 +458,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/camps').networkError()
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$loadItems()
@@ -542,7 +542,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/users/1').lastReadBook().chapters()
     await letNetworkRequestFinish()
     const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
-    expect(lastReadBookChapters).toBeInstanceOf(StoreValue)
+    expect(lastReadBookChapters).toBeInstanceOf(Resource)
 
     // when
     const load = lastReadBookChapters.$loadItems()
@@ -630,7 +630,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/books/555').replyOnce(200, bookResponse)
 
     const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
-    expect(lastReadBookChapters).toBeInstanceOf(LoadingStoreValue)
+    expect(lastReadBookChapters).toBeInstanceOf(LoadingResource)
 
     // when
     const load = lastReadBookChapters.$loadItems()
