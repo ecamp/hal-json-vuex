@@ -1,10 +1,9 @@
-import EmbeddedCollection, { EmbeddedCollectionMeta } from './EmbeddedCollection'
 import Resource from './Resource'
 import StoreData from './StoreData'
 
 interface ApiActions {
-    get: (uriOrEntity: string | Resource | StoreData, forceReload?: boolean) => Resource
-    reload: (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionMeta) => Promise<Resource | EmbeddedCollection>
+    get: (uriOrEntity: string | Resource | StoreData) => Resource
+    reload: (uriOrEntity: string | Resource) => Promise<Resource>
     post: (uriOrEntity: string | Resource, data: unknown) => Promise<Resource | null>
     patch: (uriOrEntity: string | Resource, data: unknown) => Promise<Resource>
     del: (uriOrEntity: string | Resource) => Promise<string | void>

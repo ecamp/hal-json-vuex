@@ -1,13 +1,10 @@
 import urltemplate from 'url-template'
 import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
-import EmbeddedCollection from './EmbeddedCollection'
 import Resource from './interfaces/Resource'
 import ApiActions from './interfaces/ApiActions'
-import { StoreData, StoreDataEntity } from './interfaces/StoreData'
-import Collection from './interfaces/Collection'
+import { StoreData } from './interfaces/StoreData'
 import StoreValueCreator from './StoreValueCreator'
 import { InternalConfig } from './interfaces/Config'
-import HasItems from './HasItems'
 
 /**
  * Represents an actual StoreValue, by wrapping the given Vuex store storeData. The storeData must not be loading.
@@ -43,18 +40,7 @@ class StoreValue implements Resource {
 
         // storeData[key] is a virtual link (=embedded collection)
         if (isVirtualLink(value)) {
-          // build complete Collection class = EmbeddedCollection + HasItems mixin
-          const EmbeddedCollectionClass = HasItems(EmbeddedCollection, this.apiActions, this.config, storeData._meta.self, key)
-
-          const loadCollection = storeData._meta.loading && storeData._meta.load
-            ? (storeData._meta.load as Promise<StoreDataEntity>).then(() => {
-                const collection = this.apiActions.get(value.href) as Collection
-                return new EmbeddedCollectionClass(collection, storeData._meta.self, key, this.apiActions)
-              })
-            : null
-
-          const collection = this.apiActions.get(value.href) as Collection
-          this[key] = () => new EmbeddedCollectionClass(collection, storeData._meta.self, key, this.apiActions, loadCollection)
+          this[key] = () => this.apiActions.get(value.href)
 
           // storeData[key] is a reference only (contains only href; no data)
         } else if (isEntityReference(value)) {
@@ -84,18 +70,30 @@ class StoreValue implements Resource {
   }
 
   $reload (): Promise<Resource> {
-    return this.apiActions.reload(this._meta.self)
+    return this.apiActions.reload(this)
   }
 
   $post (data: unknown): Promise<Resource | null> {
+    if (this.isVirtual()) {
+      throw new Error('$post is not implemented for virtual resources')
+    }
+
     return this.apiActions.post(this._meta.self, data)
   }
 
   $patch (data: unknown): Promise<Resource> {
+    if (this.isVirtual()) {
+      throw new Error('$patch is not implemented for virtual resources')
+    }
+
     return this.apiActions.patch(this._meta.self, data)
   }
 
   $del (): Promise<string | void> {
+    if (this.isVirtual()) {
+      throw new Error('$del is not implemented for virtual resources')
+    }
+
     return this.apiActions.del(this._meta.self)
   }
 
@@ -111,6 +109,14 @@ class StoreValue implements Resource {
     // for the lack of any better alternative, return store data as JSON
     // alternatively: could also return '{}', as the data cannot be used directly, anyway
     return JSON.stringify(this._storeData)
+  }
+
+  /**
+   * returns true, if resource is only virtual generated an not an actual resource on the API
+   */
+  private isVirtual (): boolean {
+    const meta = this._storeData._meta
+    return 'virtual' in meta && meta.virtual
   }
 }
 

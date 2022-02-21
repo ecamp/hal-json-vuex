@@ -791,7 +791,7 @@ describe('API store', () => {
         vm.api.reload(embeddedCollection)
 
         // then
-        expect(embeddedCollection._meta.self).toBeUndefined()
+        expect(embeddedCollection._meta.self).toBe('http://localhost/camps/1#activityTypes')
         await letNetworkRequestFinish()
         expect(vm.$store.state.api['/camps/1#activityTypes'].items).toMatchObject(campData.storeState)
       })
@@ -839,7 +839,7 @@ describe('API store', () => {
         vm.api.reload(embeddedCollection)
 
         // then
-        expect(embeddedCollection._meta.self).toBeUndefined()
+        expect(embeddedCollection._meta.self).toBe('http://localhost/camps/1#activityTypes')
         await letNetworkRequestFinish()
         expect(vm.$store.state.api['/camps/1#activityTypes'].items).toMatchObject(activityTypeStoreState)
       })

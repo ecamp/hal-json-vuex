@@ -18,7 +18,7 @@ type GConstructor<T> = new (...args: any[]) => T;
 type HasStoreData = GConstructor<{ _storeData: { items: Array<Link> } }>;
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActions, config: InternalConfig, reloadUri?: string, reloadProperty?: string) {
+function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActions, config: InternalConfig) {
   /**
    * Filter out items that are marked as deleting (eager removal)
    */
@@ -75,8 +75,8 @@ function HasItems<TBase extends HasStoreData> (Base: TBase, apiActions: ApiActio
       }
 
       // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
-      if (config.avoidNPlusOneRequests && reloadUri) {
-        return apiActions.reload({ _meta: { reload: { uri: reloadUri || '', property: reloadProperty || '' } } }) as Promise<Collection> // we know that reload resolves to a type Collection
+      if (config.avoidNPlusOneRequests) {
+        return apiActions.reload(this as unknown as Collection) as Promise<Collection> // we know that reload resolves to a type Collection
 
       // no eager loading: replace each reference (Link) with a StoreValue (Resource)
       } else {

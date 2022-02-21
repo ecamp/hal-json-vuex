@@ -13,7 +13,6 @@ import templatedLink from './resources/templated-link'
 import rootWithLink from './resources/root-with-link'
 import StoreValue from '../src/StoreValue'
 import LoadingStoreValue from '../src/LoadingStoreValue'
-import EmbeddedCollection from '../src/EmbeddedCollection'
 
 async function letNetworkRequestFinish () {
   await new Promise(resolve => {
@@ -123,7 +122,7 @@ describe('Using dollar methods', () => {
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
     expect(camp).toBeInstanceOf(StoreValue)
-    expect(camp.periods()).toBeInstanceOf(EmbeddedCollection)
+    expect(camp.periods()).toBeInstanceOf(StoreValue)
 
     // when
     const load = camp.periods().$reload()
@@ -133,7 +132,7 @@ describe('Using dollar methods', () => {
     const periods = await load
 
     expect(periods.items.length).toEqual(2)
-    expect(periods).toBeInstanceOf(EmbeddedCollection)
+    expect(periods).toBeInstanceOf(StoreValue)
 
     done()
   })
@@ -543,7 +542,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/users/1').lastReadBook().chapters()
     await letNetworkRequestFinish()
     const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
-    expect(lastReadBookChapters).toBeInstanceOf(EmbeddedCollection)
+    expect(lastReadBookChapters).toBeInstanceOf(StoreValue)
 
     // when
     const load = lastReadBookChapters.$loadItems()

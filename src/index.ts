@@ -10,10 +10,8 @@ import { ExternalConfig } from './interfaces/Config'
 import { Store } from 'vuex/types'
 import { AxiosInstance, AxiosError } from 'axios'
 import Resource from './interfaces/Resource'
-import StoreData, { VirtualStoreData, Link, SerializablePromise } from './interfaces/StoreData'
+import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
-import EmbeddedCollectionClass from './EmbeddedCollection'
-import EmbeddedCollection, { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
@@ -133,15 +131,11 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  async function reload (uriOrEntity: string | Resource | StoreData | VirtualStoreData | EmbeddedCollectionMeta): Promise<Resource | EmbeddedCollection> {
-    if (isEmbeddedCollection(uriOrEntity)) {
+  async function reload (uriOrEntity: string | Resource): Promise<Resource> {
+    if (uriOrEntity instanceof StoreValue && 'virtual' in uriOrEntity._storeData._meta && uriOrEntity._storeData._meta.virtual) {
       // For embedded collections which had to reload the parent entity, unwrap the embedded collection after loading has finished
-      return reload(uriOrEntity._meta.reload.uri).then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection)
-    }
-
-    if (isVirtualStoreData(uriOrEntity) && uriOrEntity._meta.virtual) {
-      // For virtual resources which had to reload the owningResource, unwrap the relation after loading has finished
-      return reload(uriOrEntity._meta.owningResource).then(owner => owner[uriOrEntity._meta.owningRelation]() as Resource)
+      const { owningResource, owningRelation } = uriOrEntity._storeData._meta
+      return reload(owningResource).then(owner => owner[owningRelation]())
     }
 
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
@@ -165,33 +159,14 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     return loadPromise.then(storeData => storeValueCreator.wrap(storeData))
   }
 
-  /**
-   * Type guard for EmbeddedCollectionMeta
-   * @param uriOrEntity
-   */
-  function isVirtualStoreData (uriOrEntity: string | Resource | EmbeddedCollectionMeta | StoreData | VirtualStoreData | null): uriOrEntity is VirtualStoreData {
-    if (uriOrEntity === null) return false
+  async function reloadResourceFromStoreData (storeData: StoreData) {
+    if ('virtual' in storeData._meta && storeData._meta.virtual) {
+      const { owningResource, owningRelation } = storeData._meta
 
-    if (typeof uriOrEntity === 'string') return false
+      return reload(owningResource).then(owner => owner[owningRelation]())
+    }
 
-    // found an object that looks like an EmbeddedCollectionMeta
-    return 'virtual' in uriOrEntity._meta
-  }
-
-  /**
-   * Type guard for EmbeddedCollectionMeta
-   * @param uriOrEntity
-   */
-  function isEmbeddedCollection (uriOrEntity: string | Resource | EmbeddedCollectionMeta | StoreData | VirtualStoreData | null): uriOrEntity is EmbeddedCollectionMeta {
-    if (uriOrEntity === null) return false
-
-    if (typeof uriOrEntity === 'string') return false
-
-    // found an actual EmbeddedCollection instance
-    if (uriOrEntity instanceof EmbeddedCollectionClass) return true
-
-    // found an object that looks like an EmbeddedCollectionMeta
-    return 'reload' in uriOrEntity._meta
+    return reload(storeData._meta.self)
   }
 
   /**
@@ -392,7 +367,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
 
       // reload outdated entities...
-      .map(outdatedEntity => reload(outdatedEntity).catch(() => {
+      .map(outdatedEntity => reloadResourceFromStoreData(outdatedEntity).catch(() => {
         // ...but ignore any errors (such as 404 errors during reloading)
         // handleAxiosError will take care of recursively deleting cascade-deleted entities
       }))
