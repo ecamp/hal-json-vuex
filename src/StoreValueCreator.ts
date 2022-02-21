@@ -60,10 +60,7 @@ class StoreValueCreator {
   wrapData (data: StoreData): Resource {
     // Store data looks like a collection --> return Collection
     if (isCollection(data)) {
-      // build Collection class = StoreValue + HasItems mixin
-      const Collection = HasItems(StoreValue, this.apiActions, this.config)
-
-      return new Collection(data, this.apiActions, this, this.config) // these parameters are passed to StoreValue constructor
+      return new HasItems(data, this.apiActions, this, this.config) // these parameters are passed to StoreValue constructor
 
     // else Store Data looks like an entity --> return normal StoreValue
     } else {
