@@ -1035,7 +1035,7 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(axiosMock.history.delete.length).toEqual(1)
-        expect(axiosMock.history.get.length).toEqual(2)
+        expect(axiosMock.history.get.length).toEqual(3)
       })
 
       it('deletes an object from the store and reloads all entities referencing it', async () => {
@@ -1069,7 +1069,7 @@ describe('API store', () => {
         // then
         await letNetworkRequestFinish()
         expect(axiosMock.history.delete.length).toEqual(1)
-        expect(axiosMock.history.get.length).toEqual(2)
+        expect(axiosMock.history.get.length).toEqual(3)
       })
 
       it('breaks circular dependencies when deleting an entity in the reference circle', async () => {

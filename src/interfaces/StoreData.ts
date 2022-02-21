@@ -23,6 +23,14 @@ type StoreDataMeta = {
     }
 }
 
+type VirtualStoreDataMeta = {
+    _meta: {
+        virtual: boolean
+        owningResource: string
+        owningRelation: string
+    }
+}
+
 type StoreDataEntity = StoreDataMeta & {
     items: never,
     _meta: {
@@ -39,6 +47,8 @@ type StoreDataCollection = StoreDataMeta & {
 
 type StoreData = StoreDataEntity | StoreDataCollection
 
-export { StoreData, Link, VirtualLink, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
+type VirtualStoreData = StoreData & VirtualStoreDataMeta
+
+export { StoreData, VirtualStoreData, Link, VirtualLink, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
 
 export default StoreData

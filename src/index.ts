@@ -10,7 +10,7 @@ import { ExternalConfig } from './interfaces/Config'
 import { Store } from 'vuex/types'
 import { AxiosInstance, AxiosError } from 'axios'
 import Resource from './interfaces/Resource'
-import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
+import StoreData, { VirtualStoreData, Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
 import EmbeddedCollectionClass from './EmbeddedCollection'
 import EmbeddedCollection, { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
@@ -133,9 +133,18 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  async function reload (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionMeta): Promise<Resource | EmbeddedCollection> {
-    // For embedded collections which have no self link, reload the parent entity instead
-    const uri = normalizeEntityUri(isEmbeddedCollection(uriOrEntity) ? uriOrEntity._meta.reload.uri : uriOrEntity, axios.defaults.baseURL)
+  async function reload (uriOrEntity: string | Resource | StoreData | VirtualStoreData | EmbeddedCollectionMeta): Promise<Resource | EmbeddedCollection> {
+    if (isEmbeddedCollection(uriOrEntity)) {
+      // For embedded collections which had to reload the parent entity, unwrap the embedded collection after loading has finished
+      return reload(uriOrEntity._meta.reload.uri).then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection)
+    }
+
+    if (isVirtualStoreData(uriOrEntity) && uriOrEntity._meta.virtual) {
+      // For virtual resources which had to reload the owningResource, unwrap the relation after loading has finished
+      return reload(uriOrEntity._meta.owningResource).then(owner => owner[uriOrEntity._meta.owningRelation]() as Resource)
+    }
+
+    const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
       if (uriOrEntity instanceof LoadingStoreValue) {
@@ -153,18 +162,27 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       return store.state[opts.apiName][uri]
     }))
 
-    const resourcePromise = loadPromise.then(storeData => storeValueCreator.wrap(storeData))
-    return isEmbeddedCollection(uriOrEntity)
-      // For embedded collections which had to reload the parent entity, unwrap the embedded collection after loading has finished
-      ? resourcePromise.then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection)
-      : resourcePromise
+    return loadPromise.then(storeData => storeValueCreator.wrap(storeData))
   }
 
   /**
    * Type guard for EmbeddedCollectionMeta
    * @param uriOrEntity
    */
-  function isEmbeddedCollection (uriOrEntity: string | Resource | EmbeddedCollectionMeta | StoreData | null): uriOrEntity is EmbeddedCollectionMeta {
+  function isVirtualStoreData (uriOrEntity: string | Resource | EmbeddedCollectionMeta | StoreData | VirtualStoreData | null): uriOrEntity is VirtualStoreData {
+    if (uriOrEntity === null) return false
+
+    if (typeof uriOrEntity === 'string') return false
+
+    // found an object that looks like an EmbeddedCollectionMeta
+    return 'virtual' in uriOrEntity._meta
+  }
+
+  /**
+   * Type guard for EmbeddedCollectionMeta
+   * @param uriOrEntity
+   */
+  function isEmbeddedCollection (uriOrEntity: string | Resource | EmbeddedCollectionMeta | StoreData | VirtualStoreData | null): uriOrEntity is EmbeddedCollectionMeta {
     if (uriOrEntity === null) return false
 
     if (typeof uriOrEntity === 'string') return false
@@ -392,7 +410,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       normalizeUri: (uri: string) => normalizeEntityUri(uri, axios.defaults.baseURL),
       filterReferences: true,
       embeddedStandaloneListKey: 'items',
-      embeddedStandaloneListVirtualKeys: true
+      virtualSelfLinks: true
     })
     store.commit('add', normalizedData)
 
