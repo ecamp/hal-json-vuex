@@ -105,7 +105,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get (uriOrEntity: string | ResourceInterface | StoreData = ''): ResourceInterface {
+  function get (uriOrEntity: string | ResourceInterface): ResourceInterface {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {

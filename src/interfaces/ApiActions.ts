@@ -1,8 +1,7 @@
 import ResourceInterface from './ResourceInterface'
-import StoreData from './StoreData'
 
 interface ApiActions {
-    get: (uriOrEntity: string | ResourceInterface | StoreData) => ResourceInterface
+    get: (uriOrEntity: string | ResourceInterface) => ResourceInterface
     reload: (uriOrEntity: string | ResourceInterface) => Promise<ResourceInterface>
     post: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface | null>
     patch: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface>
