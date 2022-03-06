@@ -12,6 +12,7 @@ import { AxiosInstance, AxiosError } from 'axios'
 import ResourceInterface from './interfaces/ResourceInterface'
 import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
+import { isVirtualResource } from './halHelpers'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
@@ -132,19 +133,23 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                    in the Vuex store.
    */
   async function reload (uriOrEntity: string | ResourceInterface): Promise<ResourceInterface> {
-    if (uriOrEntity instanceof Resource && 'virtual' in uriOrEntity._storeData._meta && uriOrEntity._storeData._meta.virtual) {
+    let resource: ResourceInterface
+
+    if (typeof uriOrEntity === 'string') {
+      resource = get(uriOrEntity)
+    } else {
+      resource = uriOrEntity
+    }
+
+    if (isVirtualResource(resource)) {
       // For embedded collections which had to reload the parent entity, unwrap the embedded collection after loading has finished
-      const { owningResource, owningRelation } = uriOrEntity._storeData._meta
+      const { owningResource, owningRelation } = resource._storeData._meta
       return reload(owningResource).then(owner => owner[owningRelation]())
     }
 
-    const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
+    const uri = normalizeEntityUri(resource, axios.defaults.baseURL)
 
     if (uri === null) {
-      if (uriOrEntity instanceof LoadingResource) {
-        // A LoadingResource is safe to return without breaking the UI.
-        return uriOrEntity
-      }
       // We don't know anything about the requested object, something is wrong.
       throw new Error(`Could not perform reload, "${uriOrEntity}" is not an entity or URI`)
     }
@@ -157,16 +162,6 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }))
 
     return loadPromise.then(storeData => resourceCreator.wrap(storeData))
-  }
-
-  async function reloadResourceFromStoreData (storeData: StoreData) {
-    if ('virtual' in storeData._meta && storeData._meta.virtual) {
-      const { owningResource, owningRelation } = storeData._meta
-
-      return reload(owningResource).then(owner => owner[owningRelation]())
-    }
-
-    return reload(storeData._meta.self)
   }
 
   /**
@@ -367,7 +362,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
 
       // reload outdated entities...
-      .map(outdatedEntity => reloadResourceFromStoreData(outdatedEntity).catch(() => {
+      .map(outdatedEntity => reload(outdatedEntity._meta.self).catch(() => {
         // ...but ignore any errors (such as 404 errors during reloading)
         // handleAxiosError will take care of recursively deleting cascade-deleted entities
       }))

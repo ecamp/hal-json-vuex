@@ -1,5 +1,5 @@
 import urltemplate from 'url-template'
-import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
+import { isTemplatedLink, isVirtualLink, isEntityReference, isVirtualResource } from './halHelpers'
 import ResourceInterface from './interfaces/ResourceInterface'
 import ApiActions from './interfaces/ApiActions'
 import { StoreData } from './interfaces/StoreData'
@@ -74,7 +74,7 @@ class Resource implements ResourceInterface {
   }
 
   $post (data: unknown): Promise<ResourceInterface | null> {
-    if (this.isVirtual()) {
+    if (isVirtualResource(this)) {
       throw new Error('$post is not implemented for virtual resources')
     }
 
@@ -82,7 +82,7 @@ class Resource implements ResourceInterface {
   }
 
   $patch (data: unknown): Promise<ResourceInterface> {
-    if (this.isVirtual()) {
+    if (isVirtualResource(this)) {
       throw new Error('$patch is not implemented for virtual resources')
     }
 
@@ -90,7 +90,7 @@ class Resource implements ResourceInterface {
   }
 
   $del (): Promise<string | void> {
-    if (this.isVirtual()) {
+    if (isVirtualResource(this)) {
       throw new Error('$del is not implemented for virtual resources')
     }
 
@@ -109,14 +109,6 @@ class Resource implements ResourceInterface {
     // for the lack of any better alternative, return store data as JSON
     // alternatively: could also return '{}', as the data cannot be used directly, anyway
     return JSON.stringify(this._storeData)
-  }
-
-  /**
-   * returns true, if resource is only virtual generated an not an actual resource on the API
-   */
-  private isVirtual (): boolean {
-    const meta = this._storeData._meta
-    return 'virtual' in meta && meta.virtual
   }
 }
 

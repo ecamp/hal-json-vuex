@@ -36,9 +36,16 @@ function sortQueryParams (uri: string): string {
  * @param baseUrl         common URI prefix to remove during normalization
  * @returns {null|string} normalized URI, or null if the uriOrEntity argument was not understood
  */
-function normalizeEntityUri (uriOrEntity: string | ResourceInterface | StoreData = '', baseUrl = ''): string | null {
-  if (typeof uriOrEntity === 'string') return normalizeUri(uriOrEntity, baseUrl)
-  return normalizeUri(((uriOrEntity || {})._meta || {}).self, baseUrl)
+function normalizeEntityUri (uriOrEntity: string | ResourceInterface | null = '', baseUrl = ''): string | null {
+  let uri
+
+  if (typeof uriOrEntity === 'string') {
+    uri = uriOrEntity
+  } else {
+    uri = uriOrEntity?._meta?.self
+  }
+
+  return normalizeUri(uri, baseUrl)
 }
 
 /**
