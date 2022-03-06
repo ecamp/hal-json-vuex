@@ -1,5 +1,4 @@
 import ResourceInterface from './interfaces/ResourceInterface'
-import StoreData from './interfaces/StoreData'
 
 /**
  * Sorts the query parameters in a URI, keeping the values of duplicate keys in order.
