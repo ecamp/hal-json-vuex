@@ -18,8 +18,7 @@ interface ResourceInterface {
     $post: (data: unknown) => Promise<ResourceInterface | null>
     $patch: (data: unknown) => Promise<ResourceInterface>
     $del: () => Promise<string | void>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    $href: (relation: string, templateParams: any) => Promise<string | undefined>
+    $href: (relation: string, templateParams: Record<string, string | number | boolean>) => Promise<string | undefined>
 }
 
 export { ResourceInterface }

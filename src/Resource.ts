@@ -97,7 +97,7 @@ class Resource implements ResourceInterface {
     return this.apiActions.del(this._meta.self)
   }
 
-  $href (relation: string, templateParams = {}): Promise<string | undefined> {
+  $href (relation: string, templateParams: Record<string, string | number | boolean> = {}): Promise<string | undefined> {
     return this.apiActions.href(this, relation, templateParams)
   }
 
