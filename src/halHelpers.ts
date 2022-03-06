@@ -31,7 +31,7 @@ function isEntityReference (object: keyValueObject): object is Link {
 }
 
 /**
- * A templated link in the Vuex store looks like this: { href: '/some/uri{/something}', templated: true }
+ * A virtual link in the Vuex store looks like this: { href: '/some/uri{/something}', virtual: true }
  * @param object         to be examined
  * @returns boolean      true if the object looks like a templated link, false otherwise
  */
