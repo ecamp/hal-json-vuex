@@ -1,6 +1,7 @@
 import LoadingCollection from './LoadingCollection'
 import ResourceInterface from './interfaces/ResourceInterface'
 import CollectionInterface from './interfaces/CollectionInterface'
+import { InternalConfig } from './interfaces/Config'
 
 /**
  * Creates a placeholder for an entity which has not yet finished loading from the API.
@@ -17,6 +18,7 @@ import CollectionInterface from './interfaces/CollectionInterface'
 class LoadingResource implements ResourceInterface {
   public _meta: {
     self: string | null,
+    selfUrl: string | null,
     load: Promise<ResourceInterface>
     loading: boolean
   }
@@ -26,12 +28,13 @@ class LoadingResource implements ResourceInterface {
   /**
    * @param entityLoaded a Promise that resolves to a Resource when the entity has finished
    *                     loading from the API
-   * @param absoluteSelf optional fully qualified URI of the entity being loaded, if available. If passed, the
+   * @param self optional URI of the entity being loaded, if available. If passed, the
    *                     returned LoadingResource will return it in calls to .self and ._meta.self
    */
-  constructor (loadResource: Promise<ResourceInterface>, absoluteSelf: string | null = null) {
+  constructor (loadResource: Promise<ResourceInterface>, self: string | null = null, config: InternalConfig | null = null) {
     this._meta = {
-      self: absoluteSelf,
+      self: self,
+      selfUrl: self ? config?.apiRoot + self : null,
       load: loadResource,
       loading: true
     }
@@ -64,7 +67,7 @@ class LoadingResource implements ResourceInterface {
           try {
             return property(templateParams)._meta.load
           } catch (e) {
-            throw new Error(`Property '${prop.toString()}' on resource ${absoluteSelf} was used like a relation, but no relation with this name was returned by the API (actual return value: ${JSON.stringify(property)})`)
+            throw new Error(`Property '${prop.toString()}' on resource '${self}' was used like a relation, but no relation with this name was returned by the API (actual return value: ${JSON.stringify(property)})`)
           }
         }
         ))

@@ -7,6 +7,7 @@ import { StoreData, VirtualStoreData } from './StoreData'
 interface ResourceInterface {
     _meta: {
         self: string | null
+        selfUrl: string | null
         load: Promise<ResourceInterface>
         loading: boolean
         deleting?: boolean

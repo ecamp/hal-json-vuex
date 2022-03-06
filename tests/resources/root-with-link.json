@@ -7,7 +7,7 @@
         "href": "/"
       },
       "books": {
-        "href": "http://localhost/books{/id}",
+        "href": "/books{/id}",
         "templated": true
       }
     }
