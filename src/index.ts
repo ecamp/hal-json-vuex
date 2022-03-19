@@ -252,7 +252,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     if (rel.templated) {
       return urltemplate.parse(rel.href).expand(templateParams)
     }
-    return axios.defaults.baseURL + rel.href
+    return rel.href
   }
 
   /**

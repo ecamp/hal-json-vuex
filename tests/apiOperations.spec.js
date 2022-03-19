@@ -75,7 +75,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps' } })
+    expect(await load).toMatchObject({ id: 1, _meta: { self: '/camps' } })
     done()
   })
 
@@ -99,7 +99,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ id: 2, _meta: { self: 'http://localhost/camps' } })
+    expect(await load).toMatchObject({ id: 2, _meta: { self: '/camps' } })
     done()
   })
 
@@ -161,14 +161,14 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
-    expect(vm.api.get('/camps/1')).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
+    expect(await load).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
+    expect(vm.api.get('/camps/1')).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
     expect(vm.api.get('/campTypes/20')).toMatchObject({
       id: 20,
       name: 'camp',
       js: true,
       targetGroup: 'Kids',
-      _meta: { self: 'http://localhost/campTypes/20' }
+      _meta: { self: '/campTypes/20' }
     })
     done()
   })
@@ -223,14 +223,14 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
-    expect(vm.api.get('/camps/1')).toMatchObject({ id: 1, _meta: { self: 'http://localhost/camps/1' } })
+    expect(await load).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
+    expect(vm.api.get('/camps/1')).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
     expect(vm.api.get('/campTypes/20')).toMatchObject({
       id: 20,
       name: 'camp',
       js: true,
       targetGroup: 'Kids',
-      _meta: { self: 'http://localhost/campTypes/20' }
+      _meta: { self: '/campTypes/20' }
     })
     done()
   })
@@ -268,7 +268,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ some: 'thing', _meta: { self: 'http://localhost/camps' } })
+    expect(await load).toMatchObject({ some: 'thing', _meta: { self: '/camps' } })
     done()
   })
 
@@ -303,7 +303,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ some: 'thing', _meta: { self: 'http://localhost/camps' } })
+    expect(await load).toMatchObject({ some: 'thing', _meta: { self: '/camps' } })
     done()
   })
 
@@ -341,7 +341,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(hrefPromise).resolves.toEqual('http://localhost/camps/1/activities')
+    expect(hrefPromise).resolves.toEqual('/camps/1/activities')
     done()
   })
 
@@ -359,7 +359,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(hrefPromise).resolves.toEqual('http://localhost/camps/1/users/999')
+    expect(hrefPromise).resolves.toEqual('/camps/1/users/999')
     done()
   })
 
@@ -377,7 +377,7 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(hrefPromise).resolves.toEqual('http://localhost/books')
+    expect(hrefPromise).resolves.toEqual('/books')
     done()
   })
 
@@ -432,7 +432,7 @@ describe('Using dollar methods', () => {
     await letNetworkRequestFinish()
     const result = (await load).items
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
+    expect(result[0]).toMatchObject({ id: 123, _meta: { self: '/items/123' } })
     done()
   })
 
@@ -467,7 +467,7 @@ describe('Using dollar methods', () => {
     await letNetworkRequestFinish()
     const result = (await load).items
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({ id: 123, _meta: { self: 'http://localhost/items/123' } })
+    expect(result[0]).toMatchObject({ id: 123, _meta: { self: '/items/123' } })
     done()
   })
 
@@ -555,7 +555,7 @@ describe('Using dollar methods', () => {
       id: 1028,
       name: 'The first chapter',
       _meta: {
-        self: 'http://localhost/chapters/1028'
+        self: '/chapters/1028'
       }
     })
     done()
@@ -643,7 +643,7 @@ describe('Using dollar methods', () => {
       id: 1028,
       name: 'The first chapter',
       _meta: {
-        self: 'http://localhost/chapters/1028'
+        self: '/chapters/1028'
       }
     })
     done()

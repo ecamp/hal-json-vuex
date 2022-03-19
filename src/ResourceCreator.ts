@@ -49,7 +49,7 @@ class ResourceCreator {
     // Resource is loading --> return LoadingResource
     if (meta.loading) {
       const loadResource = (meta.load as Promise<StoreData>).then(storeData => this.wrapData(storeData))
-      return new LoadingResource(loadResource, this.config.apiRoot + meta.self)
+      return new LoadingResource(loadResource, meta.self, this.config)
 
     // Resource is not loading --> wrap actual data
     } else {

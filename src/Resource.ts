@@ -14,6 +14,7 @@ import { InternalConfig } from './interfaces/Config'
 class Resource implements ResourceInterface {
   public _meta: {
     self: string,
+    selfUrl: string,
     load: Promise<ResourceInterface>
     loading: boolean
   }
@@ -65,7 +66,8 @@ class Resource implements ResourceInterface {
     this._meta = {
       ...storeData._meta,
       load: loadResource,
-      self: this.config.apiRoot + storeData._meta.self
+      self: storeData._meta.self,
+      selfUrl: this.config.apiRoot + storeData._meta.self
     }
   }
 
