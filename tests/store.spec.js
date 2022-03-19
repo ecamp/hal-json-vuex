@@ -78,7 +78,7 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject(root.storeState)
       })
 
-      it('can serialize Resource object', async done => {
+      it('can serialize Resource object', async () => {
         // given
         axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
 
@@ -93,7 +93,6 @@ describe('API store', () => {
         const loadedObject = await loadingObject._meta.load
         expect(loadedObject).toBeInstanceOf(Resource)
         expect(loadedObject.toJSON()).toEqual('{"this":"is","the":"root","_meta":{"self":"","loading":false,"reloading":false,"load":"{}"}}')
-        done()
       })
 
       it('imports embedded single entity', async () => {
@@ -427,7 +426,7 @@ describe('API store', () => {
         expect(meta.self).toEqual(null)
       })
 
-      it('returns the correct object when awaiting._meta.load on a LoadingResource', async done => {
+      it('returns the correct object when awaiting._meta.load on a LoadingResource', done => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)
         const loadingResource = vm.api.get('/camps/1')
@@ -1562,7 +1561,7 @@ describe('API store', () => {
         await expect(load).rejects.toThrow('Error trying to patch \"/camps/1\" (status 422): Request failed with status code 422')
       })
 
-      it('can handle object property', async done => {
+      it('can handle object property', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, objectProperty.serverResponse)
 
@@ -1579,10 +1578,9 @@ describe('API store', () => {
 
         expect(vm.api.get('/camps/1').emptyObject).toBeInstanceOf(Object)
         expect(vm.api.get('/camps/1').emptyObject).toEqual({})
-        done()
       })
 
-      it('can handle array property', async done => {
+      it('can handle array property', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, arrayProperty.serverResponse)
 
@@ -1599,10 +1597,9 @@ describe('API store', () => {
 
         expect(vm.api.get('/camps/1').emptyArray).toBeInstanceOf(Array)
         expect(vm.api.get('/camps/1').emptyArray).toEqual([])
-        done()
       })
 
-      it('throws error when accessing non-existing property like a relation', async done => {
+      it('throws error when accessing non-existing property like a relation', async () => {
         // given
         axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
 
@@ -1616,11 +1613,9 @@ describe('API store', () => {
 
         // then (loaded)
         await expect(loadingObject._meta.load).rejects.toThrow("Property 'nonexistingProperty' on resource '' was used like a relation, but no relation with this name was returned by the API (actual return value: undefined)")
-
-        done()
       })
 
-      it('throws error when accessing primitive property like a relation', async done => {
+      it('throws error when accessing primitive property like a relation', async () => {
         // given
         axiosMock.onGet('http://localhost/').reply(200, root.serverResponse)
 
@@ -1634,8 +1629,6 @@ describe('API store', () => {
 
         // then (loaded)
         await expect(loadingObject._meta.load).rejects.toThrow("Property 'the' on resource '' was used like a relation, but no relation with this name was returned by the API (actual return value: \"root\")")
-
-        done()
       })
 
       it('exposes absolute Url on loaded resources', async () => {
