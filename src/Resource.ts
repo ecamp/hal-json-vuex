@@ -1,5 +1,5 @@
 import urltemplate from 'url-template'
-import { isTemplatedLink, isVirtualLink, isEntityReference, isVirtualResource } from './halHelpers'
+import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
 import ResourceInterface from './interfaces/ResourceInterface'
 import ApiActions from './interfaces/ApiActions'
 import { StoreData } from './interfaces/StoreData'
