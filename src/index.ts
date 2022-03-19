@@ -69,6 +69,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
     }
 
+    if (!isUnknown(uri)) {
+      const entity = get(uri)
+      if (isVirtualResource(entity)) {
+        return Promise.reject(new Error('post is not implemented for virtual resources'))
+      }
+    }
+
     return axios.post(axios.defaults.baseURL + uri, data).then(({ data, status }) => {
       if (status === 204) {
         return null
@@ -262,6 +269,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
     const existsInStore = !isUnknown(uri)
 
+    if (existsInStore) {
+      const entity = get(uri)
+      if (isVirtualResource(entity)) {
+        return Promise.reject(new Error('patch is not implemented for virtual resources'))
+      }
+    }
+
     if (!existsInStore) {
       store.commit('addEmpty', uri)
     }
@@ -320,6 +334,14 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       // Can't delete an unknown URI, do nothing
       return Promise.reject(new Error(`Could not perform DELETE, "${uriOrEntity}" is not an entity or URI`))
     }
+
+    if (!isUnknown(uri)) {
+      const entity = get(uri)
+      if (isVirtualResource(entity)) {
+        return Promise.reject(new Error('del is not implemented for virtual resources'))
+      }
+    }
+
     store.commit('deleting', uri)
     return axios.delete(axios.defaults.baseURL + uri).then(
       () => deleted(uri),

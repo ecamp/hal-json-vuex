@@ -74,26 +74,14 @@ class Resource implements ResourceInterface {
   }
 
   $post (data: unknown): Promise<ResourceInterface | null> {
-    if (isVirtualResource(this)) {
-      throw new Error('$post is not implemented for virtual resources')
-    }
-
     return this.apiActions.post(this._meta.self, data)
   }
 
   $patch (data: unknown): Promise<ResourceInterface> {
-    if (isVirtualResource(this)) {
-      throw new Error('$patch is not implemented for virtual resources')
-    }
-
     return this.apiActions.patch(this._meta.self, data)
   }
 
   $del (): Promise<string | void> {
-    if (isVirtualResource(this)) {
-      throw new Error('$del is not implemented for virtual resources')
-    }
-
     return this.apiActions.del(this._meta.self)
   }
 

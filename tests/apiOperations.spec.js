@@ -648,4 +648,52 @@ describe('Using dollar methods', () => {
     })
     done()
   })
+
+  it('throws error when deleting virtual resource', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    const camp = await vm.api.get('/camps/1')._meta.load
+    await letNetworkRequestFinish()
+
+    // when
+    await expect(camp.periods().$del())
+
+    // then
+      .rejects
+      .toThrow('del is not implemented for virtual resources')
+
+    done()
+  })
+
+  it('throws error when posting on virtual resource', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    const camp = await vm.api.get('/camps/1')._meta.load
+    await letNetworkRequestFinish()
+
+    // when
+    await expect(camp.periods().$post({}))
+
+    // then
+      .rejects
+      .toThrow('post is not implemented for virtual resources')
+
+    done()
+  })
+
+  it('throws error when patching an virtual resource', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    const camp = await vm.api.get('/camps/1')._meta.load
+    await letNetworkRequestFinish()
+
+    // when
+    await expect(camp.periods().$patch([]))
+
+    // then
+      .rejects
+      .toThrow('patch is not implemented for virtual resources')
+
+    done()
+  })
 })
