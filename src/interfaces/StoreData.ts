@@ -2,6 +2,10 @@ type Link = {
     href: string
 }
 
+type VirtualLink = Link & {
+    virtual?: boolean
+}
+
 type TemplatedLink = Link & {
     templated: string
 }
@@ -16,6 +20,14 @@ type StoreDataMeta = {
         loading: boolean
         deleting: boolean
         reloading: boolean
+    }
+}
+
+type VirtualStoreDataMeta = StoreDataMeta & {
+    _meta: {
+        virtual: boolean
+        owningResource: string
+        owningRelation: string
     }
 }
 
@@ -35,6 +47,8 @@ type StoreDataCollection = StoreDataMeta & {
 
 type StoreData = StoreDataEntity | StoreDataCollection
 
-export { StoreData, Link, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
+type VirtualStoreData = StoreData & VirtualStoreDataMeta
+
+export { StoreData, VirtualStoreData, Link, VirtualLink, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
 
 export default StoreData

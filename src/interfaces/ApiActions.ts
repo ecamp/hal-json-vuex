@@ -1,14 +1,12 @@
-import EmbeddedCollection, { EmbeddedCollectionMeta } from './EmbeddedCollection'
-import Resource from './Resource'
-import StoreData from './StoreData'
+import ResourceInterface from './ResourceInterface'
 
 interface ApiActions {
-    get: (uriOrEntity: string | Resource | StoreData, forceReload?: boolean) => Resource
-    reload: (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionMeta) => Promise<Resource | EmbeddedCollection>
-    post: (uriOrEntity: string | Resource, data: unknown) => Promise<Resource | null>
-    patch: (uriOrEntity: string | Resource, data: unknown) => Promise<Resource>
-    del: (uriOrEntity: string | Resource) => Promise<string | void>
-    href: (uriOrEntity: string | Resource, relation: string, templateParams) => Promise<string | undefined>
+    get: (uriOrEntity: string | ResourceInterface) => ResourceInterface
+    reload: (uriOrEntity: string | ResourceInterface) => Promise<ResourceInterface>
+    post: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface | null>
+    patch: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface>
+    del: (uriOrEntity: string | ResourceInterface) => Promise<string | void>
+    href: (uriOrEntity: string | ResourceInterface, relation: string, templateParams) => Promise<string | undefined>
     isUnknown: (uri: string) => boolean
 }
 

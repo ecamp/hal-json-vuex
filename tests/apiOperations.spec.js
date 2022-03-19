@@ -8,11 +8,11 @@ import Vue from 'vue'
 import { cloneDeep } from 'lodash'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import linkedCollection from './resources/linked-collection'
+import embeddedCollection from './resources/embedded-collection'
 import templatedLink from './resources/templated-link'
 import rootWithLink from './resources/root-with-link'
-import StoreValue from '../src/StoreValue'
-import LoadingStoreValue from '../src/LoadingStoreValue'
-import EmbeddedCollection from '../src/EmbeddedCollection'
+import Resource from '../src/Resource'
+import LoadingResource from '../src/LoadingResource'
 
 async function letNetworkRequestFinish () {
   await new Promise(resolve => {
@@ -68,7 +68,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$reload()
@@ -92,7 +92,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/camps').networkError()
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$reload()
@@ -100,6 +100,40 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     expect(await load).toMatchObject({ id: 2, _meta: { self: 'http://localhost/camps' } })
+    done()
+  })
+
+  it('$reloads embedded collection', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, {
+      id: 1,
+      _embedded: {
+        periods: []
+      },
+      _links: {
+        self: {
+          href: '/camps/1'
+        }
+      }
+    })
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+
+    vm.api.get('/camps/1')
+    await letNetworkRequestFinish()
+    const camp = vm.api.get('/camps/1')
+    expect(camp).toBeInstanceOf(Resource)
+    expect(camp.periods()).toBeInstanceOf(Resource)
+
+    // when
+    const load = camp.periods().$reload()
+
+    // then
+    await letNetworkRequestFinish()
+    const periods = await load
+
+    expect(periods.items.length).toEqual(2)
+    expect(periods).toBeInstanceOf(Resource)
+
     done()
   })
 
@@ -120,7 +154,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$post({ some: 'thing' })
@@ -156,7 +190,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$post({ some: 'thing' })
@@ -182,7 +216,7 @@ describe('Using dollar methods', () => {
     axiosMock.onPost('http://localhost/camps').reply(200, embeddedSingleEntity.serverResponse)
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$post({ some: 'thing' })
@@ -227,7 +261,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$patch({ some: 'thing' })
@@ -262,7 +296,7 @@ describe('Using dollar methods', () => {
       }
     })
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$patch({ some: 'thing' })
@@ -282,7 +316,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(StoreValue)
+    expect(camp).toBeInstanceOf(Resource)
 
     // when
     camp.$del()
@@ -300,7 +334,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(StoreValue)
+    expect(camp).toBeInstanceOf(Resource)
 
     // when
     const hrefPromise = camp.$href('activities')
@@ -318,7 +352,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(StoreValue)
+    expect(camp).toBeInstanceOf(Resource)
 
     // when
     const hrefPromise = camp.$href('users', { id: 999 })
@@ -336,7 +370,7 @@ describe('Using dollar methods', () => {
     vm.api.get()
     await letNetworkRequestFinish()
     const root = vm.api.get()
-    expect(root).toBeInstanceOf(StoreValue)
+    expect(root).toBeInstanceOf(Resource)
 
     // when
     const hrefPromise = root.$href('books')
@@ -354,7 +388,7 @@ describe('Using dollar methods', () => {
     axiosMock.onDelete('http://localhost/camps/1').reply(204)
 
     const camp = vm.api.get('/camps/1')
-    expect(camp).toBeInstanceOf(LoadingStoreValue)
+    expect(camp).toBeInstanceOf(LoadingResource)
 
     // when
     camp.$del()
@@ -389,7 +423,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/camps')
     await letNetworkRequestFinish()
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(StoreValue)
+    expect(camps).toBeInstanceOf(Resource)
 
     // when
     const load = camps.$loadItems()
@@ -424,7 +458,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/camps').networkError()
 
     const camps = vm.api.get('/camps')
-    expect(camps).toBeInstanceOf(LoadingStoreValue)
+    expect(camps).toBeInstanceOf(LoadingResource)
 
     // when
     const load = camps.$loadItems()
@@ -508,7 +542,7 @@ describe('Using dollar methods', () => {
     vm.api.get('/users/1').lastReadBook().chapters()
     await letNetworkRequestFinish()
     const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
-    expect(lastReadBookChapters).toBeInstanceOf(EmbeddedCollection)
+    expect(lastReadBookChapters).toBeInstanceOf(Resource)
 
     // when
     const load = lastReadBookChapters.$loadItems()
@@ -596,7 +630,7 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/books/555').replyOnce(200, bookResponse)
 
     const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
-    expect(lastReadBookChapters).toBeInstanceOf(LoadingStoreValue)
+    expect(lastReadBookChapters).toBeInstanceOf(LoadingResource)
 
     // when
     const load = lastReadBookChapters.$loadItems()
@@ -612,6 +646,54 @@ describe('Using dollar methods', () => {
         self: 'http://localhost/chapters/1028'
       }
     })
+    done()
+  })
+
+  it('throws error when deleting virtual resource', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    const camp = await vm.api.get('/camps/1')._meta.load
+    await letNetworkRequestFinish()
+
+    // when
+    await expect(camp.periods().$del())
+
+    // then
+      .rejects
+      .toThrow('del is not implemented for virtual resources')
+
+    done()
+  })
+
+  it('throws error when posting on virtual resource', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    const camp = await vm.api.get('/camps/1')._meta.load
+    await letNetworkRequestFinish()
+
+    // when
+    await expect(camp.periods().$post({}))
+
+    // then
+      .rejects
+      .toThrow('post is not implemented for virtual resources')
+
+    done()
+  })
+
+  it('throws error when patching an virtual resource', async done => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    const camp = await vm.api.get('/camps/1')._meta.load
+    await letNetworkRequestFinish()
+
+    // when
+    await expect(camp.periods().$patch([]))
+
+    // then
+      .rejects
+      .toThrow('patch is not implemented for virtual resources')
+
     done()
   })
 })

@@ -1,19 +1,18 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
 import normalizeEntityUri from './normalizeEntityUri'
-import StoreValueCreator from './StoreValueCreator'
-import StoreValue from './StoreValue'
-import LoadingStoreValue from './LoadingStoreValue'
+import ResourceCreator from './ResourceCreator'
+import Resource from './Resource'
+import LoadingResource from './LoadingResource'
 import storeModule, { State } from './storeModule'
 import ServerException from './ServerException'
 import { ExternalConfig } from './interfaces/Config'
 import { Store } from 'vuex/types'
 import { AxiosInstance, AxiosError } from 'axios'
-import Resource from './interfaces/Resource'
+import ResourceInterface from './interfaces/ResourceInterface'
 import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
-import EmbeddedCollectionClass from './EmbeddedCollection'
-import EmbeddedCollection, { EmbeddedCollectionMeta } from './interfaces/EmbeddedCollection'
+import { isVirtualResource } from './halHelpers'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
@@ -38,7 +37,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const storeValueCreator = new StoreValueCreator({ get, reload, post, patch, del, href, isUnknown }, opts)
+  const resourceCreator = new ResourceCreator({ get, reload, post, patch, del, href, isUnknown }, opts)
 
   if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
 
@@ -64,10 +63,17 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise       resolves when the POST request has completed and the entity is available
    *                        in the Vuex store.
    */
-  function post (uriOrCollection: string | Resource, data: unknown): Promise<Resource | null> {
+  function post (uriOrCollection: string | ResourceInterface, data: unknown): Promise<ResourceInterface | null> {
     const uri = normalizeEntityUri(uriOrCollection, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
+    }
+
+    if (!isUnknown(uri)) {
+      const entity = get(uri)
+      if (isVirtualResource(entity)) {
+        return Promise.reject(new Error('post is not implemented for virtual resources'))
+      }
     }
 
     return axios.post(axios.defaults.baseURL + uri, data).then(({ data, status }) => {
@@ -107,12 +113,12 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get (uriOrEntity: string | Resource | StoreData = ''): Resource {
+  function get (uriOrEntity: string | ResourceInterface = ''): ResourceInterface {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
-      if (uriOrEntity instanceof LoadingStoreValue) {
-        // A LoadingStoreValue is safe to return without breaking the UI.
+      if (uriOrEntity instanceof LoadingResource) {
+        // A LoadingResource is safe to return without breaking the UI.
         return uriOrEntity
       }
       // We don't know anything about the requested object, something is wrong.
@@ -120,7 +126,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     setLoadPromiseOnStore(uri, load(uri, false))
-    return storeValueCreator.wrap(store.state[opts.apiName][uri])
+    return resourceCreator.wrap(store.state[opts.apiName][uri])
   }
 
   /**
@@ -133,15 +139,24 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  async function reload (uriOrEntity: string | Resource | StoreData | EmbeddedCollectionMeta): Promise<Resource | EmbeddedCollection> {
-    // For embedded collections which have no self link, reload the parent entity instead
-    const uri = normalizeEntityUri(isEmbeddedCollection(uriOrEntity) ? uriOrEntity._meta.reload.uri : uriOrEntity, axios.defaults.baseURL)
+  async function reload (uriOrEntity: string | ResourceInterface): Promise<ResourceInterface> {
+    let resource: ResourceInterface
+
+    if (typeof uriOrEntity === 'string') {
+      resource = get(uriOrEntity)
+    } else {
+      resource = uriOrEntity
+    }
+
+    if (isVirtualResource(resource)) {
+      // For embedded collections which had to reload the parent entity, unwrap the embedded collection after loading has finished
+      const { owningResource, owningRelation } = resource._storeData._meta
+      return reload(owningResource).then(owner => owner[owningRelation]())
+    }
+
+    const uri = normalizeEntityUri(resource, axios.defaults.baseURL)
 
     if (uri === null) {
-      if (uriOrEntity instanceof LoadingStoreValue) {
-        // A LoadingStoreValue is safe to return without breaking the UI.
-        return uriOrEntity
-      }
       // We don't know anything about the requested object, something is wrong.
       throw new Error(`Could not perform reload, "${uriOrEntity}" is not an entity or URI`)
     }
@@ -153,27 +168,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       return store.state[opts.apiName][uri]
     }))
 
-    const resourcePromise = loadPromise.then(storeData => storeValueCreator.wrap(storeData))
-    return isEmbeddedCollection(uriOrEntity)
-      // For embedded collections which had to reload the parent entity, unwrap the embedded collection after loading has finished
-      ? resourcePromise.then(parent => parent[uriOrEntity._meta.reload.property]() as EmbeddedCollection)
-      : resourcePromise
-  }
-
-  /**
-   * Type guard for EmbeddedCollectionMeta
-   * @param uriOrEntity
-   */
-  function isEmbeddedCollection (uriOrEntity: string | Resource | EmbeddedCollectionMeta | StoreData | null): uriOrEntity is EmbeddedCollectionMeta {
-    if (uriOrEntity === null) return false
-
-    if (typeof uriOrEntity === 'string') return false
-
-    // found an actual EmbeddedCollection instance
-    if (uriOrEntity instanceof EmbeddedCollectionClass) return true
-
-    // found an object that looks like an EmbeddedCollectionMeta
-    return 'reload' in uriOrEntity._meta
+    return loadPromise.then(storeData => resourceCreator.wrap(storeData))
   }
 
   /**
@@ -223,7 +218,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
 
   /**
    * Loads the entity specified by the URI from the API and stores it into the Vuex store. Returns a promise
-   * that resolves to the raw data stored in the Vuex store (needs to be storeValueCreator.wrapped into a StoreValue before
+   * that resolves to the raw data stored in the Vuex store (needs to be resourceCreator.wrapped into a Resource before
    * being usable in Vue components).
    * @param uri       URI of the entity to load from the API
    * @param operation description of the operation triggering this load, e.g. fetch or reload, for error reporting
@@ -250,7 +245,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param templateParams in case the relation is a templated link, the template parameters that should be filled in
    * @returns Promise      resolves to the URI of the related entity.
    */
-  async function href (uriOrEntity: string | Resource, relation: string, templateParams = {}): Promise<string | undefined> {
+  async function href (uriOrEntity: string | ResourceInterface, relation: string, templateParams:Record<string, string | number | boolean> = {}): Promise<string | undefined> {
     const selfUri = normalizeEntityUri(await get(uriOrEntity)._meta.load, axios.defaults.baseURL)
     const rel = selfUri != null ? store.state[opts.apiName][selfUri][relation] : null
     if (!rel || !rel.href) return undefined
@@ -267,12 +262,19 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   resolves when the PATCH request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  function patch (uriOrEntity: string | Resource, data: unknown) : Promise<Resource> {
+  function patch (uriOrEntity: string | ResourceInterface, data: unknown) : Promise<ResourceInterface> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform PATCH, "${uriOrEntity}" is not an entity or URI`))
     }
     const existsInStore = !isUnknown(uri)
+
+    if (existsInStore) {
+      const entity = get(uri)
+      if (isVirtualResource(entity)) {
+        return Promise.reject(new Error('patch is not implemented for virtual resources'))
+      }
+    }
 
     if (!existsInStore) {
       store.commit('addEmpty', uri)
@@ -297,7 +299,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * immediately re-fetch the purged entity from the API in order to re-display it.
    * @param uriOrEntity URI (or instance) of an entity which should be removed from the Vuex store
    */
-  function purge (uriOrEntity: string | Resource): void {
+  function purge (uriOrEntity: string | ResourceInterface): void {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't purge an unknown URI, do nothing
@@ -326,12 +328,20 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   resolves when the DELETE request has completed and either all related entites have
    *                    been reloaded from the API, or the failed deletion has been cleaned up.
    */
-  function del (uriOrEntity: string | Resource): Promise<void> {
+  function del (uriOrEntity: string | ResourceInterface): Promise<void> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't delete an unknown URI, do nothing
       return Promise.reject(new Error(`Could not perform DELETE, "${uriOrEntity}" is not an entity or URI`))
     }
+
+    if (!isUnknown(uri)) {
+      const entity = get(uri)
+      if (isVirtualResource(entity)) {
+        return Promise.reject(new Error('del is not implemented for virtual resources'))
+      }
+    }
+
     store.commit('deleting', uri)
     return axios.delete(axios.defaults.baseURL + uri).then(
       () => deleted(uri),
@@ -374,7 +384,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       .filter(outdatedEntity => !outdatedEntity._meta.deleting)
 
       // reload outdated entities...
-      .map(outdatedEntity => reload(outdatedEntity).catch(() => {
+      .map(outdatedEntity => reload(outdatedEntity._meta.self).catch(() => {
         // ...but ignore any errors (such as 404 errors during reloading)
         // handleAxiosError will take care of recursively deleting cascade-deleted entities
       }))
@@ -391,7 +401,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       metaKey: '_meta',
       normalizeUri: (uri: string) => normalizeEntityUri(uri, axios.defaults.baseURL),
       filterReferences: true,
-      embeddedStandaloneListKey: 'items'
+      embeddedStandaloneListKey: 'items',
+      virtualSelfLinks: true
     })
     store.commit('add', normalizedData)
 
@@ -447,7 +458,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   }
 
   const apiActions: ApiActions = { post, get, reload, del, patch, href, isUnknown }
-  const halJsonVuex = { ...apiActions, purge, purgeAll, href, StoreValue, LoadingStoreValue }
+  const halJsonVuex = { ...apiActions, purge, purgeAll, href, Resource, LoadingResource }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function install (Vue: any) {

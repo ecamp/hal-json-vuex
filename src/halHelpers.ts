@@ -1,4 +1,5 @@
-import { Link, TemplatedLink, StoreDataCollection } from './interfaces/StoreData'
+import { Link, VirtualLink, TemplatedLink, StoreDataCollection } from './interfaces/StoreData'
+import { ResourceInterface, VirtualResource } from './interfaces/ResourceInterface'
 
 type keyValueObject = Record<string, unknown>
 
@@ -31,6 +32,26 @@ function isEntityReference (object: keyValueObject): object is Link {
 }
 
 /**
+ * A virtual link in the Vuex store looks like this: { href: '/some/uri{/something}', virtual: true }
+ * @param object         to be examined
+ * @returns boolean      true if the object looks like a templated link, false otherwise
+ */
+function isVirtualLink (object: keyValueObject): object is VirtualLink {
+  if (!object) return false
+  return isEqualIgnoringOrder(Object.keys(object), ['href', 'virtual']) && (object.virtual === true)
+}
+
+/**
+ * A virtual resource contains a generated, virtual self link which points to another store key but
+ * doesn't correspond to an actual resource on the API. Such resources have the _meta.virtual flag set to true.
+ * @param resource
+ * @returns boolean  true if resource is a VirtualResource
+ */
+function isVirtualResource (resource: ResourceInterface): resource is VirtualResource {
+  return (resource as VirtualResource)._storeData?._meta?.virtual
+}
+
+/**
  * A standalone collection in the Vuex store has an items property that is an array.
  * @param object    to be examined
  * @returns boolean true if the object looks like a standalone collection, false otherwise
@@ -39,4 +60,4 @@ function isCollection (object: keyValueObject): object is StoreDataCollection {
   return !!(object && Array.isArray(object.items))
 }
 
-export { isTemplatedLink, isEntityReference, isCollection }
+export { isTemplatedLink, isVirtualLink, isEntityReference, isCollection, isVirtualResource }

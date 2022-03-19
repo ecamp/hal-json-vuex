@@ -42,8 +42,8 @@
   },
   "homepage": "https://github.com/ecamp/hal-json-vuex#readme",
   "dependencies": {
-    "hal-json-normalizer": "^4.0.3",
-    "url-template": "^2.0.8"
+    "hal-json-normalizer": "4.1.1",
+    "url-template": "2.0.8"
   },
   "devDependencies": {
     "@babel/plugin-transform-regenerator": "7.16.7",
@@ -51,7 +51,6 @@
     "@babel/preset-env": "7.16.11",
     "@babel/preset-typescript": "7.16.7",
     "@nuxt/types": "2.15.8",
-    "@types/url-template": "2.0.28",
     "@typescript-eslint/eslint-plugin": "5.10.1",
     "@typescript-eslint/parser": "5.10.1",
     "@vue/eslint-config-standard": "6.1.0",

@@ -1,22 +1,20 @@
 import urltemplate from 'url-template'
-import { isTemplatedLink, isEntityReference } from './halHelpers'
-import EmbeddedCollection from './EmbeddedCollection'
-import Resource from './interfaces/Resource'
+import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
+import ResourceInterface from './interfaces/ResourceInterface'
 import ApiActions from './interfaces/ApiActions'
-import { StoreData, StoreDataEntity } from './interfaces/StoreData'
-import StoreValueCreator from './StoreValueCreator'
+import { StoreData } from './interfaces/StoreData'
+import ResourceCreator from './ResourceCreator'
 import { InternalConfig } from './interfaces/Config'
-import HasItems from './HasItems'
 
 /**
- * Represents an actual StoreValue, by wrapping the given Vuex store storeData. The storeData must not be loading.
+ * Represents an actual Resource, by wrapping the given Vuex store storeData. The storeData must not be loading.
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
  */
-class StoreValue implements Resource {
+class Resource implements ResourceInterface {
   public _meta: {
     self: string,
-    load: Promise<Resource>
+    load: Promise<ResourceInterface>
     loading: boolean
   }
 
@@ -27,10 +25,10 @@ class StoreValue implements Resource {
   /**
    * @param storeData fully loaded entity storeData from the Vuex store
    * @param apiActions inject dependency: API actions
-   * @param storeValueCreator inject dependency StoreValue factory
+   * @param resourceCreator inject dependency Resource factory
    * @param config inject dependency: config options
    */
-  constructor (storeData: StoreData, apiActions: ApiActions, storeValueCreator: StoreValueCreator, config: InternalConfig) {
+  constructor (storeData: StoreData, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
     this.apiActions = apiActions
     this.config = config
     this._storeData = storeData
@@ -40,16 +38,9 @@ class StoreValue implements Resource {
       .forEach(key => {
         const value = storeData[key]
 
-        // storeData[key] is an embedded collection (need min. 1 item to detect an embedded collection)
-        if (Array.isArray(value) && value.length > 0 && isEntityReference(value[0])) {
-          // build complete Collection class = EmbeddedCollection + HasItems mixin
-          const EmbeddedCollectionClass = HasItems(EmbeddedCollection, this.apiActions, this.config, storeData._meta.self, key)
-
-          const loadCollection = storeData._meta.load
-            ? (storeData._meta.load as Promise<StoreDataEntity>).then(parentResource => new EmbeddedCollectionClass(parentResource[key], storeData._meta.self, key))
-            : null
-
-          this[key] = () => new EmbeddedCollectionClass(value, storeData._meta.self, key, loadCollection)
+        // storeData[key] is a virtual link (=embedded collection)
+        if (isVirtualLink(value)) {
+          this[key] = () => this.apiActions.get(value.href)
 
           // storeData[key] is a reference only (contains only href; no data)
         } else if (isEntityReference(value)) {
@@ -67,7 +58,7 @@ class StoreValue implements Resource {
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadResource = storeData._meta.reloading
-      ? (storeData._meta.load as Promise<StoreData>).then(reloadedData => storeValueCreator.wrap(reloadedData))
+      ? (storeData._meta.load as Promise<StoreData>).then(reloadedData => resourceCreator.wrap(reloadedData))
       : Promise.resolve(this)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
@@ -78,15 +69,15 @@ class StoreValue implements Resource {
     }
   }
 
-  $reload (): Promise<Resource> {
-    return this.apiActions.reload(this._meta.self)
+  $reload (): Promise<ResourceInterface> {
+    return this.apiActions.reload(this)
   }
 
-  $post (data: unknown): Promise<Resource | null> {
+  $post (data: unknown): Promise<ResourceInterface | null> {
     return this.apiActions.post(this._meta.self, data)
   }
 
-  $patch (data: unknown): Promise<Resource> {
+  $patch (data: unknown): Promise<ResourceInterface> {
     return this.apiActions.patch(this._meta.self, data)
   }
 
@@ -94,7 +85,7 @@ class StoreValue implements Resource {
     return this.apiActions.del(this._meta.self)
   }
 
-  $href (relation: string, templateParams = {}): Promise<string | undefined> {
+  $href (relation: string, templateParams: Record<string, string | number | boolean> = {}): Promise<string | undefined> {
     return this.apiActions.href(this, relation, templateParams)
   }
 
@@ -109,4 +100,4 @@ class StoreValue implements Resource {
   }
 }
 
-export default StoreValue
+export default Resource
