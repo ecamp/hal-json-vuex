@@ -26,10 +26,11 @@ class LoadingResource implements ResourceInterface {
   private loadResource: Promise<ResourceInterface>
 
   /**
-   * @param entityLoaded a Promise that resolves to a Resource when the entity has finished
+   * @param loadResource a Promise that resolves to a Resource when the entity has finished
    *                     loading from the API
    * @param self optional URI of the entity being loaded, if available. If passed, the
    *                     returned LoadingResource will return it in calls to .self and ._meta.self
+   * @param config       configuration of this instance of hal-json-vuex
    */
   constructor (loadResource: Promise<ResourceInterface>, self: string | null = null, config: InternalConfig | null = null) {
     this._meta = {
