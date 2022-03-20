@@ -31,11 +31,14 @@ function sortQueryParams (uri: string): string {
 /**
  * Extracts the URI from an entity (or uses the passed URI if it is a string) and normalizes it for use in
  * the Vuex store.
- * @param uriOrEntity     entity or literal URI string
- * @param baseUrl         common URI prefix to remove during normalization
+ * @param uriOrEntity         entity or literal URI string
+ * @param baseUrl             common URI prefix to remove during normalization
+ * @param customNormalizeUri  a custom function to normalize URIs according to application specific logic.
+ *                            Gets passed the original as well as the default-normalized URI as arguments,
+ *                            and should return the final normalized URI.
  * @returns {null|string} normalized URI, or null if the uriOrEntity argument was not understood
  */
-function normalizeEntityUri (uriOrEntity: string | ResourceInterface | null = '', baseUrl = ''): string | null {
+function normalizeEntityUri (uriOrEntity: string | ResourceInterface | null = '', baseUrl = '', customNormalizeUri: (originalUri: string, normalizedUri: string | null) => string | null = (_, normalizedUri) => normalizedUri): string | null {
   let uri
 
   if (typeof uriOrEntity === 'string') {
@@ -44,7 +47,7 @@ function normalizeEntityUri (uriOrEntity: string | ResourceInterface | null = ''
     uri = uriOrEntity?._meta?.self
   }
 
-  return normalizeUri(uri, baseUrl)
+  return customNormalizeUri(uri, normalizeUri(uri, baseUrl))
 }
 
 /**
