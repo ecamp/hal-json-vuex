@@ -26,10 +26,11 @@ class LoadingResource implements ResourceInterface {
   private loadResource: Promise<ResourceInterface>
 
   /**
-   * @param entityLoaded a Promise that resolves to a Resource when the entity has finished
+   * @param loadResource a Promise that resolves to a Resource when the entity has finished
    *                     loading from the API
    * @param self optional URI of the entity being loaded, if available. If passed, the
    *                     returned LoadingResource will return it in calls to .self and ._meta.self
+   * @param config       configuration of this instance of hal-json-vuex
    */
   constructor (loadResource: Promise<ResourceInterface>, self: string | null = null, config: InternalConfig | null = null) {
     this._meta = {
@@ -63,9 +64,9 @@ class LoadingResource implements ResourceInterface {
         // Proxy to all other unknown properties: return a function that yields another LoadingResource
         const loadProperty = loadResource.then(resource => resource[prop])
 
-        const result = templateParams => new LoadingResource(loadProperty.then(property => {
+        const result = (templateParams, queryParams) => new LoadingResource(loadProperty.then(property => {
           try {
-            return property(templateParams)._meta.load
+            return property(templateParams, queryParams)._meta.load
           } catch (e) {
             throw new Error(`Property '${prop.toString()}' on resource '${self}' was used like a relation, but no relation with this name was returned by the API (actual return value: ${JSON.stringify(property)})`)
           }
@@ -108,8 +109,8 @@ class LoadingResource implements ResourceInterface {
     return this._meta.load.then(resource => resource.$del())
   }
 
-  public $href (relation: string, templateParams = {}): Promise<string | undefined> {
-    return this._meta.load.then(resource => resource.$href(relation, templateParams))
+  public $href (relation: string, templateParams = {}, queryParams = {}): Promise<string | undefined> {
+    return this._meta.load.then(resource => resource.$href(relation, templateParams, queryParams))
   }
 
   public toJSON (): string {

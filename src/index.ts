@@ -1,6 +1,7 @@
 import normalize from 'hal-json-normalizer'
 import urltemplate from 'url-template'
 import normalizeEntityUri from './normalizeEntityUri'
+import addQuery from './addQuery'
 import ResourceCreator from './ResourceCreator'
 import Resource from './Resource'
 import LoadingResource from './LoadingResource'
@@ -243,16 +244,17 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param uriOrEntity    URI (or instance) of an entity from the API
    * @param relation       the name of the relation for which the URI should be retrieved
    * @param templateParams in case the relation is a templated link, the template parameters that should be filled in
+   * @param queryParams    query parameters to add to the url
    * @returns Promise      resolves to the URI of the related entity.
    */
-  async function href (uriOrEntity: string | ResourceInterface, relation: string, templateParams:Record<string, string | number | boolean> = {}): Promise<string | undefined> {
+  async function href (uriOrEntity: string | ResourceInterface, relation: string, templateParams: Record<string, string | number | boolean> = {}, queryParams: Record<string, string | number | boolean | Array<string | number | boolean>> = {}): Promise<string | undefined> {
     const selfUri = normalizeEntityUri(await get(uriOrEntity)._meta.load, axios.defaults.baseURL)
     const rel = selfUri != null ? store.state[opts.apiName][selfUri][relation] : null
     if (!rel || !rel.href) return undefined
     if (rel.templated) {
-      return urltemplate.parse(rel.href).expand(templateParams)
+      return addQuery(urltemplate.parse(rel.href).expand(templateParams), queryParams)
     }
-    return rel.href
+    return addQuery(rel.href, queryParams)
   }
 
   /**

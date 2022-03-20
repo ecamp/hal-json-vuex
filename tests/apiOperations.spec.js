@@ -331,7 +331,24 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(hrefPromise).resolves.toEqual('/camps/1/activities')
+    await expect(hrefPromise).resolves.toEqual('/camps/1/activities')
+  })
+
+  it('$href adds query parameters to a relation URI', async () => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').reply(200, linkedCollection.serverResponse)
+
+    vm.api.get('/camps/1')
+    await letNetworkRequestFinish()
+    const camp = vm.api.get('/camps/1')
+    expect(camp).toBeInstanceOf(Resource)
+
+    // when
+    const hrefPromise = camp.$href('activities', {}, { test: 'param' })
+
+    // then
+    await letNetworkRequestFinish()
+    await expect(hrefPromise).resolves.toEqual('/camps/1/activities?test=param')
   })
 
   it('$href returns a relation URI filled in with template parameters', async () => {
@@ -348,7 +365,24 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(hrefPromise).resolves.toEqual('/camps/1/users/999')
+    return await expect(hrefPromise).resolves.toEqual('/camps/1/users/999')
+  })
+
+  it('$href adds query parameters to a relation URI with template parameters', async () => {
+    // given
+    axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
+
+    vm.api.get('/camps/1')
+    await letNetworkRequestFinish()
+    const camp = vm.api.get('/camps/1')
+    expect(camp).toBeInstanceOf(Resource)
+
+    // when
+    const hrefPromise = camp.$href('users', { id: 999 }, { some: 'thing' })
+
+    // then
+    await letNetworkRequestFinish()
+    return expect(hrefPromise).resolves.toEqual('/camps/1/users/999?some=thing')
   })
 
   it('$href also works on the root API endpoint', async () => {
@@ -365,7 +399,24 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(hrefPromise).resolves.toEqual('/books')
+    await expect(hrefPromise).resolves.toEqual('/books')
+  })
+
+  it('$href also works with query parameters on the root API endpoint', async () => {
+    // given
+    axiosMock.onGet('http://localhost/').reply(200, rootWithLink.serverResponse)
+
+    vm.api.get()
+    await letNetworkRequestFinish()
+    const root = vm.api.get()
+    expect(root).toBeInstanceOf(Resource)
+
+    // when
+    const hrefPromise = root.$href('books', {}, { must_be: true })
+
+    // then
+    await letNetworkRequestFinish()
+    await expect(hrefPromise).resolves.toEqual('/books?must_be=true')
   })
 
   it('$deletes loading entity and removes it from the store', async () => {

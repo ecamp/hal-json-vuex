@@ -19,7 +19,7 @@ interface ResourceInterface {
     $post: (data: unknown) => Promise<ResourceInterface | null>
     $patch: (data: unknown) => Promise<ResourceInterface>
     $del: () => Promise<string | void>
-    $href: (relation: string, templateParams: Record<string, string | number | boolean>) => Promise<string | undefined>
+    $href: (relation: string, templateParams: Record<string, string | number | boolean>, queryParams: Record<string, string | number | boolean | Array<string | number | boolean>>) => Promise<string | undefined>
 }
 
 interface VirtualResource extends ResourceInterface {
