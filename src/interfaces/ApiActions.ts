@@ -6,7 +6,7 @@ interface ApiActions {
     post: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface | null>
     patch: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface>
     del: (uriOrEntity: string | ResourceInterface) => Promise<string | void>
-    href: (uriOrEntity: string | ResourceInterface, relation: string, templateParams) => Promise<string | undefined>
+    href: (uriOrEntity: string | ResourceInterface, relation: string, templateParams: Record<string, string | number | boolean>, queryParams: Record<string, string | number | boolean | Array<string | number | boolean>>) => Promise<string | undefined>
     isUnknown: (uri: string) => boolean
 }
 

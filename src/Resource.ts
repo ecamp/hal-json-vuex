@@ -1,5 +1,6 @@
 import urltemplate from 'url-template'
 import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
+import addQuery from './addQuery'
 import ResourceInterface from './interfaces/ResourceInterface'
 import ApiActions from './interfaces/ApiActions'
 import { StoreData } from './interfaces/StoreData'
@@ -45,11 +46,13 @@ class Resource implements ResourceInterface {
 
           // storeData[key] is a reference only (contains only href; no data)
         } else if (isEntityReference(value)) {
-          this[key] = () => this.apiActions.get(value.href)
+          this[key] = (_, queryParams) => this.apiActions.get(addQuery(value.href, queryParams))
 
           // storeData[key] is a templated link
         } else if (isTemplatedLink(value)) {
-          this[key] = templateParams => this.apiActions.get(urltemplate.parse(value.href).expand(templateParams || {}))
+          this[key] = (templateParams, queryParams) => this.apiActions.get(
+            addQuery(urltemplate.parse(value.href).expand(templateParams || {}), queryParams)
+          )
 
           // storeData[key] is a primitive (normal entity property)
         } else {
@@ -87,8 +90,8 @@ class Resource implements ResourceInterface {
     return this.apiActions.del(this._meta.self)
   }
 
-  $href (relation: string, templateParams: Record<string, string | number | boolean> = {}): Promise<string | undefined> {
-    return this.apiActions.href(this, relation, templateParams)
+  $href (relation: string, templateParams: Record<string, string | number | boolean> = {}, queryParams: Record<string, string | number | boolean | Array<string | number | boolean>> = {}): Promise<string | undefined> {
+    return this.apiActions.href(this, relation, templateParams, queryParams)
   }
 
   /**

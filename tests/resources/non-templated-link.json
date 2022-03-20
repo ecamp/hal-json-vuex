@@ -1,0 +1,51 @@
+{
+  "linkingServerResponse": {
+    "id": 1,
+    "_links": {
+      "self": {
+        "href": "/camps/1"
+      },
+      "user": {
+        "href": "/camps/1/users/83"
+      }
+    }
+  },
+  "linkedServerResponse": {
+    "id": 83,
+    "name": "Pflock",
+    "_links": {
+      "self": {
+        "href": "/camps/1/users/83"
+      }
+    }
+  },
+  "storeStateBeforeLinkedLoaded": {
+    "/camps/1": {
+      "id": 1,
+      "user": {
+        "href": "/camps/1/users/83"
+      },
+      "_meta": {
+        "self": "/camps/1"
+      }
+    }
+  },
+  "storeStateAfterLinkedLoaded": {
+    "/camps/1": {
+      "id": 1,
+      "user": {
+        "href": "/camps/1/users/83"
+      },
+      "_meta": {
+        "self": "/camps/1"
+      }
+    },
+    "/camps/1/users/83": {
+      "id": 83,
+      "name": "Pflock",
+      "_meta": {
+        "self": "/camps/1/users/83"
+      }
+    }
+  }
+}

@@ -54,4 +54,31 @@ describe('URI normalizing', () => {
     // then
     expect(result).toEqual('')
   })
+
+  it('allows to specify a custom normalization function', () => {
+    // given
+    const reverse = (string) => string.split('').reverse().join('')
+
+    const examples = {
+      '': '',
+      '/': '/',
+      '/?': '/',
+      '?': '',
+      'http://localhost': 'tsohlacol//:ptth',
+    }
+
+    Object.entries(examples).forEach(([example, expected]) => {
+      // when
+      const result = normalizeEntityUri(example, '', (_, normalized) => reverse(normalized))
+
+      // then
+      expect(result).toEqual(expected)
+
+      // when
+      const result2 = normalizeEntityUri(example, '', (original, _) => original)
+
+      // then
+      expect(result2).toEqual(example)
+    })
+  })
 })

@@ -148,3 +148,12 @@ In case your API does this, you can set the `forceRequestedSelfLink` option to t
 ```js
 Vue.use(HalJsonVuex(store, axios, { forceRequestedSelfLink: true }))
 ```
+
+### normalizeUri
+For defining custom logic to influence the self links in the application (e.g. ignoring the presence of some query parameters), you can specify a `normalizeUri` function.
+This function will be called whenever hal-json-vuex normalizes an URI, and will be passed the original, unnormalized URI, and the default-normalized URI as arguments.
+The function is expected to return a final normalized URI string or null.
+
+```js
+Vue.use(HalJsonVuex(store, axios, { normalizeUri: (originalUri, normalizedUri) => removeUnknownQueryParameters(normalizedUri) }))
+```

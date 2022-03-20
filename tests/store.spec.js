@@ -19,6 +19,7 @@ import collectionPage1 from './resources/collection-page1'
 import circularReference from './resources/circular-reference'
 import multipleReferencesToUser from './resources/multiple-references-to-user'
 import templatedLink from './resources/templated-link'
+import nonTemplatedLink from './resources/non-templated-link'
 import objectProperty from './resources/object-property'
 import arrayProperty from './resources/array-property'
 import root from './resources/root'
@@ -1380,6 +1381,19 @@ describe('API store', () => {
         expect(await load).toEqual('/users/83')
       })
 
+      it('can add query parameters to the href of a linked entity', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, linkedSingleEntity.serverResponse)
+        axiosMock.onGet('http://localhost/users/83').networkError()
+
+        // when
+        const load = vm.api.href('/camps/1', 'main_leader', {}, { test: 'param' })
+
+        // then
+        await letNetworkRequestFinish()
+        expect(await load).toEqual('/users/83?test=param')
+      })
+
       it('gets the href of a templated linked entity without fetching the entity itself', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').replyOnce(200, templatedLink.linkingServerResponse)
@@ -1392,6 +1406,58 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(await load).toEqual('/camps/1/users/83')
         expect(vm.$store.state.api).toMatchObject(templatedLink.storeStateBeforeLinkedLoaded)
+      })
+
+      it('can add query parameters to the templated href of a linked entity', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').replyOnce(200, templatedLink.linkingServerResponse)
+        axiosMock.onGet('http://localhost/users/83').networkError()
+
+        // when
+        const load = vm.api.href('/camps/1', 'users', { id: 83 }, { query: 'param' })
+
+        // then
+        await letNetworkRequestFinish()
+        expect(await load).toEqual('/camps/1/users/83?query=param')
+        expect(vm.$store.state.api).toMatchObject(templatedLink.storeStateBeforeLinkedLoaded)
+      })
+
+      it('imports normal link to single entity when linking entity is still loading', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, nonTemplatedLink.linkingServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83').reply(200, nonTemplatedLink.linkedServerResponse)
+        const loadingCamp = vm.api.get('/camps/1')
+
+        // when
+        const load = loadingCamp.user()._meta.load
+
+        // then
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(nonTemplatedLink.storeStateAfterLinkedLoaded)
+        expect(await load).toMatchObject({
+          id: 83,
+          name: 'Pflock',
+          _meta: { self: '/camps/1/users/83' }
+        })
+      })
+
+      it('can add query params to normal link when linking entity is still loading', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, nonTemplatedLink.linkingServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83?query=param').reply(200, nonTemplatedLink.linkedServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83').networkError()
+        const loadingCamp = vm.api.get('/camps/1')
+
+        // when
+        const load = loadingCamp.user({}, { query: 'param' })._meta.load
+
+        // then
+        await letNetworkRequestFinish()
+        expect(await load).toMatchObject({
+          id: 83,
+          name: 'Pflock',
+          _meta: { self: '/camps/1/users/83?query=param' }
+        })
       })
 
       it('imports templated link to single entity when linking entity is still loading', async () => {
@@ -1410,6 +1476,71 @@ describe('API store', () => {
           id: 83,
           name: 'Pflock',
           _meta: { self: '/camps/1/users/83' }
+        })
+      })
+
+      it('can add query parameters to templated linked entity when linking entity is still loading', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83?query=param').reply(200, templatedLink.linkedServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83').networkError()
+        const loadingCamp = vm.api.get('/camps/1')
+
+        // when
+        const load = loadingCamp.users({ id: 83 }, { query: 'param' })._meta.load
+
+        // then
+        await letNetworkRequestFinish()
+        expect(await load).toMatchObject({
+          id: 83,
+          name: 'Pflock',
+          _meta: { self: '/camps/1/users/83?query=param' }
+        })
+      })
+
+      it('imports normal link to single entity when linking entity is already loaded', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, nonTemplatedLink.linkingServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83').reply(200, nonTemplatedLink.linkedServerResponse)
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+        const camp = vm.api.get('/camps/1')
+
+        // when
+        const load = camp.user()._meta.load
+
+        // then
+        expect(vm.$store.state.api).toMatchObject(nonTemplatedLink.storeStateBeforeLinkedLoaded)
+        expect(vm.$store.state.api).not.toMatchObject(nonTemplatedLink.storeStateAfterLinkedLoaded)
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(nonTemplatedLink.storeStateAfterLinkedLoaded)
+        expect(await load).toMatchObject({
+          id: 83,
+          name: 'Pflock',
+          _meta: { self: '/camps/1/users/83' }
+        })
+      })
+
+      it('can add query parameters to normal link when linking entity is already loaded', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, nonTemplatedLink.linkingServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83?query=param').reply(200, nonTemplatedLink.linkedServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83').networkError()
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+        const camp = vm.api.get('/camps/1')
+
+        // when
+        const load = camp.user({}, { query: 'param' })._meta.load
+
+        // then
+        expect(vm.$store.state.api).toMatchObject(nonTemplatedLink.storeStateBeforeLinkedLoaded)
+        expect(vm.$store.state.api).not.toMatchObject(nonTemplatedLink.storeStateAfterLinkedLoaded)
+        await letNetworkRequestFinish()
+        expect(await load).toMatchObject({
+          id: 83,
+          name: 'Pflock',
+          _meta: { self: '/camps/1/users/83?query=param' }
         })
       })
 
@@ -1433,6 +1564,29 @@ describe('API store', () => {
           id: 83,
           name: 'Pflock',
           _meta: { self: '/camps/1/users/83' }
+        })
+      })
+
+      it('can add query params to linked entity when linking entity is already loaded', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83?query=param').reply(200, templatedLink.linkedServerResponse)
+        axiosMock.onGet('http://localhost/camps/1/users/83').networkError()
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+        const camp = vm.api.get('/camps/1')
+
+        // when
+        const load = camp.users({ id: 83 }, { query: 'param' })._meta.load
+
+        // then
+        expect(vm.$store.state.api).toMatchObject(templatedLink.storeStateBeforeLinkedLoaded)
+        expect(vm.$store.state.api).not.toMatchObject(templatedLink.storeStateAfterLinkedLoaded)
+        await letNetworkRequestFinish()
+        expect(await load).toMatchObject({
+          id: 83,
+          name: 'Pflock',
+          _meta: { self: '/camps/1/users/83?query=param' }
         })
       })
 

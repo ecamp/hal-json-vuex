@@ -5,6 +5,7 @@ interface ExternalConfig {
     avoidNPlusOneRequests?: boolean
     forceRequestedSelfLink?: boolean
     nuxtInject?: Inject
+    normalizeUri?(originalUri: string, normalizedUri: string | null): string | null
 }
 
 interface InternalConfig extends ExternalConfig {
