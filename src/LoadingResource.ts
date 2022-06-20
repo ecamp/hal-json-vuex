@@ -64,9 +64,9 @@ class LoadingResource implements ResourceInterface {
         // Proxy to all other unknown properties: return a function that yields another LoadingResource
         const loadProperty = loadResource.then(resource => resource[prop])
 
-        const result = templateParams => new LoadingResource(loadProperty.then(property => {
+        const result = (templateParams, options) => new LoadingResource(loadProperty.then(property => {
           try {
-            return property(templateParams)._meta.load
+            return property(templateParams, options)._meta.load
           } catch (e) {
             throw new Error(`Property '${prop.toString()}' on resource '${self}' was used like a relation, but no relation with this name was returned by the API (actual return value: ${JSON.stringify(property)})`)
           }

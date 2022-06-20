@@ -45,11 +45,11 @@ class Resource implements ResourceInterface {
 
           // storeData[key] is a reference only (contains only href; no data)
         } else if (isEntityReference(value)) {
-          this[key] = () => this.apiActions.get(value.href)
+          this[key] = (_, options) => this.apiActions.get(value.href, options)
 
           // storeData[key] is a templated link
         } else if (isTemplatedLink(value)) {
-          this[key] = templateParams => this.apiActions.get(urltemplate.parse(value.href).expand(templateParams || {}))
+          this[key] = (templateParams, options) => this.apiActions.get(urltemplate.parse(value.href).expand(templateParams || {}), options)
 
           // storeData[key] is a primitive (normal entity property)
         } else {
