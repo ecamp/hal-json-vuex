@@ -372,6 +372,80 @@ describe('API store', () => {
         expect(vm.api.get('/camps/1/activities?page_size=2&page=1').items.length).toEqual(1)
       })
 
+      it('applies request interceptor', async () => {
+        // given
+        axiosMock.onGet('http://localhost/camps/1?test=param').reply(200, embeddedSingleEntity.serverResponse)
+        const interceptor = (config) => {
+          config.url += '?test=param'
+          return config
+        }
+
+        // when
+        vm.api.get('/camps/1', { axiosRequestInterceptor: interceptor })
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({ '/camps/1': { _meta: { self: '/camps/1', loading: true } } })
+        expect(vm.api.get('/camps/1').campType().name.toString()).toEqual('')
+        await letNetworkRequestFinish()
+        expect(vm.$store.state.api).toMatchObject(embeddedSingleEntity.storeState)
+        expect(vm.api.get('/camps/1')._meta.self).toEqual('/camps/1')
+        expect(vm.api.get('/camps/1').campType()._meta.self).toEqual('/campTypes/20')
+        expect(vm.api.get('/campTypes/20')._meta.self).toEqual('/campTypes/20')
+        expect(vm.api.get('/camps/1').campType().name.toString()).toEqual('camp')
+      })
+
+      it('applies request interceptor when traversing relation', async () => {
+        // given
+        const userResponse = {
+          id: 1,
+          _links: {
+            self: {
+              href: '/users/1'
+            },
+            lastReadBook: {
+              href: '/books/555'
+            }
+          }
+        }
+        const bookResponse = {
+          id: 555,
+          title: 'Moby Dick',
+          _links: {
+            self: {
+              href: '/books/555'
+            }
+          }
+        }
+        axiosMock.onGet('http://localhost/users/1').replyOnce(200, userResponse)
+
+        const user = vm.api.get('/users/1')
+        await letNetworkRequestFinish()
+
+        axiosMock.onGet('http://localhost/books/555?some=param').replyOnce(200, bookResponse)
+        const interceptor = (config) => {
+          config.url += '?some=param'
+          return config
+        }
+
+        // when
+        const result = user.lastReadBook({}, { axiosRequestInterceptor: interceptor })
+
+        // then
+        await letNetworkRequestFinish()
+        expect(vm.api.get('/books/555').title).toEqual('Moby Dick')
+      })
+
+      // TODO how to proceed here?
+      it.skip('treats passed options the same as reload flag', async () => {
+        // given an entity is already loaded
+
+        // when fetching the same URI, but this time around with some options
+
+        // then what should happen?
+        // should we ignore the options and reuse the cached version from the store?
+        // should we treat options as if the user had used `reload` instead of `get`?
+      })
+
       it('allows redundantly using get with an object', async () => {
         // given
         axiosMock.onGet('http://localhost/camps/1').reply(200, embeddedSingleEntity.serverResponse)

@@ -7,8 +7,10 @@ import LoadingResource from './LoadingResource'
 import storeModule, { State } from './storeModule'
 import ServerException from './ServerException'
 import { ExternalConfig } from './interfaces/Config'
+import Options from './interfaces/Options'
 import { Store } from 'vuex/types'
-import { AxiosInstance, AxiosError } from 'axios'
+import AxiosCreator, { AxiosInstance, AxiosError } from 'axios'
+import mergeAxiosConfig from 'axios/lib/core/mergeConfig'
 import ResourceInterface from './interfaces/ResourceInterface'
 import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
@@ -109,11 +111,12 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * }
    *
    * @param uriOrEntity URI (or instance) of an entity to load from the store or API. If omitted, the root resource of the API is returned.
+   * @param options     Options for this single request
    * @returns entity    Entity from the store. Note that when fetching an object for the first time, a reactive
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get (uriOrEntity: string | ResourceInterface = ''): ResourceInterface {
+  function get (uriOrEntity: string | ResourceInterface = '', options: Options = {}): ResourceInterface {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
@@ -125,7 +128,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       throw new Error(`Could not perform GET, "${uriOrEntity}" is not an entity or URI`)
     }
 
-    setLoadPromiseOnStore(uri, load(uri, false))
+    setLoadPromiseOnStore(uri, load(uri, false, options))
     return resourceCreator.wrap(store.state[opts.apiName][uri])
   }
 
@@ -184,10 +187,11 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * sets the load promise on the entity in the Vuex store.
    * @param uri         URI of the entity to load
    * @param forceReload If true, the entity will be fetched from the API even if it is already in the Vuex store.
+   * @param options     Options for this single request
    * @returns entity    the current entity data from the Vuex store. Note: This may be a reactive dummy if the
    *                    API request is still ongoing.
    */
-  function load (uri: string, forceReload: boolean): Promise<StoreData> {
+  function load (uri: string, forceReload: boolean, options: Options = {}): Promise<StoreData> {
     const existsInStore = !isUnknown(uri)
 
     const isAlreadyLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
@@ -204,9 +208,9 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     if (!existsInStore) {
-      return loadFromApi(uri, 'fetch')
+      return loadFromApi(uri, 'fetch', options)
     } else if (forceReload) {
-      return loadFromApi(uri, 'reload').catch(error => {
+      return loadFromApi(uri, 'reload', options).catch(error => {
         store.commit('reloadingFailed', uri)
         throw error
       })
@@ -222,11 +226,12 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * being usable in Vue components).
    * @param uri       URI of the entity to load from the API
    * @param operation description of the operation triggering this load, e.g. fetch or reload, for error reporting
+   * @param options   Options for this single request
    * @returns Promise resolves to the raw data stored in the Vuex store after the API request completes, or
    *                  rejects when the API request fails
    */
-  function loadFromApi (uri: string, operation: string): Promise<StoreData> {
-    return axios.get(axios.defaults.baseURL + uri).then(({ data }) => {
+  function loadFromApi (uri: string, operation: string, options: Options = {}): Promise<StoreData> {
+    return axiosWith(options).get(axios.defaults.baseURL + uri).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -235,6 +240,12 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }, error => {
       throw handleAxiosError(operation, uri, error)
     })
+  }
+
+  function axiosWith (options) {
+    const instance = AxiosCreator.create(mergeAxiosConfig(axios.defaults, {}))
+    instance.interceptors.request.use(options.axiosRequestInterceptor)
+    return instance
   }
 
   /**
@@ -280,7 +291,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       store.commit('addEmpty', uri)
     }
 
-    const returnedResource = axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
+    return axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -289,8 +300,6 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }, (error) => {
       throw handleAxiosError('patch', uri, error)
     })
-
-    return returnedResource
   }
 
   /**
