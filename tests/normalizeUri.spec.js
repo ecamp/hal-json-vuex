@@ -101,6 +101,21 @@ describe('URI normalizing', () => {
         baseUrl: 'http://localhost:3000/api',
         uri: 'http://localhost:3000/api/activities',
         normalized: '/activities'
+      },
+      {
+        baseUrl: 'http://localhost:3000/api',
+        uri: '/api/activities',
+        normalized: '/activities'
+      },
+      {
+        baseUrl: 'http://localhost:3000/api/',
+        uri: '/api/activities',
+        normalized: '/activities'
+      },
+      {
+        baseUrl: 'http://localhost:3000/api/',
+        uri: 'http://localhost:3000/print/activities',
+        normalized: 'http://localhost:3000/print/activities'
       }
     ]
 

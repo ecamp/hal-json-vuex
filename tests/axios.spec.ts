@@ -64,7 +64,7 @@ describe('When using baseUrl with axios', () => {
       },
       expectedFetches: [
         'http://localhost:3000/api/',
-        'http://localhost:3000/api/api/entities'
+        'http://localhost:3000/api/entities'
       ]
     },
     {
