@@ -54,4 +54,59 @@ describe('URI normalizing', () => {
     // then
     expect(result).toEqual('')
   })
+
+  it('treats undefined as root URI, to enable this.api.get() without parameters to be the same as this.api.get(\'\')', () => {
+    // given
+
+    // when
+    const result = normalizeEntityUri(undefined)
+
+    // then
+    expect(result).toEqual('')
+  })
+
+  const baseUrlParams =
+    [
+      {
+        baseUrl: undefined,
+        uri: '/api/activities',
+        normalized: '/api/activities'
+      },
+      {
+        baseUrl: null,
+        uri: '/api/activities',
+        normalized: '/api/activities'
+      },
+      {
+        baseUrl: '',
+        uri: '/api/activities',
+        normalized: '/api/activities'
+      },
+      {
+        baseUrl: '/api',
+        uri: '/api/activities',
+        normalized: '/activities'
+      },
+      {
+        baseUrl: 'http://localhost:3000',
+        uri: 'http://localhost:3000/api/activities',
+        normalized: '/api/activities'
+      },
+      {
+        baseUrl: 'http://localhost:3000',
+        uri: '/api/activities',
+        normalized: '/api/activities'
+      },
+      {
+        baseUrl: 'http://localhost:3000/api',
+        uri: 'http://localhost:3000/api/activities',
+        normalized: '/activities'
+      }
+    ]
+
+  baseUrlParams.forEach(({ baseUrl, uri, normalized }) => {
+    it(`normalizes ${uri} when baseUrl is ${baseUrl} to ${normalized}`, () => {
+      expect(normalizeEntityUri(uri, baseUrl)).toEqual(normalized)
+    })
+  })
 })
