@@ -76,7 +76,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       }
     }
 
-    return axios.post(axios.defaults.baseURL + uri, data).then(({ data, status }) => {
+    return axios.post(uri || '/', data).then(({ data, status }) => {
       if (status === 204) {
         return null
       }
@@ -226,7 +226,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                  rejects when the API request fails
    */
   function loadFromApi (uri: string, operation: string): Promise<StoreData> {
-    return axios.get(axios.defaults.baseURL + uri).then(({ data }) => {
+    return axios.get(uri || '/').then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -280,7 +280,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       store.commit('addEmpty', uri)
     }
 
-    const returnedResource = axios.patch(axios.defaults.baseURL + uri, data).then(({ data }) => {
+    const returnedResource = axios.patch(uri || '/', data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
@@ -343,7 +343,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     store.commit('deleting', uri)
-    return axios.delete(axios.defaults.baseURL + uri).then(
+    return axios.delete(uri || '/').then(
       () => deleted(uri),
       (error) => {
         store.commit('deletingFailed', uri)
