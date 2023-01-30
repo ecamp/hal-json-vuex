@@ -55,7 +55,34 @@ function normalizeEntityUri (uriOrEntity: string | ResourceInterface | null = ''
  */
 function normalizeUri (uri: unknown, baseUrl: string): string | null {
   if (typeof uri !== 'string') return null
-  return sortQueryParams(uri).replace(new RegExp(`^${baseUrl}`), '')
+  const sorted = sortQueryParams(uri)
+  const simpleReplace = sorted.replace(new RegExp(`^${baseUrl}`), '')
+  if (baseUrl && simpleReplace === uri) {
+    try {
+      const parsedBaseUrl = new URL(baseUrl)
+      const uriHasHost = getHostOfUri(uri) !== undefined
+      if (parsedBaseUrl.host && uriHasHost) {
+        return simpleReplace
+      }
+
+      const pathname = parsedBaseUrl.pathname.replace(/\/$/, '')
+      return sorted.replace(new RegExp(`^${pathname}`), '')
+    } catch (_) {
+    }
+  }
+  return simpleReplace
+}
+
+/**
+ * returns the host of uri if present, or undefined if new URL throws exception.
+ * @param uri
+ */
+function getHostOfUri (uri: string): string | undefined {
+  try {
+    return new URL(uri).host
+  } catch (_) {
+    return undefined
+  }
 }
 
 export default normalizeEntityUri
