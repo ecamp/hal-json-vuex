@@ -34,7 +34,58 @@ describe('When using baseUrl with axios', () => {
 
   const baseUrlParams = [
     {
+      baseUrl: undefined,
+      api: {
+        entities: {
+          href: '/entities'
+        },
+        _links: {
+          self: {
+            href: 'http://localhost:3000/'
+          }
+        }
+      },
+      expectedFetches: [
+        '/',
+        '/entities'
+      ]
+    },
+    {
+      baseUrl: '/',
+      api: {
+        entities: {
+          href: '/entities'
+        },
+        _links: {
+          self: {
+            href: 'http://localhost:3000/'
+          }
+        }
+      },
+      expectedFetches: [
+        '/',
+        '/entities'
+      ]
+    },
+    {
       baseUrl: 'http://localhost:3000',
+      api: {
+        entities: {
+          href: '/entities'
+        },
+        _links: {
+          self: {
+            href: 'http://localhost:3000/'
+          }
+        }
+      },
+      expectedFetches: [
+        'http://localhost:3000/',
+        'http://localhost:3000/entities'
+      ]
+    },
+    {
+      baseUrl: 'http://localhost:3000/',
       api: {
         entities: {
           href: '/entities'
@@ -68,7 +119,41 @@ describe('When using baseUrl with axios', () => {
       ]
     },
     {
+      baseUrl: 'http://localhost:3000/api/',
+      api: {
+        entities: {
+          href: '/api/entities'
+        },
+        _links: {
+          self: {
+            href: 'http://localhost:3000/api'
+          }
+        }
+      },
+      expectedFetches: [
+        'http://localhost:3000/api/',
+        'http://localhost:3000/api/entities'
+      ]
+    },
+    {
       baseUrl: '/api',
+      api: {
+        entities: {
+          href: '/api/entities'
+        },
+        _links: {
+          self: {
+            href: '/api'
+          }
+        }
+      },
+      expectedFetches: [
+        '/api/',
+        '/api/entities'
+      ]
+    },
+    {
+      baseUrl: '/api/',
       api: {
         entities: {
           href: '/api/entities'
