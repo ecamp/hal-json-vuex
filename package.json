@@ -42,8 +42,8 @@
   },
   "homepage": "https://github.com/ecamp/hal-json-vuex#readme",
   "dependencies": {
-    "hal-json-normalizer": "4.1.2",
-    "url-template": "2.0.8"
+    "hal-json-normalizer": "^4.2.0",
+    "url-template": "^2.0.8"
   },
   "devDependencies": {
     "@babel/plugin-transform-regenerator": "7.16.7",
@@ -72,7 +72,7 @@
     "jest": "27.5.1",
     "lodash": "4.17.21",
     "mock-xmlhttprequest": "8.1.0",
-    "np": "^7.6.3",
+    "np": "7.6.3",
     "rimraf": "3.0.2",
     "source-map-loader": "3.0.1",
     "ts-jest": "27.1.3",
