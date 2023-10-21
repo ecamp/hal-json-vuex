@@ -15,7 +15,7 @@ describe('When using baseUrl with axios', () => {
     Vue.use(Vuex)
     store = new Vuex.Store({
       modules: {},
-      strict: process.env.NODE_ENV !== 'production'
+      strict: import.meta.env.DEV
     })
     stateCopy = cloneDeep(store.state)
   })

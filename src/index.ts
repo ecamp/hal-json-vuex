@@ -461,17 +461,30 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   const halJsonVuex = { ...apiActions, purge, purgeAll, href, Resource, LoadingResource }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function install (Vue: any) {
+  function install (app: any, options: any) {
     if (!opts.nuxtInject) {
-      // Normal installation in a Vue app
-      Object.defineProperties(Vue.prototype, {
-        [opts.apiName]: {
-          get () {
-            return halJsonVuex
+      if (app.version && app.version.charAt(0) === '3') {
+        console.log('Vue 3 detected')
+        Object.defineProperties(app.config.globalProperties, {
+          [opts.apiName]: {
+            get () {
+              return halJsonVuex
+            }
           }
-        }
-      })
+        })
+      } else {
+      // Normal installation i
+        console.log('Vue 2 detected')
+        Object.defineProperties(app.prototype, {
+          [opts.apiName]: {
+            get () {
+              return halJsonVuex
+            }
+          }
+        })
+      }
     } else {
+      console.log('Nuxt detected')
       // Support for Nuxt-style inject installation
       opts.nuxtInject(opts.apiName, halJsonVuex)
     }

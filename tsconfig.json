@@ -1,14 +1,14 @@
 {
     "compilerOptions": {
         "lib": [
-            "ES2019",
+            "ESNext",
             "dom",
             "dom.iterable"
         ],
-        "module": "commonjs",
-        "target": "ES2019",
+        "module": "ESNext",
+        "target": "ESNext",
         "strict": true,
-        "importHelpers": true,
+        "importHelpers": false,
         "moduleResolution": "node",
         "allowJs": true,
         "esModuleInterop": true,
@@ -36,6 +36,7 @@
             ]
         },
         "types": [
+            "vite/client",
             "node",
             "jest"
         ]
