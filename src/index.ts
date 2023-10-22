@@ -454,9 +454,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
         }
       })
     } else {
-      throw "Vue2 detected: this version of hal-json-vuex is not compatible with Vue2"
+      throw new Error('Vue2 detected: this version of hal-json-vuex is not compatible with Vue2')
     }
-   
   }
 
   return { ...halJsonVuex, install }

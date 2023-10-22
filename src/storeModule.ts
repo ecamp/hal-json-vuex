@@ -13,6 +13,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the object that is being fetched
    */
   addEmpty (state: State, uri: string) : void {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     state[uri] = { _meta: { self: uri, loading: true } }
   },
@@ -23,6 +24,7 @@ export const mutations: MutationTree<State> = {
    */
   add (state: State, data: Record<string, unknown>) : void {
     Object.keys(data).forEach(uri => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       state[uri] = data[uri]
 

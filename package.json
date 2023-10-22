@@ -17,7 +17,7 @@
     "build-dev": "cross-env NODE_ENV=development tsc && vite build",
     "clean": "cross-env rimraf dist coverage lib",
     "coverage": "cross-env npm run build && jest --coverage",
-    "lint": "cross-env eslint src --ext .js,.ts",
+    "lint": "cross-env eslint src tests --ext .js,.ts",
     "test": "jest",
     "test:debug": "node --inspect-brk ./node_modules/.bin/jest -i",
     "version": "npm run build"
