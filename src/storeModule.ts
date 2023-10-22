@@ -13,6 +13,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the object that is being fetched
    */
   addEmpty (state: State, uri: string) : void {
+    // @ts-ignore
     state[uri] = { _meta: { self: uri, loading: true } }
   },
   /**
@@ -22,6 +23,7 @@ export const mutations: MutationTree<State> = {
    */
   add (state: State, data: Record<string, unknown>) : void {
     Object.keys(data).forEach(uri => {
+      // @ts-ignore
       state[uri] = data[uri]
 
       state[uri]._meta.loading = false

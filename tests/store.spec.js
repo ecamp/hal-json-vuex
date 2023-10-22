@@ -1,10 +1,8 @@
-import { createLocalVue, mount } from "@vue/test-utils";
+import { mount } from "@vue/test-utils";
 import HalJsonVuex from "../src";
 import axios from "axios";
 import MockAdapter from "axios-mock-adapter";
-import VueAxios from "vue-axios";
-import Vuex from "vuex";
-import Vue from "vue";
+import { createStore } from "vuex";
 import { cloneDeep } from "lodash";
 import embeddedSingleEntity from "./resources/embedded-single-entity";
 import referenceToSingleEntity from "./resources/reference-to-single-entity";
@@ -45,27 +43,32 @@ describe("API store", () => {
     describe(title, () => {
       beforeAll(() => {
         axios.defaults.baseURL = "http://localhost";
-        Vue.use(Vuex);
-        store = new Vuex.Store({
-          modules: {},
-          strict: import.meta.env.DEV,
-        });
-        stateCopy = cloneDeep(store.state);
       });
 
       beforeEach(() => {
         axiosMock = new MockAdapter(axios);
-        store.replaceState(cloneDeep(stateCopy));
-        const localVue = createLocalVue();
-        localVue.use(Vuex);
-        localVue.use(VueAxios, axios);
-        localVue.use(
-          HalJsonVuex(store, axios, {
-            forceRequestedSelfLink: true,
-            avoidNPlusOneRequests,
-          })
-        );
-        const wrapper = mount({ store, template: "<div></div>" }, { localVue });
+
+        store = createStore({});
+
+        const installApi = {
+          install(app){
+            const api = HalJsonVuex(store, axios, {
+              forceRequestedSelfLink: true,
+              avoidNPlusOneRequests,
+            })
+            app.use(api)
+          }
+        }
+       
+        const wrapper = mount({ template: "<div></div>" }, {
+          global: {
+            plugins: [
+              store,
+              installApi
+            ]
+          }
+        })
+
         vm = wrapper.vm;
       });
 

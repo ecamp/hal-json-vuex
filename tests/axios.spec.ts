@@ -1,6 +1,5 @@
 import HalJsonVuex from '../src/index'
-import Vue from 'vue'
-import Vuex from 'vuex'
+import { createStore } from "vuex";
 import axios from 'axios'
 import { cloneDeep } from 'lodash'
 import { newServer } from 'mock-xmlhttprequest'
@@ -12,19 +11,15 @@ let server
 
 describe('When using baseUrl with axios', () => {
   beforeAll(() => {
-    Vue.use(Vuex)
-    store = new Vuex.Store({
-      modules: {},
-      strict: import.meta.env.DEV
-    })
-    stateCopy = cloneDeep(store.state)
+
   })
 
   beforeEach(() => {
+
     server = newServer()
     server.install()
 
-    store.replaceState(cloneDeep(stateCopy))
+    store = createStore({});
     halJsonVuex = HalJsonVuex(store, axios, { forceRequestedSelfLink: true })
   })
 

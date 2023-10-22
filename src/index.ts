@@ -30,30 +30,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   const defaultOptions = {
     apiName: 'api',
     avoidNPlusOneRequests: true,
-    forceRequestedSelfLink: false,
-    nuxtInject: undefined
+    forceRequestedSelfLink: false
   }
   const opts = { ...defaultOptions, ...options, apiRoot: axios.defaults.baseURL }
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
   const resourceCreator = new ResourceCreator({ get, reload, post, patch, del, href, isUnknown }, opts)
-
-  if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
-
-  /**
-   * Since Nuxt.js uses $get, $post etc., we need to use an adapter in the case of a Nuxt.js app...
-   * @param $axios
-   */
-  function adaptNuxtAxios ($axios) {
-    return {
-      get: $axios.$get,
-      patch: $axios.$patch,
-      post: $axios.$post,
-      delete: $axios.$delete,
-      ...$axios
-    }
-  }
 
   /**
    * Sends a POST request to the API, in order to create a new entity. Note that this does not
@@ -461,33 +444,19 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   const halJsonVuex = { ...apiActions, purge, purgeAll, href, Resource, LoadingResource }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function install (app: any, options: any) {
-    if (!opts.nuxtInject) {
-      if (app.version && app.version.charAt(0) === '3') {
-        console.log('Vue 3 detected')
-        Object.defineProperties(app.config.globalProperties, {
-          [opts.apiName]: {
-            get () {
-              return halJsonVuex
-            }
+  function install (app: any) {
+    if (app.version && app.version.charAt(0) === '3') {
+      Object.defineProperties(app.config.globalProperties, {
+        [opts.apiName]: {
+          get () {
+            return halJsonVuex
           }
-        })
-      } else {
-      // Normal installation i
-        console.log('Vue 2 detected')
-        Object.defineProperties(app.prototype, {
-          [opts.apiName]: {
-            get () {
-              return halJsonVuex
-            }
-          }
-        })
-      }
+        }
+      })
     } else {
-      console.log('Nuxt detected')
-      // Support for Nuxt-style inject installation
-      opts.nuxtInject(opts.apiName, halJsonVuex)
+      throw "Vue2 detected: this version of hal-json-vuex is not compatible with Vue2"
     }
+   
   }
 
   return { ...halJsonVuex, install }
