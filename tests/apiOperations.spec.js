@@ -1,11 +1,8 @@
-import { createLocalVue, mount } from '@vue/test-utils'
+import { mount } from '@vue/test-utils'
 import HalJsonVuex from '../src'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
-import VueAxios from 'vue-axios'
-import Vuex from 'vuex'
-import Vue from 'vue'
-import { cloneDeep } from 'lodash'
+import { createStore } from 'vuex'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import linkedCollection from './resources/linked-collection'
 import embeddedCollection from './resources/embedded-collection'
@@ -15,7 +12,7 @@ import Resource from '../src/Resource'
 import LoadingResource from '../src/LoadingResource'
 
 async function letNetworkRequestFinish () {
-  await new Promise(resolve => {
+  await new Promise((resolve) => {
     setTimeout(() => resolve())
   })
 }
@@ -23,27 +20,34 @@ async function letNetworkRequestFinish () {
 let axiosMock
 let store
 let vm
-let stateCopy
 
 describe('Using dollar methods', () => {
   beforeAll(() => {
     axios.defaults.baseURL = 'http://localhost'
-    Vue.use(Vuex)
-    store = new Vuex.Store({
-      modules: {},
-      strict: process.env.NODE_ENV !== 'production'
-    })
-    stateCopy = cloneDeep(store.state)
   })
 
   beforeEach(() => {
     axiosMock = new MockAdapter(axios)
-    store.replaceState(cloneDeep(stateCopy))
-    const localVue = createLocalVue()
-    localVue.use(Vuex)
-    localVue.use(VueAxios, axios)
-    localVue.use(HalJsonVuex(store, axios, { forceRequestedSelfLink: true }))
-    const wrapper = mount({ store, template: '<div></div>' }, { localVue })
+
+    store = createStore({})
+
+    const installApi = {
+      install (app) {
+        const api = HalJsonVuex(store, axios, {
+          forceRequestedSelfLink: true
+        })
+        app.use(api)
+      }
+    }
+
+    const wrapper = mount({ template: '<div></div>' }, {
+      global: {
+        plugins: [
+          store,
+          installApi
+        ]
+      }
+    })
     vm = wrapper.vm
   })
 
@@ -63,7 +67,9 @@ describe('Using dollar methods', () => {
         }
       }
     })
-    axiosMock.onGet('http://localhost/camps').replyOnce(200, embeddedSingleEntity.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps')
+      .replyOnce(200, embeddedSingleEntity.serverResponse)
 
     vm.api.get('/camps')
     await letNetworkRequestFinish()
@@ -114,7 +120,9 @@ describe('Using dollar methods', () => {
         }
       }
     })
-    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .replyOnce(200, embeddedCollection.serverResponse)
 
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
@@ -145,7 +153,9 @@ describe('Using dollar methods', () => {
         }
       }
     })
-    axiosMock.onPost('http://localhost/camps').reply(200, embeddedSingleEntity.serverResponse)
+    axiosMock
+      .onPost('http://localhost/camps')
+      .reply(200, embeddedSingleEntity.serverResponse)
 
     vm.api.get('/camps')
     await letNetworkRequestFinish()
@@ -158,7 +168,10 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     expect(await load).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
-    expect(vm.api.get('/camps/1')).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
+    expect(vm.api.get('/camps/1')).toMatchObject({
+      id: 1,
+      _meta: { self: '/camps/1' }
+    })
     expect(vm.api.get('/campTypes/20')).toMatchObject({
       id: 20,
       name: 'camp',
@@ -207,7 +220,9 @@ describe('Using dollar methods', () => {
         }
       }
     })
-    axiosMock.onPost('http://localhost/camps').reply(200, embeddedSingleEntity.serverResponse)
+    axiosMock
+      .onPost('http://localhost/camps')
+      .reply(200, embeddedSingleEntity.serverResponse)
 
     const camps = vm.api.get('/camps')
     expect(camps).toBeInstanceOf(LoadingResource)
@@ -218,7 +233,10 @@ describe('Using dollar methods', () => {
     // then
     await letNetworkRequestFinish()
     expect(await load).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
-    expect(vm.api.get('/camps/1')).toMatchObject({ id: 1, _meta: { self: '/camps/1' } })
+    expect(vm.api.get('/camps/1')).toMatchObject({
+      id: 1,
+      _meta: { self: '/camps/1' }
+    })
     expect(vm.api.get('/campTypes/20')).toMatchObject({
       id: 20,
       name: 'camp',
@@ -261,7 +279,10 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ some: 'thing', _meta: { self: '/camps' } })
+    expect(await load).toMatchObject({
+      some: 'thing',
+      _meta: { self: '/camps' }
+    })
   })
 
   it('$patches loading entity and stores the response into the store', async () => {
@@ -295,12 +316,17 @@ describe('Using dollar methods', () => {
 
     // then
     await letNetworkRequestFinish()
-    expect(await load).toMatchObject({ some: 'thing', _meta: { self: '/camps' } })
+    expect(await load).toMatchObject({
+      some: 'thing',
+      _meta: { self: '/camps' }
+    })
   })
 
   it('$deletes entity and removes it from the store', async () => {
     // given
-    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedSingleEntity.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .replyOnce(200, embeddedSingleEntity.serverResponse)
     axiosMock.onGet('http://localhost/camps/1').reply(404)
     axiosMock.onDelete('http://localhost/camps/1').reply(204)
 
@@ -319,7 +345,9 @@ describe('Using dollar methods', () => {
 
   it('$href returns a relation URI', async () => {
     // given
-    axiosMock.onGet('http://localhost/camps/1').reply(200, linkedCollection.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .reply(200, linkedCollection.serverResponse)
 
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
@@ -336,7 +364,9 @@ describe('Using dollar methods', () => {
 
   it('$href returns a relation URI filled in with template parameters', async () => {
     // given
-    axiosMock.onGet('http://localhost/camps/1').reply(200, templatedLink.linkingServerResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .reply(200, templatedLink.linkingServerResponse)
 
     vm.api.get('/camps/1')
     await letNetworkRequestFinish()
@@ -353,7 +383,9 @@ describe('Using dollar methods', () => {
 
   it('$href also works on the root API endpoint', async () => {
     // given
-    axiosMock.onGet('http://localhost/').reply(200, rootWithLink.serverResponse)
+    axiosMock
+      .onGet('http://localhost/')
+      .reply(200, rootWithLink.serverResponse)
 
     vm.api.get()
     await letNetworkRequestFinish()
@@ -370,7 +402,9 @@ describe('Using dollar methods', () => {
 
   it('$deletes loading entity and removes it from the store', async () => {
     // given
-    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedSingleEntity.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .replyOnce(200, embeddedSingleEntity.serverResponse)
     axiosMock.onGet('http://localhost/camps/1').reply(404)
     axiosMock.onDelete('http://localhost/camps/1').reply(204)
 
@@ -389,14 +423,16 @@ describe('Using dollar methods', () => {
     // given
     axiosMock.onGet('http://localhost/camps').replyOnce(200, {
       _embedded: {
-        items: [{
-          id: 123,
-          _links: {
-            self: {
-              href: '/items/123'
+        items: [
+          {
+            id: 123,
+            _links: {
+              self: {
+                href: '/items/123'
+              }
             }
           }
-        }]
+        ]
       },
       _links: {
         self: {
@@ -425,14 +461,16 @@ describe('Using dollar methods', () => {
     // given
     axiosMock.onGet('http://localhost/camps').replyOnce(200, {
       _embedded: {
-        items: [{
-          id: 123,
-          _links: {
-            self: {
-              href: '/items/123'
+        items: [
+          {
+            id: 123,
+            _links: {
+              self: {
+                href: '/items/123'
+              }
             }
           }
-        }]
+        ]
       },
       _links: {
         self: {
@@ -525,7 +563,10 @@ describe('Using dollar methods', () => {
 
     vm.api.get('/users/1').lastReadBook().chapters()
     await letNetworkRequestFinish()
-    const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
+    const lastReadBookChapters = vm.api
+      .get('/users/1')
+      .lastReadBook()
+      .chapters()
     expect(lastReadBookChapters).toBeInstanceOf(Resource)
 
     // when
@@ -612,7 +653,10 @@ describe('Using dollar methods', () => {
     axiosMock.onGet('http://localhost/users/1').replyOnce(200, userResponse)
     axiosMock.onGet('http://localhost/books/555').replyOnce(200, bookResponse)
 
-    const lastReadBookChapters = vm.api.get('/users/1').lastReadBook().chapters()
+    const lastReadBookChapters = vm.api
+      .get('/users/1')
+      .lastReadBook()
+      .chapters()
     expect(lastReadBookChapters).toBeInstanceOf(LoadingResource)
 
     // when
@@ -633,43 +677,43 @@ describe('Using dollar methods', () => {
 
   it('throws error when deleting virtual resource', async () => {
     // given
-    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .replyOnce(200, embeddedCollection.serverResponse)
     const camp = await vm.api.get('/camps/1')._meta.load
     await letNetworkRequestFinish()
 
     // when
     await expect(camp.periods().$del())
-
-    // then
-      .rejects
-      .toThrow('del is not implemented for virtual resources')
+      // then
+      .rejects.toThrow('del is not implemented for virtual resources')
   })
 
   it('throws error when posting on virtual resource', async () => {
     // given
-    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .replyOnce(200, embeddedCollection.serverResponse)
     const camp = await vm.api.get('/camps/1')._meta.load
     await letNetworkRequestFinish()
 
     // when
     await expect(camp.periods().$post({}))
-
-    // then
-      .rejects
-      .toThrow('post is not implemented for virtual resources')
+      // then
+      .rejects.toThrow('post is not implemented for virtual resources')
   })
 
   it('throws error when patching an virtual resource', async () => {
     // given
-    axiosMock.onGet('http://localhost/camps/1').replyOnce(200, embeddedCollection.serverResponse)
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .replyOnce(200, embeddedCollection.serverResponse)
     const camp = await vm.api.get('/camps/1')._meta.load
     await letNetworkRequestFinish()
 
     // when
     await expect(camp.periods().$patch([]))
-
-    // then
-      .rejects
-      .toThrow('patch is not implemented for virtual resources')
+      // then
+      .rejects.toThrow('patch is not implemented for virtual resources')
   })
 })

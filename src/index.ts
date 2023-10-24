@@ -30,30 +30,13 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   const defaultOptions = {
     apiName: 'api',
     avoidNPlusOneRequests: true,
-    forceRequestedSelfLink: false,
-    nuxtInject: undefined
+    forceRequestedSelfLink: false
   }
   const opts = { ...defaultOptions, ...options, apiRoot: axios.defaults.baseURL }
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
   const resourceCreator = new ResourceCreator({ get, reload, post, patch, del, href, isUnknown }, opts)
-
-  if (opts.nuxtInject !== null) axios = adaptNuxtAxios(axios)
-
-  /**
-   * Since Nuxt.js uses $get, $post etc., we need to use an adapter in the case of a Nuxt.js app...
-   * @param $axios
-   */
-  function adaptNuxtAxios ($axios) {
-    return {
-      get: $axios.$get,
-      patch: $axios.$patch,
-      post: $axios.$post,
-      delete: $axios.$delete,
-      ...$axios
-    }
-  }
 
   /**
    * Sends a POST request to the API, in order to create a new entity. Note that this does not
@@ -461,10 +444,9 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   const halJsonVuex = { ...apiActions, purge, purgeAll, href, Resource, LoadingResource }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function install (Vue: any) {
-    if (!opts.nuxtInject) {
-      // Normal installation in a Vue app
-      Object.defineProperties(Vue.prototype, {
+  function install (app: any) {
+    if (app.version && app.version.charAt(0) === '3') {
+      Object.defineProperties(app.config.globalProperties, {
         [opts.apiName]: {
           get () {
             return halJsonVuex
@@ -472,8 +454,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
         }
       })
     } else {
-      // Support for Nuxt-style inject installation
-      opts.nuxtInject(opts.apiName, halJsonVuex)
+      throw new Error('Vue2 detected: this version of hal-json-vuex is not compatible with Vue2')
     }
   }
 
