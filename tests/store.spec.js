@@ -1140,7 +1140,7 @@ describe('API store', () => {
           .onGet('http://localhost/users/1')
           .replyOnce(200, userResponse)
 
-        const lastReadBookChapters = vm.api
+        vm.api
           .get('/users/1')
           .lastReadBook()
           .chapters()
@@ -1161,9 +1161,6 @@ describe('API store', () => {
             .onGet('http://localhost/chapters/1038')
             .replyOnce(200, chapter3Response)
         }
-
-        // when
-        // const result = lastReadBookChapters.items
 
         // then
         await letNetworkRequestFinish()
@@ -1230,7 +1227,7 @@ describe('API store', () => {
             .onGet('http://localhost/users/1')
             .replyOnce(200, userResponse)
 
-          const lastReadBookChapters = vm.api
+          vm.api
             .get('/users/1')
             .lastReadBook()
             .chapters()
@@ -1248,9 +1245,6 @@ describe('API store', () => {
           axiosMock
             .onGet('http://localhost/chapters/1038')
             .replyOnce(200, chapter3Response)
-
-          // when
-          // const result = lastReadBookChapters.items
 
           // then
           await letNetworkRequestFinish()
