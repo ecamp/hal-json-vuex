@@ -228,7 +228,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param templateParams in case the relation is a templated link, the template parameters that should be filled in
    * @returns Promise      resolves to the URI of the related entity.
    */
-  async function href (uriOrEntity: string | ResourceInterface, relation: string, templateParams:Record<string, string | number | boolean> = {}): Promise<string | undefined> {
+  async function href (uriOrEntity: string | ResourceInterface, relation: string, templateParams: Record<string, string | number | boolean> = {}): Promise<string | undefined> {
     const selfUri = normalizeEntityUri(await get(uriOrEntity)._meta.load, axios.defaults.baseURL)
     const rel = selfUri != null ? store.state[opts.apiName][selfUri][relation] : null
     if (!rel || !rel.href) return undefined
@@ -245,7 +245,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   resolves when the PATCH request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  function patch (uriOrEntity: string | ResourceInterface, data: unknown) : Promise<ResourceInterface> {
+  function patch (uriOrEntity: string | ResourceInterface, data: unknown): Promise<ResourceInterface> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform PATCH, "${uriOrEntity}" is not an entity or URI`))
@@ -347,7 +347,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     return objectKeys.length === 1 && objectKeys[0] === 'href' && (value as Link).href === uri
   }
 
-  function findEntitiesReferencing (uri: string) : Array<StoreData> {
+  function findEntitiesReferencing (uri: string): Array<StoreData> {
     return Object.values(store.state[opts.apiName])
       .filter((entity) => {
         return Object.values(entity).some(propertyValue =>
@@ -406,7 +406,11 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   function setLoadPromiseOnStore (uri: string, loadStoreData: Promise<StoreData> | null = null) {
     const promise: SerializablePromise<StoreData> = loadStoreData || Promise.resolve(store.state[opts.apiName][uri])
     promise.toJSON = () => '{}' // avoid warning in Nuxt when serializing the complete Vuex store ("Cannot stringify arbitrary non-POJOs Promise")
-    store.state[opts.apiName][uri]._meta.load = promise
+
+    store.commit('setLoadPromise', {
+      uri,
+      promise
+    })
   }
 
   /**
