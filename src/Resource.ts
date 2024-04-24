@@ -11,15 +11,15 @@ import { InternalConfig } from './interfaces/Config'
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
  */
-class Resource implements ResourceInterface {
+class Resource<T extends ResourceInterface<T>> implements ResourceInterface<T> {
   public _meta: {
     self: string,
     selfUrl: string,
-    load: Promise<ResourceInterface>
+    load: Promise<T>
     loading: boolean
   }
 
-  _storeData: StoreData
+  _storeData: StoreData<T>
   config: InternalConfig
   apiActions: ApiActions
 
@@ -29,7 +29,7 @@ class Resource implements ResourceInterface {
    * @param resourceCreator inject dependency Resource factory
    * @param config inject dependency: config options
    */
-  constructor (storeData: StoreData, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
+  constructor (storeData: StoreData<T>, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
     this.apiActions = apiActions
     this.config = config
     this._storeData = storeData
@@ -59,8 +59,8 @@ class Resource implements ResourceInterface {
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadResource = storeData._meta.reloading
-      ? (storeData._meta.load as Promise<StoreData>).then(reloadedData => resourceCreator.wrap(reloadedData))
-      : Promise.resolve(this)
+      ? (storeData._meta.load as Promise<StoreData<T>>).then(reloadedData => resourceCreator.wrap(reloadedData))
+      : Promise.resolve(this as unknown as T)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
     this._meta = {
@@ -71,16 +71,16 @@ class Resource implements ResourceInterface {
     }
   }
 
-  $reload (): Promise<ResourceInterface> {
-    return this.apiActions.reload(this)
+  $reload (): Promise<T> {
+    return this.apiActions.reload<T>(this as unknown as T)
   }
 
-  $post (data: unknown): Promise<ResourceInterface | null> {
-    return this.apiActions.post(this._meta.self, data)
+  $post (data: unknown): Promise<T | null> {
+    return this.apiActions.post<T>(this._meta.self, data)
   }
 
-  $patch (data: unknown): Promise<ResourceInterface> {
-    return this.apiActions.patch(this._meta.self, data)
+  $patch (data: unknown): Promise<T> {
+    return this.apiActions.patch<T>(this._meta.self, data)
   }
 
   $del (): Promise<string | void> {

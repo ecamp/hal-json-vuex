@@ -8,45 +8,45 @@ import Resource from './Resource'
 /**
   * Filter out items that are marked as deleting (eager removal)
   */
-function filterDeleting (array: Array<ResourceInterface>): Array<ResourceInterface> {
+function filterDeleting<T extends ResourceInterface> (array: Array<T>): Array<T> {
   return array.filter(entry => !entry._meta.deleting)
 }
 
-class Collection extends Resource {
+class Collection<Item extends ResourceInterface> extends Resource<Item & Link> implements CollectionInterface<Item>{
   /**
      * Get items excluding ones marked as 'deleting' (eager remove)
      * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences
      * lazy, since that potentially fetches a large number of entities from the API.
      */
-  public get items (): Array<ResourceInterface> {
-    return filterDeleting(this._mapArrayOfEntityReferences(this._storeData.items))
+  public get items (): Array<Item> {
+    return filterDeleting<Item>(this._mapArrayOfEntityReferences(this._storeData.items))
   }
 
   /**
      * Get all items including ones marked as 'deleting' (lazy remove)
      */
-  public get allItems (): Array<ResourceInterface> {
+  public get allItems (): Array<Item> {
     return this._mapArrayOfEntityReferences(this._storeData.items)
   }
 
   /**
      * Returns a promise that resolves to the collection object, once all items have been loaded
      */
-  public $loadItems () :Promise<CollectionInterface> {
+  public $loadItems () :Promise<CollectionInterface<Item>> {
     return this._itemLoader(this._storeData.items)
   }
 
   /**
      *  Returns a promise that resolves to the collection object, once all items have been loaded
      */
-  private _itemLoader (array: Array<Link>) : Promise<CollectionInterface> {
+  private _itemLoader (array: Array<Item & Link>) : Promise<CollectionInterface<Item>> {
     if (!this._containsUnknownEntityReference(array)) {
-      return Promise.resolve(this as unknown as CollectionInterface) // we know that this object must be of type CollectionInterface
+      return Promise.resolve(this as unknown as CollectionInterface<Item>) // we know that this object must be of type CollectionInterface
     }
 
     // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
     if (this.config.avoidNPlusOneRequests) {
-      return this.apiActions.reload(this as unknown as CollectionInterface) as Promise<CollectionInterface> // we know that reload resolves to a type CollectionInterface
+      return this.apiActions.reload(this as unknown as CollectionInterface<Item>) as Promise<CollectionInterface<Item>> // we know that reload resolves to a type CollectionInterface
 
       // no eager loading: replace each reference (Link) with a Resource (ResourceInterface)
     } else {
@@ -54,7 +54,7 @@ class Collection extends Resource {
 
       return Promise.all(
         arrayWithReplacedReferences.map(entry => entry._meta.load)
-      ).then(() => this as unknown as CollectionInterface) // we know that this object must be of type CollectionInterface
+      ).then(() => this as unknown as CollectionInterface<Item>) // we know that this object must be of type CollectionInterface
     }
   }
 
@@ -68,7 +68,7 @@ class Collection extends Resource {
      * @returns array          the new array with replaced items, or a LoadingCollection if any of the array
      *                         elements is still loading.
      */
-  private _mapArrayOfEntityReferences (array: Array<Link>): Array<ResourceInterface> {
+  private _mapArrayOfEntityReferences (array: Array<Item & Link>): Array<Item> {
     if (!this._containsUnknownEntityReference(array)) {
       return this._replaceEntityReferences(array)
     }
@@ -77,27 +77,27 @@ class Collection extends Resource {
 
     // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
     if (this.config.avoidNPlusOneRequests) {
-      return LoadingCollection.create(itemsLoaded)
+      return LoadingCollection.create<Item>(itemsLoaded)
 
       // no eager loading: replace each reference (Link) with a Resource (ResourceInterface)
     } else {
-      return LoadingCollection.create(itemsLoaded, this._replaceEntityReferences(array))
+      return LoadingCollection.create<Item>(itemsLoaded, this._replaceEntityReferences(array))
     }
   }
 
   /**
    * Replace each item in array with a proper Resource (or LoadingResource)
    */
-  private _replaceEntityReferences (array: Array<Link>): Array<ResourceInterface> {
+  private _replaceEntityReferences (array: Array<Item & Link>): Array<Item> {
     return array
       .filter(entry => isEntityReference(entry))
-      .map(entry => this.apiActions.get(entry.href))
+      .map(entry => this.apiActions.get<Item>(entry.href))
   }
 
   /**
    * Returns true if any of the items within 'array' is not yet known to the API (meaning it has never been loaded)
    */
-  private _containsUnknownEntityReference (array: Array<Link>): boolean {
+  private _containsUnknownEntityReference (array: Array<Item & Link>): boolean {
     return array.some(entry => isEntityReference(entry) && this.apiActions.isUnknown(entry.href))
   }
 }
