@@ -430,7 +430,13 @@ root.camps({ isPrototype: false})._meta.load.then(endpoint => {
   })
 })
 
+halJsonVuex.reload<ActivityEntity>('/entity/1').then(activity => {
+    console.log(activity.title)
+})
+
 root.camps().items[0].name = "";
+
+root.camps().items[0]._storeData?._meta.load.toJSON?.();
 
 //root.camps({ isPrototype: true }).sds[0].name = "";
 root.camps({ isPrototype: true }).items[0].name = "";

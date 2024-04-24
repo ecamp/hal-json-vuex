@@ -32,20 +32,19 @@ type VirtualStoreDataMeta = StoreDataMeta & {
 }
 
 type StoreDataEntity<T> = StoreDataMeta & {
-    items: T[],
     _meta: {
         load: SerializablePromise<StoreDataEntity<T>>
     }
-}
+} & T
 
-type StoreDataCollection<Item extends Link> = StoreDataMeta & {
-    items: Array<Item & Link>,
+type StoreDataCollection<T> = StoreDataMeta & {
+    items: Array<Link>,
     _meta: {
-        load: SerializablePromise<StoreDataCollection<Item & Link>>
+        load: SerializablePromise<StoreDataCollection<T>>
     }
-}
+} & T
 
-type StoreData<T> = StoreDataEntity<T> | StoreDataCollection<T & Link>
+type StoreData<T> = StoreDataEntity<T> | StoreDataCollection<T>
 
 type VirtualStoreData<T> = StoreData<T> & VirtualStoreDataMeta
 
