@@ -2,7 +2,7 @@ import Resource from './Resource'
 import LoadingResource from './LoadingResource'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
-import { StoreData } from './interfaces/StoreData'
+import {Link, StoreData} from './interfaces/StoreData'
 import ResourceInterface from './interfaces/ResourceInterface'
 import Collection from './Collection'
 import { isCollection } from './halHelpers'
@@ -43,28 +43,28 @@ class ResourceCreator {
    * @param data                entity data from the Vuex store
    * @returns object            wrapped entity ready for use in a frontend component
    */
-  wrap (data: StoreData): ResourceInterface {
+  wrap<Type extends ResourceInterface<Type>, Item extends ResourceInterface<Item>> (data: StoreData<Type>): Type {
     const meta = data._meta || { load: Promise.resolve(), loading: false }
 
     // Resource is loading --> return LoadingResource
     if (meta.loading) {
-      const loadResource = (meta.load as Promise<StoreData>).then(storeData => this.wrapData(storeData))
-      return new LoadingResource(loadResource, meta.self, this.config)
+      const loadResource = (meta.load as Promise<StoreData<Type>>).then(storeData => this.wrapData<Type, Item>(storeData))
+      return new LoadingResource<Type, Item>(loadResource, meta.self, this.config) as unknown as Type
 
     // Resource is not loading --> wrap actual data
     } else {
-      return this.wrapData(data)
+      return this.wrapData<Type, Item>(data)
     }
   }
 
-  wrapData (data: StoreData): ResourceInterface {
+  wrapData<T extends ResourceInterface, Item extends ResourceInterface> (data: StoreData<T | Item>): T {
     // Store data looks like a collection --> return CollectionInterface
     if (isCollection(data)) {
-      return new Collection(data, this.apiActions, this, this.config) // these parameters are passed to Resource constructor
+      return new Collection<Item>(data as StoreData<Item & Link>, this.apiActions, this, this.config) as unknown as T// these parameters are passed to Resource constructor
 
     // else Store Data looks like an entity --> return normal Resource
     } else {
-      return new Resource(data, this.apiActions, this, this.config)
+      return new Resource<T>(data as StoreData<T>, this.apiActions, this, this.config) as unknown as T
     }
   }
 }

@@ -1,7 +1,9 @@
-import { Link, VirtualLink, TemplatedLink, StoreDataCollection } from './interfaces/StoreData'
+import { Link, VirtualLink, TemplatedLink } from './interfaces/StoreData'
 import { ResourceInterface, VirtualResource } from './interfaces/ResourceInterface'
+import Collection from '@/Collection'
+import CollectionInterface from "@/interfaces/CollectionInterface";
 
-type keyValueObject = Record<string, unknown>
+export type keyValueObject = Record<string, unknown>
 
 /**
  * Verifies that two arrays contain the same values while ignoring the order
@@ -26,7 +28,7 @@ function isTemplatedLink (object: keyValueObject): object is TemplatedLink {
  * @param object    to be examined
  * @returns boolean true if the object looks like an entity reference, false otherwise
  */
-function isEntityReference (object: keyValueObject): object is Link {
+function isEntityReference (object: unknown): object is Link {
   if (!object) return false
   return isEqualIgnoringOrder(Object.keys(object), ['href'])
 }
@@ -47,7 +49,7 @@ function isVirtualLink (object: keyValueObject): object is VirtualLink {
  * @param resource
  * @returns boolean  true if resource is a VirtualResource
  */
-function isVirtualResource (resource: ResourceInterface): resource is VirtualResource {
+function isVirtualResource (resource: unknown): resource is VirtualResource {
   return (resource as VirtualResource)._storeData?._meta?.virtual
 }
 
@@ -56,8 +58,8 @@ function isVirtualResource (resource: ResourceInterface): resource is VirtualRes
  * @param object    to be examined
  * @returns boolean true if the object looks like a standalone collection, false otherwise
  */
-function isCollection (object: keyValueObject): object is StoreDataCollection {
-  return !!(object && Array.isArray(object.items))
+function isCollection<Item extends ResourceInterface> (object: unknown): object is CollectionInterface<Item> {
+  return !!(object && Array.isArray((object as CollectionInterface<Item>).items))
 }
 
 export { isTemplatedLink, isVirtualLink, isEntityReference, isCollection, isVirtualResource }
