@@ -1,10 +1,10 @@
 import { mount } from '@vue/test-utils'
 import { vi } from 'vitest'
-import HalJsonVuex from '../src'
+import { HalJsonVuexPlugin, LoadingResource, Resource } from '../src'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
 import { createStore } from 'vuex'
-import { cloneDeep } from 'lodash'
+import cloneDeep from 'lodash/clone.js'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import referenceToSingleEntity from './resources/reference-to-single-entity'
 import embeddedCollection from './resources/embedded-collection'
@@ -21,9 +21,6 @@ import templatedLink from './resources/templated-link'
 import objectProperty from './resources/object-property'
 import arrayProperty from './resources/array-property'
 import root from './resources/root'
-
-import LoadingResource from '../src/LoadingResource'
-import Resource from '../src/Resource'
 
 async function letNetworkRequestFinish () {
   await new Promise((resolve) => {
@@ -52,7 +49,7 @@ describe('API store', () => {
 
         const installApi = {
           install (app) {
-            const api = HalJsonVuex(store, axios, {
+            const api = HalJsonVuexPlugin(store, axios, {
               forceRequestedSelfLink: true,
               avoidNPlusOneRequests
             })
@@ -610,10 +607,11 @@ describe('API store', () => {
           .onGet('http://localhost/camps/1')
           .reply(200, embeddedSingleEntity.serverResponse)
         const loadingResource = vm.api.get('/camps/1')
-        expect(loadingResource).toBeInstanceOf(vm.api.LoadingResource)
+        expect(loadingResource).toBeInstanceOf(LoadingResource)
 
         // when
         const loadedData = await loadingResource._meta.load
+
         // then
         expect(loadedData).toMatchObject({
           id: 1,
@@ -631,7 +629,7 @@ describe('API store', () => {
         vm.api.get('/camps/1')
         await letNetworkRequestFinish()
         const camp = vm.api.get('/camps/1')
-        expect(camp).not.toBeInstanceOf(vm.api.LoadingResource)
+        expect(camp).not.toBeInstanceOf(LoadingResource)
 
         // when
         const loadedData = await camp._meta.load
@@ -813,6 +811,30 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject(
           embeddedSingleEntity.storeState
         )
+      })
+
+      it('purge the whole store', async () => {
+        // given
+        axiosMock
+          .onGet('http://localhost/camps/1')
+          .reply(200, embeddedSingleEntity.serverResponse)
+        axiosMock
+          .onGet('http://localhost/campTypes/20')
+          .reply(200, embeddedSingleEntity.serverResponse._embedded.campType)
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+        const storeStateWithoutCampType = cloneDeep(
+          embeddedSingleEntity.storeState
+        )
+        delete storeStateWithoutCampType['/campTypes/20']
+        expect(vm.$store.state.api).toMatchObject(storeStateWithoutCampType)
+
+        // when
+        vm.api.purgeAll()
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({})
+        await letNetworkRequestFinish()
       })
 
       it('purges and later re-fetches an object from the store', async () => {

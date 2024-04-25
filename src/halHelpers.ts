@@ -1,7 +1,8 @@
 import { Link, VirtualLink, TemplatedLink, StoreDataCollection } from './interfaces/StoreData'
 import { ResourceInterface, VirtualResource } from './interfaces/ResourceInterface'
+import CollectionInterface from './interfaces/CollectionInterface'
 
-type keyValueObject = Record<string, unknown>
+export type keyValueObject = Record<string, unknown>
 
 /**
  * Verifies that two arrays contain the same values while ignoring the order
@@ -26,7 +27,8 @@ function isTemplatedLink (object: keyValueObject): object is TemplatedLink {
  * @param object    to be examined
  * @returns boolean true if the object looks like an entity reference, false otherwise
  */
-function isEntityReference (object: keyValueObject): object is Link {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isEntityReference (object: any): object is Link {
   if (!object) return false
   return isEqualIgnoringOrder(Object.keys(object), ['href'])
 }
@@ -48,7 +50,7 @@ function isVirtualLink (object: keyValueObject): object is VirtualLink {
  * @returns boolean  true if resource is a VirtualResource
  */
 function isVirtualResource (resource: ResourceInterface): resource is VirtualResource {
-  return (resource as VirtualResource)._storeData?._meta?.virtual
+  return (resource as VirtualResource)._storeData?._meta?.virtual as boolean
 }
 
 /**
@@ -56,8 +58,14 @@ function isVirtualResource (resource: ResourceInterface): resource is VirtualRes
  * @param object    to be examined
  * @returns boolean true if the object looks like a standalone collection, false otherwise
  */
-function isCollection (object: keyValueObject): object is StoreDataCollection {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isCollection<StoreType> (object: any): object is StoreDataCollection<StoreType> {
   return !!(object && Array.isArray(object.items))
 }
 
-export { isTemplatedLink, isVirtualLink, isEntityReference, isCollection, isVirtualResource }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isCollectionInterface<Item extends ResourceInterface> (object: ResourceInterface): object is CollectionInterface<Item> {
+  return isCollection(object._storeData)
+}
+
+export { isTemplatedLink, isVirtualLink, isEntityReference, isCollection, isVirtualResource, isCollectionInterface }

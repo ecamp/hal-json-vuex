@@ -1,25 +1,27 @@
 import { parseTemplate } from 'url-template'
+
+import type ResourceInterface from './interfaces/ResourceInterface'
+import type { ApiActions } from './interfaces/Interfaces'
+import type { StoreData, StoreDataEntity } from './interfaces/StoreData'
+import type { InternalConfig } from './interfaces/Config'
 import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
-import ResourceInterface from './interfaces/ResourceInterface'
-import ApiActions from './interfaces/ApiActions'
-import { StoreData } from './interfaces/StoreData'
 import ResourceCreator from './ResourceCreator'
-import { InternalConfig } from './interfaces/Config'
 
 /**
  * Represents an actual Resource, by wrapping the given Vuex store storeData. The storeData must not be loading.
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
  */
-class Resource implements ResourceInterface {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+class Resource<ResourceType extends ResourceInterface, StoreType extends StoreData<ResourceType> = StoreDataEntity<ResourceType>> implements ResourceInterface<ResourceType> {
   public _meta: {
     self: string,
     selfUrl: string,
-    load: Promise<ResourceInterface>
+    load: Promise<ResourceType>
     loading: boolean
   }
 
-  _storeData: StoreData
+  _storeData: StoreType
   config: InternalConfig
   apiActions: ApiActions
 
@@ -29,7 +31,7 @@ class Resource implements ResourceInterface {
    * @param resourceCreator inject dependency Resource factory
    * @param config inject dependency: config options
    */
-  constructor (storeData: StoreData, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
+  constructor (storeData: StoreType, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
     this.apiActions = apiActions
     this.config = config
     this._storeData = storeData
@@ -59,7 +61,7 @@ class Resource implements ResourceInterface {
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadResource = storeData._meta.reloading
-      ? (storeData._meta.load as Promise<StoreData>).then(reloadedData => resourceCreator.wrap(reloadedData))
+      ? storeData._meta.load.then(reloadedData => resourceCreator.wrap(reloadedData))
       : Promise.resolve(this)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
@@ -71,15 +73,15 @@ class Resource implements ResourceInterface {
     }
   }
 
-  $reload (): Promise<ResourceInterface> {
+  $reload (): Promise<ResourceType> {
     return this.apiActions.reload(this)
   }
 
-  $post (data: unknown): Promise<ResourceInterface | null> {
+  $post (data: unknown): Promise<ResourceType | null> {
     return this.apiActions.post(this._meta.self, data)
   }
 
-  $patch (data: unknown): Promise<ResourceInterface> {
+  $patch (data: unknown): Promise<ResourceType> {
     return this.apiActions.patch(this._meta.self, data)
   }
 
@@ -93,7 +95,7 @@ class Resource implements ResourceInterface {
 
   /**
    * Serialize object to JSON
-   * this avoid warnings in Nuxt "Cannot stringify arbitrary non-POJOs"
+   * this avoids warnings in Nuxt "Cannot stringify arbitrary non-POJOs"
    */
   toJSON (): string {
     // for the lack of any better alternative, return store data as JSON

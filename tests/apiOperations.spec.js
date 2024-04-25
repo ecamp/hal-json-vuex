@@ -1,5 +1,5 @@
 import { mount } from '@vue/test-utils'
-import HalJsonVuex from '../src'
+import { HalJsonVuexPlugin } from '../src'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
 import { vi } from 'vitest'
@@ -34,7 +34,7 @@ describe('Using dollar methods', () => {
 
     const installApi = {
       install (app) {
-        const api = HalJsonVuex(store, axios, {
+        const api = HalJsonVuexPlugin(store, axios, {
           forceRequestedSelfLink: true
         })
         app.use(api)
@@ -494,6 +494,26 @@ describe('Using dollar methods', () => {
     expect(result[0]).toMatchObject({ id: 123, _meta: { self: '/items/123' } })
   })
 
+  it('does throw when $loadItems is called on a non-collection entity', async () => {
+    // given
+    const userResponse = {
+      id: 2,
+      _links: {
+        self: {
+          href: '/users/2'
+        }
+      }
+    }
+    axiosMock.onGet('http://localhost/users/2').replyOnce(200, userResponse)
+
+    const user = vm.api.get('/users/2')
+    expect(user).toBeInstanceOf(LoadingResource)
+
+    // then
+    expect(user.$loadItems()).rejects.toThrow('This LoadingResource is not a collection')
+    await letNetworkRequestFinish()
+  })
+
   it('loads the contents of an embedded collection', async () => {
     // given
     const userResponse = {
@@ -890,5 +910,49 @@ describe('Using dollar methods', () => {
     await expect(camp.periods().$patch([]))
       // then
       .rejects.toThrow('patch is not implemented for virtual resources')
+  })
+
+  it('throws error when posting an invalid input', async () => {
+    // when
+    await expect(vm.api.post(42))
+      // then
+      .rejects.toThrow('Could not perform POST, "42" is not an entity or URI')
+    await letNetworkRequestFinish()
+  })
+
+  it('throws error when reloading an invalid input', async () => {
+    // when
+    await expect(vm.api.reload(42))
+      // then
+      .rejects.toThrow('Could not perform reload, "42" is not an entity or URI')
+    await letNetworkRequestFinish()
+  })
+
+  it('throws error when patching an invalid input', async () => {
+    // when
+    await expect(vm.api.patch(42))
+      // then
+      .rejects.toThrow('Could not perform PATCH, "42" is not an entity or URI')
+    await letNetworkRequestFinish()
+  })
+
+  it('throws error when deleting an invalid input', async () => {
+    // when
+    await expect(vm.api.del(42))
+      // then
+      .rejects.toThrow('Could not perform DELETE, "42" is not an entity or URI')
+    await letNetworkRequestFinish()
+  })
+
+  it('throws error when posting fails', async () => {
+    // given
+    axiosMock
+      .onGet('http://localhost/camps/1')
+      .replyOnce(404)
+    // when
+    await expect(vm.api.post('/camp/1', { id: 0 }))
+      // then
+      .rejects.toThrow('Could not post to "/camp/1" (status 404): Request failed with status code 404')
+    await letNetworkRequestFinish()
   })
 })

@@ -1,4 +1,4 @@
-import ResourceInterface from './interfaces/ResourceInterface'
+import type ResourceInterface from './interfaces/ResourceInterface'
 
 /**
  * Sorts the query parameters in a URI, keeping the values of duplicate keys in order.
@@ -36,13 +36,7 @@ function sortQueryParams (uri: string): string {
  * @returns {null|string} normalized URI, or null if the uriOrEntity argument was not understood
  */
 function normalizeEntityUri (uriOrEntity: string | ResourceInterface | null = '', baseUrl = ''): string | null {
-  let uri
-
-  if (typeof uriOrEntity === 'string') {
-    uri = uriOrEntity
-  } else {
-    uri = uriOrEntity?._meta?.self
-  }
+  const uri = typeof uriOrEntity === 'string' ? uriOrEntity : uriOrEntity?._meta?.self
 
   return normalizeUri(uri, baseUrl)
 }

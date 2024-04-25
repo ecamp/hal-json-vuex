@@ -1,7 +1,9 @@
+import type ResourceInterface from './interfaces/ResourceInterface'
+import type CollectionInterface from './interfaces/CollectionInterface'
+import type { InternalConfig } from './interfaces/Config'
+
 import LoadingCollection from './LoadingCollection'
-import ResourceInterface from './interfaces/ResourceInterface'
-import CollectionInterface from './interfaces/CollectionInterface'
-import { InternalConfig } from './interfaces/Config'
+import { isCollectionInterface } from './halHelpers'
 
 /**
  * Creates a placeholder for an entity which has not yet finished loading from the API.
@@ -15,15 +17,15 @@ import { InternalConfig } from './interfaces/Config'
  * let user = new LoadingResource(...)
  * 'The "' + user + '" is called "' + user.name + '"' // gives 'The "" is called ""'
  */
-class LoadingResource implements ResourceInterface {
+class LoadingResource<ResourceType extends (ResourceInterface | CollectionInterface<ResourceType>)> implements ResourceInterface<ResourceType> {
   public _meta: {
     self: string | null,
     selfUrl: string | null,
-    load: Promise<ResourceInterface>
+    load: Promise<ResourceType>
     loading: boolean
   }
 
-  private loadResource: Promise<ResourceInterface>
+  private loadResource: Promise<ResourceType>
 
   /**
    * @param loadResource a Promise that resolves to a Resource when the entity has finished
@@ -32,7 +34,7 @@ class LoadingResource implements ResourceInterface {
    *                     returned LoadingResource will return it in calls to .self and ._meta.self
    * @param config       configuration of this instance of hal-json-vuex
    */
-  constructor (loadResource: Promise<ResourceInterface>, self: string | null = null, config: InternalConfig | null = null) {
+  constructor (loadResource: Promise<ResourceType>, self: string | null = null, config: InternalConfig | null = null) {
     this._meta = {
       self: self,
       selfUrl: self ? config?.apiRoot + self : null,
@@ -43,7 +45,7 @@ class LoadingResource implements ResourceInterface {
     this.loadResource = loadResource
 
     const handler = {
-      get: function (target: LoadingResource, prop: string | number | symbol) {
+      get: function (target: LoadingResource<ResourceType>, prop: string | number | symbol) {
         // This is necessary so that Vue's reactivity system understands to treat this LoadingResource
         // like a normal object.
         if (prop === Symbol.toPrimitive) {
@@ -80,28 +82,33 @@ class LoadingResource implements ResourceInterface {
     return new Proxy(this, handler)
   }
 
-  get items (): Array<ResourceInterface> {
-    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface).items))
+  get items (): Array<ResourceType> {
+    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface<ResourceType>).items))
   }
 
-  get allItems (): Array<ResourceInterface> {
-    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface).allItems))
+  get allItems (): Array<ResourceType> {
+    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface<ResourceType>).allItems))
   }
 
-  public $reload (): Promise<ResourceInterface> {
+  public $reload (): Promise<ResourceType> {
     // Skip reloading entities that are already loading
     return this._meta.load
   }
 
-  public $loadItems (): Promise<CollectionInterface> {
-    return this._meta.load.then(resource => (resource as CollectionInterface).$loadItems())
+  public $loadItems (): Promise<CollectionInterface<ResourceType>> {
+    return this._meta.load.then((resource) => {
+      if (isCollectionInterface<ResourceType>(resource)) {
+        return resource.$loadItems()
+      }
+      throw new Error('This LoadingResource is not a collection')
+    })
   }
 
-  public $post (data: unknown): Promise<ResourceInterface | null> {
+  public $post (data: unknown): Promise<ResourceType | null> {
     return this._meta.load.then(resource => resource.$post(data))
   }
 
-  public $patch (data: unknown): Promise<ResourceInterface> {
+  public $patch (data: unknown): Promise<ResourceType> {
     return this._meta.load.then(resource => resource.$patch(data))
   }
 

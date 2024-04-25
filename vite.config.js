@@ -23,6 +23,7 @@ export default defineConfig({
       // externalize outputs if we have these modules as dependencies
       external: ['hal-json-normalizer', 'url-template', 'vue-demi'],
       output: {
+        exports: 'named',
         globals: {
           'url-template': 'parseTemplate',
           'hal-json-normalizer': 'normalize',

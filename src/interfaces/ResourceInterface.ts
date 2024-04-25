@@ -1,29 +1,31 @@
-import { StoreData, VirtualStoreData } from './StoreData'
+import type { StoreData, VirtualStoreData } from './StoreData'
 
 /**
  * Generic interface for a standalone ResourceInterface (e.g. a HAl resource with an own store entry and a self link)
  * Can be a collection or a single entity
  */
-interface ResourceInterface {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface ResourceInterface<ResourceType extends ResourceInterface = any> {
     _meta: {
         self: string | null
         selfUrl: string | null
-        load: Promise<ResourceInterface>
+        load: Promise<ResourceType>
         loading: boolean
         deleting?: boolean
     }
 
     _storeData?: StoreData // optional, because LoadingResource has no _storeData
 
-    $reload: () => Promise<ResourceInterface>
-    $post: (data: unknown) => Promise<ResourceInterface | null>
-    $patch: (data: unknown) => Promise<ResourceInterface>
+    $reload: () => Promise<ResourceType>
+    $post: (data: unknown) => Promise<ResourceType | null>
+    $patch: (data: unknown) => Promise<ResourceType>
     $del: () => Promise<string | void>
     $href: (relation: string, templateParams: Record<string, string | number | boolean>) => Promise<string | undefined>
 }
 
-interface VirtualResource extends ResourceInterface {
-    _storeData: VirtualStoreData
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface VirtualResource<Type extends ResourceInterface = any> extends ResourceInterface<Type> {
+    _storeData: VirtualStoreData<Type>
 }
 
 export { ResourceInterface, VirtualResource }

@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios'
+import type { AxiosError, AxiosResponse } from 'axios'
 
 /**
  * Error class for returning server exceptions (attaches Axios response object to error)

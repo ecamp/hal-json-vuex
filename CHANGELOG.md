@@ -1,5 +1,9 @@
 ### Unreleased
 
+### 3.0.0-alpha.3
+- BREAKING: Now uses named exports
+- Publishes the types
+
 ### 2.0.0-alpha.6
 - Bugfix: `href` and `$href` can now also be used on the root API endpoint
 

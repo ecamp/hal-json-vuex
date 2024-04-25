@@ -27,6 +27,7 @@
   },
   "type": "module",
   "files": [
+    "/src",
     "/dist",
     "/CHANGELOG.md",
     "/LICENSE",

@@ -1,4 +1,4 @@
-import HalJsonVuex from '../src/index'
+import { HalJsonVuexPlugin } from '../src'
 import { createStore } from 'vuex'
 import axios from 'axios'
 import { newServer } from 'mock-xmlhttprequest'
@@ -13,7 +13,7 @@ describe('When using baseUrl with axios', () => {
     server.install()
 
     store = createStore({})
-    halJsonVuex = HalJsonVuex(store, axios, { forceRequestedSelfLink: true })
+    halJsonVuex = HalJsonVuexPlugin(store, axios, { forceRequestedSelfLink: true })
   })
 
   afterEach(() => {

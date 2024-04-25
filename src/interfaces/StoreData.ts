@@ -31,23 +31,26 @@ type VirtualStoreDataMeta = StoreDataMeta & {
     }
 }
 
-type StoreDataEntity = StoreDataMeta & {
-    items: never,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StoreDataEntity<T = any> = T & StoreDataMeta & {
     _meta: {
-        load: SerializablePromise<StoreDataEntity>
+        load: SerializablePromise<StoreDataEntity<T>>
     }
 }
 
-type StoreDataCollection = StoreDataMeta & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StoreDataCollection<T = any> = T & StoreDataMeta & {
     items: Array<Link>,
     _meta: {
-        load: SerializablePromise<StoreDataCollection>
+        load: SerializablePromise<StoreDataCollection<T>>
     }
 }
 
-type StoreData = StoreDataEntity | StoreDataCollection
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StoreData<T = any> = StoreDataEntity<T> | StoreDataCollection<T>
 
-type VirtualStoreData = StoreData & VirtualStoreDataMeta
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type VirtualStoreData<T = any> = StoreData<T> & VirtualStoreDataMeta
 
 export { StoreData, VirtualStoreData, Link, VirtualLink, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
 
