@@ -11,7 +11,7 @@ import { InternalConfig } from './interfaces/Config'
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
  */
-class Resource implements ResourceInterface {
+class Resource<Store extends StoreData> implements ResourceInterface {
   public _meta: {
     self: string,
     selfUrl: string,
@@ -19,7 +19,7 @@ class Resource implements ResourceInterface {
     loading: boolean
   }
 
-  _storeData: StoreData
+  _storeData: Store
   config: InternalConfig
   apiActions: ApiActions
 
@@ -29,7 +29,7 @@ class Resource implements ResourceInterface {
    * @param resourceCreator inject dependency Resource factory
    * @param config inject dependency: config options
    */
-  constructor (storeData: StoreData, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
+  constructor (storeData: Store, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
     this.apiActions = apiActions
     this.config = config
     this._storeData = storeData

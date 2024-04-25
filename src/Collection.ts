@@ -2,7 +2,7 @@ import { isEntityReference } from './halHelpers'
 import LoadingCollection from './LoadingCollection'
 import ResourceInterface from './interfaces/ResourceInterface'
 import CollectionInterface from './interfaces/CollectionInterface'
-import { Link } from './interfaces/StoreData'
+import { Link, StoreDataCollection } from './interfaces/StoreData'
 import Resource from './Resource'
 
 /**
@@ -12,7 +12,7 @@ function filterDeleting (array: Array<ResourceInterface>): Array<ResourceInterfa
   return array.filter(entry => !entry._meta.deleting)
 }
 
-class Collection extends Resource {
+class Collection extends Resource<StoreDataCollection> {
   /**
      * Get items excluding ones marked as 'deleting' (eager remove)
      * The items property should always be a getter, in order to make the call to mapArrayOfEntityReferences

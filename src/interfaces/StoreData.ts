@@ -32,7 +32,6 @@ type VirtualStoreDataMeta = StoreDataMeta & {
 }
 
 type StoreDataEntity = StoreDataMeta & {
-    items: never,
     _meta: {
         load: SerializablePromise<StoreDataEntity>
     }
