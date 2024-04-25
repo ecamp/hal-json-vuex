@@ -15,15 +15,15 @@ import { InternalConfig } from './interfaces/Config'
  * let user = new LoadingResource(...)
  * 'The "' + user + '" is called "' + user.name + '"' // gives 'The "" is called ""'
  */
-class LoadingResource implements ResourceInterface {
+class LoadingResource<StoreType> implements ResourceInterface<StoreType> {
   public _meta: {
     self: string | null,
     selfUrl: string | null,
-    load: Promise<ResourceInterface>
+    load: Promise<ResourceInterface<StoreType>>
     loading: boolean
   }
 
-  private loadResource: Promise<ResourceInterface>
+  private loadResource: Promise<ResourceInterface<StoreType>>
 
   /**
    * @param loadResource a Promise that resolves to a Resource when the entity has finished
@@ -32,7 +32,7 @@ class LoadingResource implements ResourceInterface {
    *                     returned LoadingResource will return it in calls to .self and ._meta.self
    * @param config       configuration of this instance of hal-json-vuex
    */
-  constructor (loadResource: Promise<ResourceInterface>, self: string | null = null, config: InternalConfig | null = null) {
+  constructor (loadResource: Promise<ResourceInterface<StoreType>>, self: string | null = null, config: InternalConfig | null = null) {
     this._meta = {
       self: self,
       selfUrl: self ? config?.apiRoot + self : null,
@@ -43,7 +43,7 @@ class LoadingResource implements ResourceInterface {
     this.loadResource = loadResource
 
     const handler = {
-      get: function (target: LoadingResource, prop: string | number | symbol) {
+      get: function (target: LoadingResource<StoreType>, prop: string | number | symbol) {
         // This is necessary so that Vue's reactivity system understands to treat this LoadingResource
         // like a normal object.
         if (prop === Symbol.toPrimitive) {
@@ -80,28 +80,28 @@ class LoadingResource implements ResourceInterface {
     return new Proxy(this, handler)
   }
 
-  get items (): Array<ResourceInterface> {
-    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface).items))
+  get items (): Array<ResourceInterface<StoreType>> {
+    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface<StoreType>).items))
   }
 
-  get allItems (): Array<ResourceInterface> {
-    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface).allItems))
+  get allItems (): Array<ResourceInterface<StoreType>> {
+    return LoadingCollection.create(this.loadResource.then(resource => (resource as CollectionInterface<StoreType>).allItems))
   }
 
-  public $reload (): Promise<ResourceInterface> {
+  public $reload (): Promise<ResourceInterface<StoreType>> {
     // Skip reloading entities that are already loading
     return this._meta.load
   }
 
-  public $loadItems (): Promise<CollectionInterface> {
-    return this._meta.load.then(resource => (resource as CollectionInterface).$loadItems())
+  public $loadItems (): Promise<CollectionInterface<StoreType>> {
+    return this._meta.load.then(resource => (resource as CollectionInterface<StoreType>).$loadItems())
   }
 
-  public $post (data: unknown): Promise<ResourceInterface | null> {
+  public $post (data: unknown): Promise<ResourceInterface<StoreType> | null> {
     return this._meta.load.then(resource => resource.$post(data))
   }
 
-  public $patch (data: unknown): Promise<ResourceInterface> {
+  public $patch (data: unknown): Promise<ResourceInterface<StoreType>> {
     return this._meta.load.then(resource => resource.$patch(data))
   }
 

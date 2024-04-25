@@ -6,6 +6,7 @@ import { StoreData } from './interfaces/StoreData'
 import ResourceInterface from './interfaces/ResourceInterface'
 import Collection from './Collection'
 import { isCollection } from './halHelpers'
+import CollectionInterface from '@/interfaces/CollectionInterface'
 
 class ResourceCreator {
   private config: InternalConfig
@@ -43,28 +44,28 @@ class ResourceCreator {
    * @param data                entity data from the Vuex store
    * @returns object            wrapped entity ready for use in a frontend component
    */
-  wrap (data: StoreData): ResourceInterface {
+  wrap<StoreType> (data: StoreData<StoreType>): ResourceInterface<StoreType> {
     const meta = data._meta || { load: Promise.resolve(), loading: false }
 
     // Resource is loading --> return LoadingResource
     if (meta.loading) {
-      const loadResource = (meta.load as Promise<StoreData>).then(storeData => this.wrapData(storeData))
+      const loadResource = (meta.load as Promise<StoreData<StoreType>>).then(storeData => this.wrapData<StoreType>(storeData))
       return new LoadingResource(loadResource, meta.self, this.config)
 
     // Resource is not loading --> wrap actual data
     } else {
-      return this.wrapData(data)
+      return this.wrapData<StoreType>(data)
     }
   }
 
-  wrapData (data: StoreData): ResourceInterface {
+  wrapData<StoreType> (data: StoreData<StoreType>): ResourceInterface<StoreType> | CollectionInterface<StoreType> {
     // Store data looks like a collection --> return CollectionInterface
-    if (isCollection(data)) {
-      return new Collection(data, this.apiActions, this, this.config) // these parameters are passed to Resource constructor
+    if (isCollection<StoreType>(data)) {
+      return new Collection<StoreType>(data, this.apiActions, this, this.config) // these parameters are passed to Resource constructor
 
     // else Store Data looks like an entity --> return normal Resource
     } else {
-      return new Resource(data, this.apiActions, this, this.config)
+      return new Resource<StoreType>(data, this.apiActions, this, this.config)
     }
   }
 }

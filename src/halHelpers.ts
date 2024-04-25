@@ -47,8 +47,8 @@ function isVirtualLink (object: keyValueObject): object is VirtualLink {
  * @param resource
  * @returns boolean  true if resource is a VirtualResource
  */
-function isVirtualResource (resource: ResourceInterface): resource is VirtualResource {
-  return (resource as VirtualResource)._storeData?._meta?.virtual
+function isVirtualResource<StoreType> (resource: ResourceInterface<StoreType>): resource is VirtualResource<StoreType> {
+  return (resource as VirtualResource<StoreType>)._storeData?._meta?.virtual as boolean
 }
 
 /**
@@ -56,7 +56,7 @@ function isVirtualResource (resource: ResourceInterface): resource is VirtualRes
  * @param object    to be examined
  * @returns boolean true if the object looks like a standalone collection, false otherwise
  */
-function isCollection (object: keyValueObject): object is StoreDataCollection {
+function isCollection<StoreType> (object: keyValueObject): object is StoreDataCollection<StoreType> {
   return !!(object && Array.isArray(object.items))
 }
 

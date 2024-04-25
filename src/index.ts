@@ -26,12 +26,13 @@ import { isVirtualResource } from './halHelpers'
  */
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance, options: ExternalConfig): any {
+function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosInstance, options: ExternalConfig): any {
   const defaultOptions = {
     apiName: 'api',
     avoidNPlusOneRequests: true,
     forceRequestedSelfLink: false
   }
+
   const opts = { ...defaultOptions, ...options, apiRoot: axios.defaults.baseURL }
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
@@ -46,7 +47,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise       resolves when the POST request has completed and the entity is available
    *                        in the Vuex store.
    */
-  function post (uriOrCollection: string | ResourceInterface, data: unknown): Promise<ResourceInterface | null> {
+  function post<StoreType> (uriOrCollection: string | ResourceInterface<StoreType>, data: unknown): Promise<ResourceInterface<StoreType> | null> {
     const uri = normalizeEntityUri(uriOrCollection, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
@@ -96,7 +97,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get (uriOrEntity: string | ResourceInterface = ''): ResourceInterface {
+  function get<StoreType> (uriOrEntity: string | ResourceInterface<StoreType> = ''): ResourceInterface<StoreType> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
@@ -109,7 +110,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     setLoadPromiseOnStore(uri, load(uri, false))
-    return resourceCreator.wrap(store.state[opts.apiName][uri])
+    return resourceCreator.wrap<StoreType>(store.state[opts.apiName][uri])
   }
 
   /**
@@ -122,11 +123,11 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  async function reload (uriOrEntity: string | ResourceInterface): Promise<ResourceInterface> {
-    let resource: ResourceInterface
+  async function reload<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>): Promise<ResourceInterface<StoreType>> {
+    let resource: ResourceInterface<StoreType>
 
     if (typeof uriOrEntity === 'string') {
-      resource = get(uriOrEntity)
+      resource = get<StoreType>(uriOrEntity)
     } else {
       resource = uriOrEntity
     }
@@ -144,7 +145,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
       throw new Error(`Could not perform reload, "${uriOrEntity}" is not an entity or URI`)
     }
 
-    const loadPromise = load(uri, true)
+    const loadPromise = load<StoreType>(uri, true)
     // Catch all errors for the Promise that is saved to the store, to avoid unhandled promise rejections.
     // The errors are still available to catch on the promise returned by reload.
     setLoadPromiseOnStore(uri, loadPromise.catch(() => {
@@ -170,7 +171,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns entity    the current entity data from the Vuex store. Note: This may be a reactive dummy if the
    *                    API request is still ongoing.
    */
-  function load (uri: string, forceReload: boolean): Promise<StoreData> {
+  function load<StoreType> (uri: string, forceReload: boolean): Promise<StoreData<StoreType>> {
     const existsInStore = !isUnknown(uri)
 
     const isAlreadyLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
@@ -187,9 +188,9 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     if (!existsInStore) {
-      return loadFromApi(uri, 'fetch')
+      return loadFromApi<StoreType>(uri, 'fetch')
     } else if (forceReload) {
-      return loadFromApi(uri, 'reload').catch(error => {
+      return loadFromApi<StoreType>(uri, 'reload').catch(error => {
         store.commit('reloadingFailed', uri)
         throw error
       })
@@ -208,7 +209,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise resolves to the raw data stored in the Vuex store after the API request completes, or
    *                  rejects when the API request fails
    */
-  function loadFromApi (uri: string, operation: string): Promise<StoreData> {
+  function loadFromApi<StoreType> (uri: string, operation: string): Promise<StoreData<StoreType>> {
     return axios.get(uri || '/').then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
@@ -228,8 +229,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param templateParams in case the relation is a templated link, the template parameters that should be filled in
    * @returns Promise      resolves to the URI of the related entity.
    */
-  async function href (uriOrEntity: string | ResourceInterface, relation: string, templateParams:Record<string, string | number | boolean> = {}): Promise<string | undefined> {
-    const selfUri = normalizeEntityUri(await get(uriOrEntity)._meta.load, axios.defaults.baseURL)
+  async function href<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>, relation: string, templateParams:Record<string, string | number | boolean> = {}): Promise<string | undefined> {
+    const selfUri = normalizeEntityUri(await get<StoreType>(uriOrEntity)._meta.load, axios.defaults.baseURL)
     const rel = selfUri != null ? store.state[opts.apiName][selfUri][relation] : null
     if (!rel || !rel.href) return undefined
     if (rel.templated) {
@@ -245,7 +246,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   resolves when the PATCH request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  function patch (uriOrEntity: string | ResourceInterface, data: unknown) : Promise<ResourceInterface> {
+  function patch<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>, data: unknown) : Promise<ResourceInterface<StoreType>> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform PATCH, "${uriOrEntity}" is not an entity or URI`))
@@ -253,7 +254,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     const existsInStore = !isUnknown(uri)
 
     if (existsInStore) {
-      const entity = get(uri)
+      const entity = get<StoreType>(uri)
       if (isVirtualResource(entity)) {
         return Promise.reject(new Error('patch is not implemented for virtual resources'))
       }
@@ -268,7 +269,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
         data._links.self.href = uri
       }
       storeHalJsonData(data)
-      return get(uri)
+      return get<StoreType>(uri)
     }, (error) => {
       throw handleAxiosError('patch', uri, error)
     })
@@ -282,7 +283,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * immediately re-fetch the purged entity from the API in order to re-display it.
    * @param uriOrEntity URI (or instance) of an entity which should be removed from the Vuex store
    */
-  function purge (uriOrEntity: string | ResourceInterface): void {
+  function purge<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>): void {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't purge an unknown URI, do nothing
@@ -311,7 +312,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @returns Promise   resolves when the DELETE request has completed and either all related entites have
    *                    been reloaded from the API, or the failed deletion has been cleaned up.
    */
-  function del (uriOrEntity: string | ResourceInterface): Promise<void> {
+  function del<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>): Promise<void> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't delete an unknown URI, do nothing
@@ -319,7 +320,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     }
 
     if (!isUnknown(uri)) {
-      const entity = get(uri)
+      const entity = get<StoreType>(uri)
       if (isVirtualResource(entity)) {
         return Promise.reject(new Error('del is not implemented for virtual resources'))
       }
@@ -347,7 +348,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     return objectKeys.length === 1 && objectKeys[0] === 'href' && (value as Link).href === uri
   }
 
-  function findEntitiesReferencing (uri: string) : Array<StoreData> {
+  function findEntitiesReferencing<StoreType> (uri: string) : Array<StoreData<StoreType>> {
     return Object.values(store.state[opts.apiName])
       .filter((entity) => {
         return Object.values(entity).some(propertyValue =>
@@ -403,8 +404,8 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
    * @param uri
    * @param loadStoreData
    */
-  function setLoadPromiseOnStore (uri: string, loadStoreData: Promise<StoreData> | null = null) {
-    const promise: SerializablePromise<StoreData> = loadStoreData || Promise.resolve(store.state[opts.apiName][uri])
+  function setLoadPromiseOnStore<StoreType> (uri: string, loadStoreData: Promise<StoreData<StoreType>> | null = null) {
+    const promise: SerializablePromise<StoreData<StoreType>> = loadStoreData || Promise.resolve(store.state[opts.apiName][uri])
     promise.toJSON = () => '{}' // avoid warning in Nuxt when serializing the complete Vuex store ("Cannot stringify arbitrary non-POJOs Promise")
     store.state[opts.apiName][uri]._meta.load = promise
   }

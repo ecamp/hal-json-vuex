@@ -1,12 +1,12 @@
 import ResourceInterface from './ResourceInterface'
 import { StoreDataCollection } from './StoreData'
 
-interface CollectionInterface extends ResourceInterface {
-    _storeData: StoreDataCollection
+interface CollectionInterface<StoreType> extends ResourceInterface<StoreType> {
+    _storeData: StoreDataCollection<StoreType>
 
-    items: Array<ResourceInterface>
-    allItems: Array<ResourceInterface>
-    $loadItems: () => Promise<CollectionInterface>
+    items: Array<ResourceInterface<StoreType>>
+    allItems: Array<ResourceInterface<StoreType>>
+    $loadItems: () => Promise<CollectionInterface<StoreType>>
 }
 
 export default CollectionInterface
