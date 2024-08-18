@@ -11,15 +11,16 @@ import { InternalConfig } from './interfaces/Config'
  * If the storeData has been loaded into the store before but is currently reloading, the old storeData will be
  * returned, along with a ._meta.load promise that resolves when the reload is complete.
  */
-class Resource<StoreType, Store extends StoreData<StoreType> = StoreDataEntity<StoreType>> implements ResourceInterface<StoreType> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+class Resource<ResourceType extends ResourceInterface, StoreType extends StoreData<ResourceType> = StoreDataEntity<ResourceType>> implements ResourceInterface<ResourceType> {
   public _meta: {
     self: string,
     selfUrl: string,
-    load: Promise<ResourceInterface<StoreType>>
+    load: Promise<ResourceType>
     loading: boolean
   }
 
-  _storeData: Store
+  _storeData: StoreType
   config: InternalConfig
   apiActions: ApiActions
 
@@ -29,7 +30,7 @@ class Resource<StoreType, Store extends StoreData<StoreType> = StoreDataEntity<S
    * @param resourceCreator inject dependency Resource factory
    * @param config inject dependency: config options
    */
-  constructor (storeData: Store, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
+  constructor (storeData: StoreType, apiActions: ApiActions, resourceCreator: ResourceCreator, config: InternalConfig) {
     this.apiActions = apiActions
     this.config = config
     this._storeData = storeData
@@ -59,7 +60,7 @@ class Resource<StoreType, Store extends StoreData<StoreType> = StoreDataEntity<S
 
     // Use a trivial load promise to break endless recursion, except if we are currently reloading the storeData from the API
     const loadResource = storeData._meta.reloading
-      ? (storeData._meta.load as Promise<Store>).then(reloadedData => resourceCreator.wrap(reloadedData))
+      ? storeData._meta.load.then(reloadedData => resourceCreator.wrap(reloadedData))
       : Promise.resolve(this)
 
     // Use a shallow clone of _meta, since we don't want to overwrite the ._meta.load promise or self link in the Vuex store
@@ -71,15 +72,15 @@ class Resource<StoreType, Store extends StoreData<StoreType> = StoreDataEntity<S
     }
   }
 
-  $reload (): Promise<ResourceInterface<StoreType>> {
+  $reload (): Promise<ResourceType> {
     return this.apiActions.reload(this)
   }
 
-  $post (data: unknown): Promise<ResourceInterface<StoreType> | null> {
+  $post (data: unknown): Promise<ResourceType | null> {
     return this.apiActions.post(this._meta.self, data)
   }
 
-  $patch (data: unknown): Promise<ResourceInterface<StoreType>> {
+  $patch (data: unknown): Promise<ResourceType> {
     return this.apiActions.patch(this._meta.self, data)
   }
 
@@ -93,7 +94,7 @@ class Resource<StoreType, Store extends StoreData<StoreType> = StoreDataEntity<S
 
   /**
    * Serialize object to JSON
-   * this avoid warnings in Nuxt "Cannot stringify arbitrary non-POJOs"
+   * this avoids warnings in Nuxt "Cannot stringify arbitrary non-POJOs"
    */
   toJSON (): string {
     // for the lack of any better alternative, return store data as JSON

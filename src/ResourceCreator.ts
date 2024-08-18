@@ -2,11 +2,10 @@ import Resource from './Resource'
 import LoadingResource from './LoadingResource'
 import ApiActions from './interfaces/ApiActions'
 import { InternalConfig } from './interfaces/Config'
-import { StoreData } from './interfaces/StoreData'
+import { StoreData, StoreDataCollection, StoreDataEntity } from './interfaces/StoreData'
 import ResourceInterface from './interfaces/ResourceInterface'
 import Collection from './Collection'
 import { isCollection } from './halHelpers'
-import CollectionInterface from '@/interfaces/CollectionInterface'
 
 class ResourceCreator {
   private config: InternalConfig
@@ -44,28 +43,28 @@ class ResourceCreator {
    * @param data                entity data from the Vuex store
    * @returns object            wrapped entity ready for use in a frontend component
    */
-  wrap<StoreType> (data: StoreData<StoreType>): ResourceInterface<StoreType> {
+  wrap<ResourceType extends ResourceInterface> (data: StoreData<ResourceType>): ResourceType {
     const meta = data._meta || { load: Promise.resolve(), loading: false }
 
     // Resource is loading --> return LoadingResource
     if (meta.loading) {
-      const loadResource = (meta.load as Promise<StoreData<StoreType>>).then(storeData => this.wrapData<StoreType>(storeData))
-      return new LoadingResource(loadResource, meta.self, this.config)
+      const loadResource = (meta.load as Promise<StoreData<ResourceType>>).then(storeData => this.wrapData<ResourceType>(storeData))
+      return new LoadingResource<ResourceType>(loadResource, meta.self, this.config) as unknown as ResourceType
 
     // Resource is not loading --> wrap actual data
     } else {
-      return this.wrapData<StoreType>(data)
+      return this.wrapData<ResourceType>(data)
     }
   }
 
-  wrapData<StoreType> (data: StoreData<StoreType>): ResourceInterface<StoreType> | CollectionInterface<StoreType> {
+  wrapData<ResourceType extends ResourceInterface<ResourceType>> (data: StoreData<ResourceType>): ResourceType {
     // Store data looks like a collection --> return CollectionInterface
-    if (isCollection<StoreType>(data)) {
-      return new Collection<StoreType>(data, this.apiActions, this, this.config) // these parameters are passed to Resource constructor
+    if (isCollection<ResourceType>(data)) {
+      return new Collection<ResourceType>(data as StoreDataCollection<ResourceType>, this.apiActions, this, this.config) as unknown as ResourceType// these parameters are passed to Resource constructor
 
     // else Store Data looks like an entity --> return normal Resource
     } else {
-      return new Resource<StoreType>(data, this.apiActions, this, this.config)
+      return new Resource<ResourceType>(data as StoreDataEntity<ResourceType>, this.apiActions, this, this.config) as unknown as ResourceType
     }
   }
 }

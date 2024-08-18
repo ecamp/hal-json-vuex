@@ -8,7 +8,7 @@ import storeModule, { State } from './storeModule'
 import ServerException from './ServerException'
 import { ExternalConfig } from './interfaces/Config'
 import { Store } from 'vuex/types'
-import { AxiosInstance, AxiosError } from 'axios'
+import { AxiosError, AxiosInstance } from 'axios'
 import ResourceInterface from './interfaces/ResourceInterface'
 import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
@@ -24,9 +24,7 @@ import { isVirtualResource } from './halHelpers'
  * // In the <template> part of a Vue component
  * <li v-for="book in api.get('/books').items" :key="book._meta.self">...</li>
  */
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosInstance, options: ExternalConfig): any {
+function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosInstance, options: ExternalConfig) {
   const defaultOptions = {
     apiName: 'api',
     avoidNPlusOneRequests: true,
@@ -47,7 +45,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * @returns Promise       resolves when the POST request has completed and the entity is available
    *                        in the Vuex store.
    */
-  function post<StoreType> (uriOrCollection: string | ResourceInterface<StoreType>, data: unknown): Promise<ResourceInterface<StoreType> | null> {
+  function post<Item extends ResourceInterface> (uriOrCollection: string | ResourceInterface, data: unknown): Promise<Item|LoadingResource<Item> | null> {
     const uri = normalizeEntityUri(uriOrCollection, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform POST, "${uriOrCollection}" is not an entity or URI`))
@@ -65,7 +63,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
         return null
       }
       storeHalJsonData(data)
-      return get(data._links.self.href)
+      return get<Item>(data._links.self.href)
     }, (error) => {
       throw handleAxiosError('post to', uri, error)
     })
@@ -97,7 +95,8 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    *                    dummy is returned, which will be replaced with the true data through Vue's reactivity
    *                    system as soon as the API request finishes.
    */
-  function get<StoreType> (uriOrEntity: string | ResourceInterface<StoreType> = ''): ResourceInterface<StoreType> {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function get<Item extends ResourceInterface> (uriOrEntity: string | ResourceInterface = ''): Item|LoadingResource<Item> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
@@ -110,7 +109,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
     }
 
     setLoadPromiseOnStore(uri, load(uri, false))
-    return resourceCreator.wrap<StoreType>(store.state[opts.apiName][uri])
+    return resourceCreator.wrap<Item>(store.state[opts.apiName][uri])
   }
 
   /**
@@ -123,11 +122,11 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * @returns Promise   Resolves when the GET request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  async function reload<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>): Promise<ResourceInterface<StoreType>> {
-    let resource: ResourceInterface<StoreType>
+  async function reload<Item extends ResourceInterface> (uriOrEntity: string | Item|LoadingResource<Item>): Promise<Item|LoadingResource<Item>> {
+    let resource: Item|LoadingResource<Item>
 
     if (typeof uriOrEntity === 'string') {
-      resource = get<StoreType>(uriOrEntity)
+      resource = get<Item>(uriOrEntity)
     } else {
       resource = uriOrEntity
     }
@@ -145,7 +144,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
       throw new Error(`Could not perform reload, "${uriOrEntity}" is not an entity or URI`)
     }
 
-    const loadPromise = load<StoreType>(uri, true)
+    const loadPromise = load<StoreData>(uri, true)
     // Catch all errors for the Promise that is saved to the store, to avoid unhandled promise rejections.
     // The errors are still available to catch on the promise returned by reload.
     setLoadPromiseOnStore(uri, loadPromise.catch(() => {
@@ -171,7 +170,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * @returns entity    the current entity data from the Vuex store. Note: This may be a reactive dummy if the
    *                    API request is still ongoing.
    */
-  function load<StoreType> (uri: string, forceReload: boolean): Promise<StoreData<StoreType>> {
+  function load<StoreType extends StoreData> (uri: string, forceReload: boolean): Promise<StoreType> {
     const existsInStore = !isUnknown(uri)
 
     const isAlreadyLoading = existsInStore && (store.state[opts.apiName][uri]._meta || {}).loading
@@ -209,7 +208,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * @returns Promise resolves to the raw data stored in the Vuex store after the API request completes, or
    *                  rejects when the API request fails
    */
-  function loadFromApi<StoreType> (uri: string, operation: string): Promise<StoreData<StoreType>> {
+  function loadFromApi<StoreType extends StoreData> (uri: string, operation: string): Promise<StoreType> {
     return axios.get(uri || '/').then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
@@ -229,8 +228,8 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * @param templateParams in case the relation is a templated link, the template parameters that should be filled in
    * @returns Promise      resolves to the URI of the related entity.
    */
-  async function href<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>, relation: string, templateParams:Record<string, string | number | boolean> = {}): Promise<string | undefined> {
-    const selfUri = normalizeEntityUri(await get<StoreType>(uriOrEntity)._meta.load, axios.defaults.baseURL)
+  async function href<Item extends ResourceInterface> (uriOrEntity: string | Item, relation: string, templateParams:Record<string, string | number | boolean> = {}): Promise<string | undefined> {
+    const selfUri = normalizeEntityUri(await get<Item>(uriOrEntity)._meta.load, axios.defaults.baseURL)
     const rel = selfUri != null ? store.state[opts.apiName][selfUri][relation] : null
     if (!rel || !rel.href) return undefined
     if (rel.templated) {
@@ -246,7 +245,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * @returns Promise   resolves when the PATCH request has completed and the updated entity is available
    *                    in the Vuex store.
    */
-  function patch<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>, data: unknown) : Promise<ResourceInterface<StoreType>> {
+  function patch<Item extends ResourceInterface<Item>> (uriOrEntity: string | ResourceInterface, data: unknown) : Promise<Item | LoadingResource<Item>> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       return Promise.reject(new Error(`Could not perform PATCH, "${uriOrEntity}" is not an entity or URI`))
@@ -254,7 +253,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
     const existsInStore = !isUnknown(uri)
 
     if (existsInStore) {
-      const entity = get<StoreType>(uri)
+      const entity = get<Item>(uri)
       if (isVirtualResource(entity)) {
         return Promise.reject(new Error('patch is not implemented for virtual resources'))
       }
@@ -264,17 +263,15 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
       store.commit('addEmpty', uri)
     }
 
-    const returnedResource = axios.patch(uri || '/', data).then(({ data }) => {
+    return axios.patch(uri || '/', data).then(({ data }) => {
       if (opts.forceRequestedSelfLink) {
         data._links.self.href = uri
       }
       storeHalJsonData(data)
-      return get<StoreType>(uri)
+      return get<Item>(uri)
     }, (error) => {
       throw handleAxiosError('patch', uri, error)
     })
-
-    return returnedResource
   }
 
   /**
@@ -283,7 +280,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * immediately re-fetch the purged entity from the API in order to re-display it.
    * @param uriOrEntity URI (or instance) of an entity which should be removed from the Vuex store
    */
-  function purge<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>): void {
+  function purge<Item extends ResourceInterface> (uriOrEntity: string | Item): void {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't purge an unknown URI, do nothing
@@ -312,7 +309,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
    * @returns Promise   resolves when the DELETE request has completed and either all related entites have
    *                    been reloaded from the API, or the failed deletion has been cleaned up.
    */
-  function del<StoreType> (uriOrEntity: string | ResourceInterface<StoreType>): Promise<void> {
+  function del<Item extends ResourceInterface> (uriOrEntity: string | Item): Promise<void> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
     if (uri === null) {
       // Can't delete an unknown URI, do nothing
@@ -320,7 +317,7 @@ function HalJsonVuex<FullStore> (store: Store<State<FullStore>>, axios: AxiosIns
     }
 
     if (!isUnknown(uri)) {
-      const entity = get<StoreType>(uri)
+      const entity = get<Item>(uri)
       if (isVirtualResource(entity)) {
         return Promise.reject(new Error('del is not implemented for virtual resources'))
       }

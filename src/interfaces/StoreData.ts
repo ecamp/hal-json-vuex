@@ -23,7 +23,7 @@ type StoreDataMeta = {
     }
 }
 
-type VirtualStoreDataMeta = {
+type VirtualStoreDataMeta = StoreDataMeta & {
     _meta: {
         virtual: boolean
         owningResource: string
@@ -31,22 +31,26 @@ type VirtualStoreDataMeta = {
     }
 }
 
-type StoreDataEntity<Type> = Type & StoreDataMeta & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StoreDataEntity<T = any> = T & StoreDataMeta & {
     _meta: {
-        load: SerializablePromise<StoreDataEntity<Type>>
+        load: SerializablePromise<StoreDataEntity<T>>
     }
 }
 
-type StoreDataCollection<Type> = Type & StoreDataMeta & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StoreDataCollection<T = any> = T & StoreDataMeta & {
     items: Array<Link>,
     _meta: {
-        load: SerializablePromise<StoreDataCollection<Type>>
+        load: SerializablePromise<StoreDataCollection<T>>
     }
 }
 
-type StoreData<Type> = StoreDataEntity<Type> | StoreDataCollection<Type>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type StoreData<T = any> = StoreDataEntity<T> | StoreDataCollection<T>
 
-type VirtualStoreData<Type> = VirtualStoreDataMeta & StoreData<Type>
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type VirtualStoreData<T = any> = StoreData<T> & VirtualStoreDataMeta
 
 export { StoreData, VirtualStoreData, Link, VirtualLink, TemplatedLink, StoreDataEntity, StoreDataCollection, SerializablePromise }
 
