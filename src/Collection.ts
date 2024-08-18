@@ -33,7 +33,7 @@ class Collection<ItemType extends ResourceInterface, ResourceType extends Collec
   /**
      * Returns a promise that resolves to the collection object, once all items have been loaded
      */
-  public $loadItems () :Promise<this> {
+  public $loadItems (): Promise<this> {
     return this._itemLoader(this._storeData.items)
   }
 

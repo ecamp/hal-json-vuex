@@ -493,6 +493,26 @@ describe('Using dollar methods', () => {
     expect(result[0]).toMatchObject({ id: 123, _meta: { self: '/items/123' } })
   })
 
+  it('does throw when $loadItems is called on a non-collection entity', async () => {
+    // given
+    const userResponse = {
+      id: 2,
+      _links: {
+        self: {
+          href: '/users/2'
+        }
+      }
+    }
+    axiosMock.onGet('http://localhost/users/2').replyOnce(200, userResponse)
+
+    const user = vm.api.get('/users/2')
+    expect(user).toBeInstanceOf(LoadingResource)
+
+    // then
+    expect(user.$loadItems()).rejects.toThrow('This LoadingResource is not a collection')
+    await letNetworkRequestFinish()
+  })
+
   it('loads the contents of an embedded collection', async () => {
     // given
     const userResponse = {
