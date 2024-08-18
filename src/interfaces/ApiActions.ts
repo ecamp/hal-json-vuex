@@ -1,10 +1,10 @@
 import ResourceInterface from './ResourceInterface'
 
 interface ApiActions {
-    get: (uriOrEntity: string | ResourceInterface) => ResourceInterface
-    reload: (uriOrEntity: string | ResourceInterface) => Promise<ResourceInterface>
-    post: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface | null>
-    patch: (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceInterface>
+    get:<ResourceType extends ResourceInterface> (uriOrEntity?: string | ResourceInterface) => ResourceType
+    reload:<ResourceType extends ResourceInterface> (uriOrEntity: string | ResourceInterface) => Promise<ResourceType>
+    post:<ResourceType extends ResourceInterface> (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceType | null>
+    patch:<ResourceType extends ResourceInterface> (uriOrEntity: string | ResourceInterface, data: unknown) => Promise<ResourceType>
     del: (uriOrEntity: string | ResourceInterface) => Promise<string | void>
     href: (uriOrEntity: string | ResourceInterface, relation: string, templateParams) => Promise<string | undefined>
     isUnknown: (uri: string) => boolean
