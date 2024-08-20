@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { vi } from 'vitest'
 import HalJsonVuex from '../src'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
@@ -603,7 +604,7 @@ describe('API store', () => {
         expect(meta.self).toEqual(null)
       })
 
-      it('returns the correct object when awaiting._meta.load on a LoadingResource', (done) => {
+      it('returns the correct object when awaiting._meta.load on a LoadingResource', async () => {
         // given
         axiosMock
           .onGet('http://localhost/camps/1')
@@ -612,17 +613,14 @@ describe('API store', () => {
         expect(loadingResource).toBeInstanceOf(vm.api.LoadingResource)
 
         // when
-        loadingResource._meta.load.then((loadedData) => {
-          // then
-          expect(loadedData).toMatchObject({
-            id: 1,
-            _meta: { self: '/camps/1' }
-          })
-
-          done()
+        const loadedData = await loadingResource._meta.load
+        // then
+        expect(loadedData).toMatchObject({
+          id: 1,
+          _meta: { self: '/camps/1' }
         })
 
-        letNetworkRequestFinish()
+        await letNetworkRequestFinish()
       })
 
       it('returns the correct object when awaiting._meta.load on a loaded object', async () => {
@@ -1631,7 +1629,7 @@ describe('API store', () => {
 
       it('posts entity and stores the response into the store', async () => {
         // given
-        const axiosPostSpy = jest.fn(function (config) {
+        const axiosPostSpy = vi.fn(function (config) {
           return [200, embeddedSingleEntity.serverResponse]
         })
         axiosMock.onPost('http://localhost/camps').reply(axiosPostSpy)

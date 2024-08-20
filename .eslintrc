@@ -76,8 +76,5 @@
         ]
       }
     ]
-  },
-  "parserOptions": {
-    "parser": "babel-eslint"
   }
 }

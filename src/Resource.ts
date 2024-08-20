@@ -1,4 +1,4 @@
-import urltemplate from 'url-template'
+import { parseTemplate } from 'url-template'
 import { isTemplatedLink, isVirtualLink, isEntityReference } from './halHelpers'
 import ResourceInterface from './interfaces/ResourceInterface'
 import ApiActions from './interfaces/ApiActions'
@@ -49,7 +49,7 @@ class Resource implements ResourceInterface {
 
           // storeData[key] is a templated link
         } else if (isTemplatedLink(value)) {
-          this[key] = templateParams => this.apiActions.get(urltemplate.parse(value.href).expand(templateParams || {}))
+          this[key] = templateParams => this.apiActions.get(parseTemplate(value.href).expand(templateParams || {}))
 
           // storeData[key] is a primitive (normal entity property)
         } else {
