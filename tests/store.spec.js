@@ -843,6 +843,28 @@ describe('API store', () => {
         )
       })
 
+      it('purges whole store', async () => {
+        // given
+        axiosMock
+          .onGet('http://localhost/camps/1')
+          .reply(200, embeddedSingleEntity.serverResponse)
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+        vm.api.get('/camps/1').campType()
+        const storeStateWithoutCampType = cloneDeep(
+          embeddedSingleEntity.storeState
+        )
+        delete storeStateWithoutCampType['/campTypes/20']
+        expect(vm.$store.state.api).toMatchObject(storeStateWithoutCampType)
+
+        // when
+        vm.api.purgeAll()
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({ })
+        await letNetworkRequestFinish()
+      })
+
       it('reloads a URI from the store', async () => {
         // given
         axiosMock
@@ -1319,6 +1341,26 @@ describe('API store', () => {
         await letNetworkRequestFinish()
         expect(axiosMock.history.delete.length).toEqual(1)
         expect(axiosMock.history.get.length).toEqual(3)
+      })
+
+      it('does not delete object from the store if api fails', async () => {
+        // given
+        axiosMock
+          .onGet('http://localhost/users/1')
+          .replyOnce(200, { id: 1, _links: { self: { href: '/users/1' } } })
+        axiosMock.onDelete('http://localhost/users/1').replyOnce(500)
+        const user = vm.api.get('/users/1')
+        expect(user._meta.deleting).toBeUndefined()
+
+        // when
+        await expect(vm.api.del(user))
+          // then
+          .rejects.toThrow('Error trying to delete "/users/1" (status 500): Request failed with status code 500')
+
+        expect(user._meta.deleting).toBeUndefined()
+        await letNetworkRequestFinish()
+        expect(axiosMock.history.delete.length).toEqual(1)
+        expect(axiosMock.history.get.length).toEqual(1)
       })
 
       it('breaks circular dependencies when deleting an entity in the reference circle', async () => {

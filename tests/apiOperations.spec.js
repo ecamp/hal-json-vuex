@@ -2,6 +2,7 @@ import { mount } from '@vue/test-utils'
 import HalJsonVuex from '../src'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
+import { vi } from 'vitest'
 import { createStore } from 'vuex'
 import embeddedSingleEntity from './resources/embedded-single-entity'
 import linkedCollection from './resources/linked-collection'
@@ -622,7 +623,7 @@ describe('Using dollar methods', () => {
       }
     }
     const chapter2Response = {
-      id: 1028,
+      id: 1031,
       name: 'The second chapter',
       _links: {
         self: {
@@ -631,7 +632,7 @@ describe('Using dollar methods', () => {
       }
     }
     const chapter3Response = {
-      id: 1028,
+      id: 1038,
       name: 'The final chapter',
       _links: {
         self: {
@@ -673,6 +674,180 @@ describe('Using dollar methods', () => {
         self: '/chapters/1028'
       }
     })
+  })
+
+  it('provides find array function on loading embedded collections', async () => {
+    // given
+    const userResponse = {
+      id: 1,
+      _embedded: {
+        lastReadBook: {
+          id: 555,
+          _embedded: {
+            chapters: [
+              { _links: { self: { href: '/chapters/1028' } } },
+              { _links: { self: { href: '/chapters/1031' } } },
+              { _links: { self: { href: '/chapters/1038' } } }
+            ]
+          },
+          _links: {
+            self: {
+              href: '/books/555'
+            }
+          }
+        }
+      },
+      _links: {
+        self: {
+          href: '/users/1'
+        }
+      }
+    }
+    const chapter1Response = {
+      id: 1028,
+      name: 'The first chapter',
+      _links: {
+        self: {
+          href: '/chapters/1028'
+        }
+      }
+    }
+    const chapter2Response = {
+      id: 1031,
+      name: 'The second chapter',
+      _links: {
+        self: {
+          href: '/chapters/1031'
+        }
+      }
+    }
+    const chapter3Response = {
+      id: 1038,
+      name: 'The final chapter',
+      _links: {
+        self: {
+          href: '/chapters/1038'
+        }
+      }
+    }
+    const bookResponse = {
+      id: 555,
+      _embedded: {
+        chapters: [chapter1Response, chapter2Response, chapter3Response]
+      },
+      _links: {
+        self: {
+          href: '/books/555'
+        }
+      }
+    }
+    axiosMock.onGet('http://localhost/users/1').replyOnce(200, userResponse)
+    axiosMock.onGet('http://localhost/books/555').replyOnce(200, bookResponse)
+
+    const lastReadBookChapters = vm.api
+      .get('/users/1')
+      .lastReadBook()
+      .chapters()
+    expect(lastReadBookChapters).toBeInstanceOf(LoadingResource)
+
+    // when
+    const items = lastReadBookChapters.items
+
+    // then
+
+    const spy = vi.fn().mockImplementation(({ id }) => id === 1028)
+    items.find((item) => spy(item))
+
+    expect(spy).not.toHaveBeenCalled()
+    await letNetworkRequestFinish()
+    expect(spy).toHaveBeenCalled()
+  })
+
+  it('provides filter array function on loading embedded collections', async () => {
+    // given
+    const userResponse = {
+      id: 1,
+      _embedded: {
+        lastReadBook: {
+          id: 555,
+          _embedded: {
+            chapters: [
+              { _links: { self: { href: '/chapters/1028' } } },
+              { _links: { self: { href: '/chapters/1031' } } },
+              { _links: { self: { href: '/chapters/1038' } } }
+            ]
+          },
+          _links: {
+            self: {
+              href: '/books/555'
+            }
+          }
+        }
+      },
+      _links: {
+        self: {
+          href: '/users/1'
+        }
+      }
+    }
+    const chapter1Response = {
+      id: 1028,
+      name: 'The first chapter',
+      _links: {
+        self: {
+          href: '/chapters/1028'
+        }
+      }
+    }
+    const chapter2Response = {
+      id: 1031,
+      name: 'The second chapter',
+      _links: {
+        self: {
+          href: '/chapters/1031'
+        }
+      }
+    }
+    const chapter3Response = {
+      id: 1038,
+      name: 'The final chapter',
+      _links: {
+        self: {
+          href: '/chapters/1038'
+        }
+      }
+    }
+    const bookResponse = {
+      id: 555,
+      _embedded: {
+        chapters: [chapter1Response, chapter2Response, chapter3Response]
+      },
+      _links: {
+        self: {
+          href: '/books/555'
+        }
+      }
+    }
+    axiosMock.onGet('http://localhost/users/1').replyOnce(200, userResponse)
+    axiosMock.onGet('http://localhost/books/555').replyOnce(200, bookResponse)
+
+    const lastReadBookChapters = vm.api
+      .get('/users/1')
+      .lastReadBook()
+      .chapters()
+    expect(lastReadBookChapters).toBeInstanceOf(LoadingResource)
+
+    // when
+    const items = lastReadBookChapters.items
+
+    // then
+
+    const spy = vi.fn().mockImplementation(({ id }) => id === 1028)
+    items.filter((item) => spy(item))
+
+    expect(spy).not.toHaveBeenCalled()
+    await letNetworkRequestFinish()
+    expect(spy).toHaveBeenCalled()
   })
 
   it('throws error when deleting virtual resource', async () => {
