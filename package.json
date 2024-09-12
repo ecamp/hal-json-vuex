@@ -16,7 +16,7 @@
     "build:watch": "cross-env NODE_ENV=production vite build --watch",
     "build-dev": "cross-env NODE_ENV=development tsc && vite build",
     "clean": "cross-env rimraf dist coverage lib",
-    "coverage": "cross-env npm run build && vitest --coverage.enabled",
+    "coverage": "cross-env npm run build && vitest --coverage",
     "lint": "cross-env eslint src tests --ext .js,.ts",
     "test": "vitest",
     "test:debug": "node --inspect-brk ./node_modules/.bin/jest -i",
