@@ -26,6 +26,7 @@
         "noUnusedLocals": false,
         "noUnusedParameters": true,
         "strictNullChecks": true,
+        "skipLibCheck": true,
         "suppressImplicitAnyIndexErrors": true,
         "paths": {
             "@/*": [
@@ -37,8 +38,8 @@
         },
         "types": [
             "vite/client",
-            "node",
-            "jest"
+            "vitest/globals",
+            "node"
         ]
     },
     "include": [

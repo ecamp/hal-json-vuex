@@ -1,4 +1,5 @@
 import { mount } from '@vue/test-utils'
+import { vi } from 'vitest'
 import HalJsonVuex from '../src'
 import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
@@ -603,7 +604,7 @@ describe('API store', () => {
         expect(meta.self).toEqual(null)
       })
 
-      it('returns the correct object when awaiting._meta.load on a LoadingResource', (done) => {
+      it('returns the correct object when awaiting._meta.load on a LoadingResource', async () => {
         // given
         axiosMock
           .onGet('http://localhost/camps/1')
@@ -612,17 +613,14 @@ describe('API store', () => {
         expect(loadingResource).toBeInstanceOf(vm.api.LoadingResource)
 
         // when
-        loadingResource._meta.load.then((loadedData) => {
-          // then
-          expect(loadedData).toMatchObject({
-            id: 1,
-            _meta: { self: '/camps/1' }
-          })
-
-          done()
+        const loadedData = await loadingResource._meta.load
+        // then
+        expect(loadedData).toMatchObject({
+          id: 1,
+          _meta: { self: '/camps/1' }
         })
 
-        letNetworkRequestFinish()
+        await letNetworkRequestFinish()
       })
 
       it('returns the correct object when awaiting._meta.load on a loaded object', async () => {
@@ -843,6 +841,28 @@ describe('API store', () => {
         expect(vm.$store.state.api).toMatchObject(
           embeddedSingleEntity.storeState
         )
+      })
+
+      it('purges whole store', async () => {
+        // given
+        axiosMock
+          .onGet('http://localhost/camps/1')
+          .reply(200, embeddedSingleEntity.serverResponse)
+        vm.api.get('/camps/1')
+        await letNetworkRequestFinish()
+        vm.api.get('/camps/1').campType()
+        const storeStateWithoutCampType = cloneDeep(
+          embeddedSingleEntity.storeState
+        )
+        delete storeStateWithoutCampType['/campTypes/20']
+        expect(vm.$store.state.api).toMatchObject(storeStateWithoutCampType)
+
+        // when
+        vm.api.purgeAll()
+
+        // then
+        expect(vm.$store.state.api).toMatchObject({ })
+        await letNetworkRequestFinish()
       })
 
       it('reloads a URI from the store', async () => {
@@ -1323,6 +1343,26 @@ describe('API store', () => {
         expect(axiosMock.history.get.length).toEqual(3)
       })
 
+      it('does not delete object from the store if api fails', async () => {
+        // given
+        axiosMock
+          .onGet('http://localhost/users/1')
+          .replyOnce(200, { id: 1, _links: { self: { href: '/users/1' } } })
+        axiosMock.onDelete('http://localhost/users/1').replyOnce(500)
+        const user = vm.api.get('/users/1')
+        expect(user._meta.deleting).toBeUndefined()
+
+        // when
+        await expect(vm.api.del(user))
+          // then
+          .rejects.toThrow('Error trying to delete "/users/1" (status 500): Request failed with status code 500')
+
+        expect(user._meta.deleting).toBeUndefined()
+        await letNetworkRequestFinish()
+        expect(axiosMock.history.delete.length).toEqual(1)
+        expect(axiosMock.history.get.length).toEqual(1)
+      })
+
       it('breaks circular dependencies when deleting an entity in the reference circle', async () => {
         // given
         axiosMock.onDelete('http://localhost/periods/1').replyOnce(204)
@@ -1631,7 +1671,7 @@ describe('API store', () => {
 
       it('posts entity and stores the response into the store', async () => {
         // given
-        const axiosPostSpy = jest.fn(function (config) {
+        const axiosPostSpy = vi.fn(function (config) {
           return [200, embeddedSingleEntity.serverResponse]
         })
         axiosMock.onPost('http://localhost/camps').reply(axiosPostSpy)

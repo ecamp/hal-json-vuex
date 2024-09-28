@@ -1,5 +1,5 @@
 import normalize from 'hal-json-normalizer'
-import urltemplate from 'url-template'
+import { parseTemplate } from 'url-template'
 import normalizeEntityUri from './normalizeEntityUri'
 import ResourceCreator from './ResourceCreator'
 import Resource from './Resource'
@@ -233,7 +233,7 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
     const rel = selfUri != null ? store.state[opts.apiName][selfUri][relation] : null
     if (!rel || !rel.href) return undefined
     if (rel.templated) {
-      return urltemplate.parse(rel.href).expand(templateParams)
+      return parseTemplate(rel.href).expand(templateParams)
     }
     return rel.href
   }

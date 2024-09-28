@@ -10,7 +10,7 @@ class LoadingCollection {
    * @param existingContent optionally set the elements that are already known, for random access
    */
   static create (loadArray: Promise<Array<ResourceInterface> | undefined>, existingContent: Array<ResourceInterface> = []): Array<ResourceInterface> {
-    // if Promsise resolves to undefined, provide empty array
+    // if the Promise resolves to undefined, provide empty array
     // this could happen if items is accessed from a LoadingResource, which resolves to a normal entity without 'items'
     const loadArraySafely = loadArray.then(array => array ?? [])
 
