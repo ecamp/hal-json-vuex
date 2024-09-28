@@ -47,7 +47,8 @@
   ],
   "authors": [
     "Carlo Beltrame",
-    "Urban Suppiger"
+    "Urban Suppiger",
+    "Manuel Meister"
   ],
   "license": "MIT",
   "bugs": {
@@ -56,7 +57,17 @@
   "homepage": "https://github.com/ecamp/hal-json-vuex#readme",
   "dependencies": {
     "hal-json-normalizer": "^4.2.0",
-    "url-template": "^3.1.1"
+    "url-template": "^3.1.1",
+    "vue-demi": "^0.14.10"
+  },
+  "peerDependencies": {
+    "@vue/composition-api": "^1.0.0-rc.1",
+    "vue": "^2.0.0 || >=3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@vue/composition-api": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "5.10.1",
