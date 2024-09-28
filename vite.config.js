@@ -1,6 +1,7 @@
 // vite.config.js
 
 import { defineConfig } from 'vite'
+import dtsPlugin from 'vite-plugin-dts'
 
 export default defineConfig({
   build: {
@@ -35,6 +36,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['vue-demi']
   },
+  plugins: [dtsPlugin({ rollupTypes: true })],
   test: {
     environment: 'jsdom',
     globals: true,

@@ -7,9 +7,9 @@ import Collection from './Collection'
 import LoadingResource from './LoadingResource'
 import { isCollection } from './halHelpers'
 
-class ResourceCreator {
+class ResourceCreator<RootEndpoint extends ResourceInterface = ResourceInterface> {
   private config: InternalConfig
-  private apiActions: ApiActions
+  private apiActions: ApiActions<RootEndpoint>
 
   constructor ({ get, reload, post, patch, href, del, isUnknown }: ApiActions, config: InternalConfig = {}) {
     this.apiActions = { get, reload, post, patch, href, del, isUnknown }

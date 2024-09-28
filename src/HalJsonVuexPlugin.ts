@@ -27,7 +27,7 @@ import { App, isVue2, isVue3, Vue2 } from 'vue-demi'
  * // In the <template> part of a Vue component
  * <li v-for="book in api.get('/books').items" :key="book._meta.self">...</li>
  */
-export function HalJsonVuexPlugin<FullStore> (store: Store<State<FullStore>>, axios: AxiosInstance, options: ExternalConfig): HalJsonVuex & { install: (app: unknown) => void } {
+export function HalJsonVuexPlugin<RootEndpoint extends ResourceInterface, FullStore> (store: Store<State<FullStore>>, axios: AxiosInstance, options: ExternalConfig): HalJsonVuex<RootEndpoint> & { install: (app: unknown) => void } {
   const defaultOptions = {
     apiName: 'api',
     avoidNPlusOneRequests: true,
@@ -38,7 +38,7 @@ export function HalJsonVuexPlugin<FullStore> (store: Store<State<FullStore>>, ax
 
   store.registerModule(opts.apiName, { state: {}, ...storeModule })
 
-  const resourceCreator = new ResourceCreator({ get, reload, post, patch, del, href, isUnknown }, opts)
+  const resourceCreator = new ResourceCreator<RootEndpoint>({ get, reload, post, patch, del, href, isUnknown }, opts)
 
   /**
      * Sends a POST request to the API, in order to create a new entity. Note that this does not
@@ -99,7 +99,7 @@ export function HalJsonVuexPlugin<FullStore> (store: Store<State<FullStore>>, ax
      *                    system as soon as the API request finishes.
      */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function get<Item extends ResourceInterface> (uriOrEntity: string | ResourceInterface = ''): Item | LoadingResource<Item> {
+  function get<Item extends ResourceInterface = RootEndpoint> (uriOrEntity: string | ResourceInterface = ''): Item | LoadingResource<Item> {
     const uri = normalizeEntityUri(uriOrEntity, axios.defaults.baseURL)
 
     if (uri === null) {
@@ -441,9 +441,9 @@ export function HalJsonVuexPlugin<FullStore> (store: Store<State<FullStore>>, ax
     }
   }
 
-  const apiActions: ApiActions = { post, get, reload, del, patch, href, isUnknown }
+  const apiActions: ApiActions<RootEndpoint> = { post, get, reload, del, patch, href, isUnknown }
   const storeActions: StoreActions = { purge, purgeAll }
-  const halJsonVuex: HalJsonVuex = { ...apiActions, ...storeActions }
+  const halJsonVuex: HalJsonVuex<RootEndpoint> = { ...apiActions, ...storeActions }
 
   function install (app: App | typeof Vue2) {
     if (isVue3) {
