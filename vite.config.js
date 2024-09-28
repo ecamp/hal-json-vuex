@@ -21,14 +21,18 @@ export default defineConfig({
     },
     rollupOptions: {
       // externalize outputs if we have these modules as dependencies
-      external: ['hal-json-normalizer', 'url-template'],
+      external: ['hal-json-normalizer', 'url-template', 'vue-demi'],
       output: {
         globals: {
           'url-template': 'parseTemplate',
-          'hal-json-normalizer': 'normalize'
+          'hal-json-normalizer': 'normalize',
+          'vue-demi': 'VueDemi'
         }
       }
     }
+  },
+  optimizeDeps: {
+    exclude: ['vue-demi']
   },
   test: {
     environment: 'jsdom',

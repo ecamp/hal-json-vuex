@@ -1,3 +1,5 @@
+import { del, set } from 'vue-demi'
+
 import StoreData from './interfaces/StoreData'
 
 import { MutationTree } from 'vuex/types'
@@ -13,9 +15,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the object that is being fetched
    */
   addEmpty (state: State, uri: string) : void {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    state[uri] = { _meta: { self: uri, loading: true } }
+    set(state, uri, { _meta: { self: uri, loading: true } })
   },
   /**
    * Adds entities loaded from the API to the Vuex store.
@@ -24,12 +24,10 @@ export const mutations: MutationTree<State> = {
    */
   add (state: State, data: Record<string, unknown>) : void {
     Object.keys(data).forEach(uri => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      state[uri] = data[uri]
+      set(state, uri, data[uri])
 
-      state[uri]._meta.loading = false
-      state[uri]._meta.reloading = false
+      set(state[uri]._meta, 'loading', false)
+      set(state[uri]._meta, 'reloading', false)
     })
   },
   /**
@@ -38,7 +36,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the entity that is currently being reloaded
    */
   reloading (state: State, uri: string) : void {
-    if (state[uri]) state[uri]._meta.reloading = true
+    if (state[uri]) set(state[uri]._meta, 'reloading', true)
   },
   /**
    * Marks a single entity in the Vuex store as normal again, after it has been marked as reloading before.
@@ -46,7 +44,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the entity that is currently being reloaded
    */
   reloadingFailed (state: State, uri: string) : void {
-    if (state[uri]) state[uri]._meta.reloading = false
+    if (state[uri]) set(state[uri]._meta, 'reloading', false)
   },
   /**
    * Removes a single entity from the Vuex store.
@@ -54,7 +52,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the entity to be removed
    */
   purge (state: State, uri: string) : void {
-    delete state[uri]
+    del(state, uri)
   },
   /**
    * Removes all entities from the Vuex store.
@@ -63,7 +61,7 @@ export const mutations: MutationTree<State> = {
    */
   purgeAll (state: State) : void {
     Object.keys(state).forEach(uri => {
-      delete state[uri]
+      del(state, uri)
     })
   },
   /**
@@ -72,7 +70,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the entity that is currently being deleted
    */
   deleting (state: State, uri: string) : void {
-    if (state[uri]) state[uri]._meta.deleting = true
+    if (state[uri]) set(state[uri]._meta, 'deleting', true)
   },
   /**
    * Marks a single entity in the Vuex store as normal again, after it has been marked as deleting before.
@@ -80,7 +78,7 @@ export const mutations: MutationTree<State> = {
    * @param uri   URI of the entity that failed to be deleted
    */
   deletingFailed (state: State, uri: string) : void {
-    if (state[uri]) state[uri]._meta.deleting = false
+    if (state[uri]) set(state[uri]._meta, 'deleting', false)
   }
 }
 

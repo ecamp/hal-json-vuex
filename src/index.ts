@@ -13,6 +13,7 @@ import ResourceInterface from './interfaces/ResourceInterface'
 import StoreData, { Link, SerializablePromise } from './interfaces/StoreData'
 import ApiActions from './interfaces/ApiActions'
 import { isVirtualResource } from './halHelpers'
+import { App, isVue2, isVue3, Vue2 } from 'vue-demi'
 
 /**
  * Defines the API store methods available in all Vue components. The methods can be called as follows:
@@ -444,17 +445,19 @@ function HalJsonVuex (store: Store<Record<string, State>>, axios: AxiosInstance,
   const halJsonVuex = { ...apiActions, purge, purgeAll, href, Resource, LoadingResource }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function install (app: any) {
-    if (app.version && app.version.charAt(0) === '3') {
-      Object.defineProperties(app.config.globalProperties, {
-        [opts.apiName]: {
-          get () {
-            return halJsonVuex
-          }
-        }
+  function install (app: App | typeof Vue2) {
+    if (isVue3) {
+      Object.defineProperty(app.config.globalProperties, opts.apiName, {
+        get: () => halJsonVuex,
+        configurable: true
+      })
+    } else if (isVue2) {
+      Object.defineProperty(app.prototype, opts.apiName, {
+        get: () => halJsonVuex,
+        configurable: true
       })
     } else {
-      throw new Error('Vue2 detected: this version of hal-json-vuex is not compatible with Vue2')
+      throw new Error('Neither Vue2 or Vue3 detected')
     }
   }
 
