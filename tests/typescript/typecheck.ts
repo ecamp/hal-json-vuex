@@ -4,23 +4,13 @@ import { createStore, Store } from 'vuex'
 import HalJsonVuexPlugin from '../../src/HalJsonVuexPlugin'
 import { State } from '../../src/storeModule'
 
-import type CollectionInterface from '../../src/interfaces/CollectionInterface'
-import type ResourceInterface from '../../src/interfaces/ResourceInterface'
-
 /* eslint-disable no-unused-expressions */
 
-export type ResourceReference<T extends ResourceInterface<T>> = () => T;
+import type ResourceInterface from '../../src/interfaces/ResourceInterface'
+import type { ResourceReference, CollectionReference } from '../../src/interfaces/References'
 
-export type CollectionType<
-    Item extends ResourceInterface<Item>,
-    Self extends CollectionInterface<Item, Self> = CollectionInterface<Item>,
-> = CollectionInterface<Item, Self>;
-
-type SingleEndpointResource<T extends ResourceInterface<T>> = (params: { id: string }) => T;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type QueryEndpointResources<T extends ResourceInterface<T>, Param = Record<string, any>> = (
-    params?: Param,
-) => CollectionType<T>;
+type SingleEndpointResource<T extends ResourceInterface<T>> = ResourceReference<T, { id: string }>;
+type QueryEndpointResources<T extends ResourceInterface<T>, Params = undefined> = CollectionReference<T, Params>;
 
 interface PeriodEntity extends ResourceInterface<PeriodEntity> {
   name: string

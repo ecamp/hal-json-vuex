@@ -41,14 +41,14 @@ class Collection<ItemType extends ResourceInterface, ResourceType extends Collec
   /**
      *  Returns a promise that resolves to the collection object, once all items have been loaded
      */
-  private _itemLoader (array: Array<ItemType>) : Promise<this> {
+  private _itemLoader (array: Array<ItemType | Link>) : Promise<this> {
     if (!this._containsUnknownEntityReference(array)) {
-      return Promise.resolve(this) // we know that this object must be of type CollectionInterface
+      return Promise.resolve(this)
     }
 
     // eager loading of 'fetchAllUri' (e.g. parent for embedded collections)
     if (this.config.avoidNPlusOneRequests) {
-      return this.apiActions.reload<ItemType>(this) as unknown as Promise<this> // we know that reload resolves to a type CollectionInterface
+      return this.apiActions.reload<this>(this)
 
       // no eager loading: replace each reference (Link) with a Resource (ResourceInterface)
     } else {
@@ -56,7 +56,7 @@ class Collection<ItemType extends ResourceInterface, ResourceType extends Collec
 
       return Promise.all(
         arrayWithReplacedReferences.map(entry => entry._meta.load)
-      ).then(() => this) // we know that this object must be of type CollectionInterface
+      ).then(() => this)
     }
   }
 
@@ -65,12 +65,10 @@ class Collection<ItemType extends ResourceInterface, ResourceType extends Collec
      * (or from the API if necessary), and returns that as a new array. In case some of the entity references in
      * the array have not finished loading yet, returns a LoadingCollection instead.
      * @param array            possibly mixed array of values and references
-     * @param fetchAllUri      URI that allows fetching all array items in a single network request, if known
-     * @param fetchAllProperty property in the entity from fetchAllUri that will contain the array
      * @returns array          the new array with replaced items, or a LoadingCollection if any of the array
      *                         elements is still loading.
      */
-  private _mapArrayOfEntityReferences (array: Array<ItemType>): Array<ItemType> {
+  private _mapArrayOfEntityReferences (array: Array<Link>): Array<ItemType> {
     if (!this._containsUnknownEntityReference(array)) {
       return this._replaceEntityReferences(array)
     }
@@ -90,15 +88,15 @@ class Collection<ItemType extends ResourceInterface, ResourceType extends Collec
   /**
    * Replace each item in array with a proper Resource (or LoadingResource)
    */
-  private _replaceEntityReferences (array: Array<ItemType>): Array<ItemType> {
-    const links = array.filter(entry => isEntityReference(entry)) as unknown as Link[]
+  private _replaceEntityReferences (array: Array<ItemType | Link>): Array<ItemType> {
+    const links = array.filter(isEntityReference)
     return links.map(entry => this.apiActions.get<ItemType>(entry.href) as ItemType)
   }
 
   /**
    * Returns true if any of the items within 'array' is not yet known to the API (meaning it has never been loaded)
    */
-  private _containsUnknownEntityReference (array: Array<ItemType>): boolean {
+  private _containsUnknownEntityReference (array: Array<ItemType | Link>): array is Array<Link> {
     return array.some(entry => isEntityReference(entry) && this.apiActions.isUnknown(entry.href))
   }
 }

@@ -1,6 +1,6 @@
 import type { ApiActions } from './interfaces/Interfaces'
 import type { InternalConfig } from './interfaces/Config'
-import type { StoreData, StoreDataCollection, StoreDataEntity } from './interfaces/StoreData'
+import type { StoreData } from './interfaces/StoreData'
 import type ResourceInterface from './interfaces/ResourceInterface'
 import Resource from './Resource'
 import Collection from './Collection'
@@ -60,11 +60,11 @@ class ResourceCreator<RootEndpoint extends ResourceInterface = ResourceInterface
   wrapData<ResourceType extends ResourceInterface<ResourceType>> (data: StoreData<ResourceType>): ResourceType {
     // Store data looks like a collection --> return CollectionInterface
     if (isCollection<ResourceType>(data)) {
-      return new Collection<ResourceType>(data as StoreDataCollection<ResourceType>, this.apiActions, this, this.config) as unknown as ResourceType// these parameters are passed to Resource constructor
+      return new Collection<ResourceType>(data, this.apiActions, this, this.config) as unknown as ResourceType
 
     // else Store Data looks like an entity --> return normal Resource
     } else {
-      return new Resource<ResourceType>(data as StoreDataEntity<ResourceType>, this.apiActions, this, this.config) as unknown as ResourceType
+      return new Resource<ResourceType>(data, this.apiActions, this, this.config) as unknown as ResourceType
     }
   }
 }

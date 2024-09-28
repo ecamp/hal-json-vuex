@@ -23,6 +23,10 @@ interface ResourceInterface<ResourceType extends ResourceInterface = any> {
     $href: (relation: string, templateParams: Record<string, string | number | boolean>) => Promise<string | undefined>
 }
 
+/**
+ * Generic interface for a ResourceInterface without own store entry and a self link. To reload this resource, the
+ * owning resource has to be reloaded.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface VirtualResource<Type extends ResourceInterface = any> extends ResourceInterface<Type> {
     _storeData: VirtualStoreData<Type>

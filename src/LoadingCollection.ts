@@ -10,7 +10,6 @@ class LoadingCollection {
    * @param loadArray       Promise that resolves once the array has finished loading
    * @param existingContent optionally set the elements that are already known, for random access
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   static create<ItemType extends ResourceInterface> (loadArray: Promise<Array<ItemType> | undefined>, existingContent: Array<ItemType> = []): Array<ItemType> {
     // if the Promise resolves to undefined, provide empty array
     // this could happen if items is accessed from a LoadingResource, which resolves to a normal entity without 'items'
