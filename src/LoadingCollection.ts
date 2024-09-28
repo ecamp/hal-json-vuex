@@ -1,5 +1,6 @@
+import type ResourceInterface from './interfaces/ResourceInterface'
+
 import LoadingResource from './LoadingResource'
-import ResourceInterface from './interfaces/ResourceInterface'
 
 class LoadingCollection {
   /**
@@ -9,7 +10,7 @@ class LoadingCollection {
    * @param loadArray       Promise that resolves once the array has finished loading
    * @param existingContent optionally set the elements that are already known, for random access
    */
-  static create (loadArray: Promise<Array<ResourceInterface> | undefined>, existingContent: Array<ResourceInterface> = []): Array<ResourceInterface> {
+  static create<ItemType extends ResourceInterface> (loadArray: Promise<Array<ItemType> | undefined>, existingContent: Array<ItemType> = []): Array<ItemType> {
     // if the Promise resolves to undefined, provide empty array
     // this could happen if items is accessed from a LoadingResource, which resolves to a normal entity without 'items'
     const loadArraySafely = loadArray.then(array => array ?? [])
@@ -19,7 +20,7 @@ class LoadingCollection {
     singleResultFunctions.forEach(func => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       existingContent[func] = (...args: any[]) => {
-        const resultLoaded = loadArraySafely.then(array => array[func](...args) as ResourceInterface)
+        const resultLoaded = loadArraySafely.then(array => array[func](...args) as ItemType)
         return new LoadingResource(resultLoaded)
       }
     })
@@ -29,7 +30,7 @@ class LoadingCollection {
     arrayResultFunctions.forEach(func => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       existingContent[func] = (...args: any[]) => {
-        const resultLoaded = loadArraySafely.then(array => array[func](...args) as Array<ResourceInterface>) // TODO: return type for .map() is not necessarily an Array<ResourceInterface>
+        const resultLoaded = loadArraySafely.then(array => array[func](...args) as Array<ItemType>) // TODO: return type for .map() is not necessarily an Array<ResourceInterface>
         return LoadingCollection.create(resultLoaded)
       }
     })

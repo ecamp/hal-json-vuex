@@ -1,6 +1,7 @@
 // vite.config.js
 
 import { defineConfig } from 'vite'
+import dtsPlugin from 'vite-plugin-dts'
 
 export default defineConfig({
   build: {
@@ -23,6 +24,7 @@ export default defineConfig({
       // externalize outputs if we have these modules as dependencies
       external: ['hal-json-normalizer', 'url-template', 'vue-demi'],
       output: {
+        exports: 'named',
         globals: {
           'url-template': 'parseTemplate',
           'hal-json-normalizer': 'normalize',
@@ -34,6 +36,7 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['vue-demi']
   },
+  plugins: [dtsPlugin({ rollupTypes: true })],
   test: {
     environment: 'jsdom',
     globals: true,

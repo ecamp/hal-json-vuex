@@ -1,20 +1,20 @@
 import { del, set } from 'vue-demi'
 
-import StoreData from './interfaces/StoreData'
+import type { MutationTree } from 'vuex/types'
 
-import { MutationTree } from 'vuex/types'
+import type StoreData from './interfaces/StoreData'
 
 export const state = {}
-export type State = Record<string, StoreData>
+export type State<StoreType> = Record<string, StoreData<StoreType>>
 
-export const mutations: MutationTree<State> = {
+export const mutations: MutationTree<State<unknown>> = {
   /**
    * Adds a placeholder into the store that indicates that the entity with the given URI is currently being
    * fetched from the API and not yet available.
    * @param state Vuex state
    * @param uri   URI of the object that is being fetched
    */
-  addEmpty (state: State, uri: string) : void {
+  addEmpty<StoreType> (state: State<StoreType>, uri: string) : void {
     set(state, uri, { _meta: { self: uri, loading: true } })
   },
   /**
@@ -22,7 +22,7 @@ export const mutations: MutationTree<State> = {
    * @param state Vuex state
    * @param data  An object mapping URIs to entities that should be merged into the Vuex state.
    */
-  add (state: State, data: Record<string, unknown>) : void {
+  add<StoreType> (state: State<StoreType>, data: Record<string, unknown>) : void {
     Object.keys(data).forEach(uri => {
       set(state, uri, data[uri])
 
@@ -35,7 +35,7 @@ export const mutations: MutationTree<State> = {
    * @param state Vuex state
    * @param uri   URI of the entity that is currently being reloaded
    */
-  reloading (state: State, uri: string) : void {
+  reloading<StoreType> (state: State<StoreType>, uri: string) : void {
     if (state[uri]) set(state[uri]._meta, 'reloading', true)
   },
   /**
@@ -43,7 +43,7 @@ export const mutations: MutationTree<State> = {
    * @param state Vuex state
    * @param uri   URI of the entity that is currently being reloaded
    */
-  reloadingFailed (state: State, uri: string) : void {
+  reloadingFailed<StoreType> (state: State<StoreType>, uri: string) : void {
     if (state[uri]) set(state[uri]._meta, 'reloading', false)
   },
   /**
@@ -51,7 +51,7 @@ export const mutations: MutationTree<State> = {
    * @param state Vuex state
    * @param uri   URI of the entity to be removed
    */
-  purge (state: State, uri: string) : void {
+  purge<StoreType> (state: State<StoreType>, uri: string) : void {
     del(state, uri)
   },
   /**
@@ -59,7 +59,7 @@ export const mutations: MutationTree<State> = {
    * @param state Vuex state
    * @param uri   URI of the entity to be removed
    */
-  purgeAll (state: State) : void {
+  purgeAll<StoreType> (state: State<StoreType>) : void {
     Object.keys(state).forEach(uri => {
       del(state, uri)
     })
@@ -69,7 +69,7 @@ export const mutations: MutationTree<State> = {
    * @param state Vuex state
    * @param uri   URI of the entity that is currently being deleted
    */
-  deleting (state: State, uri: string) : void {
+  deleting<StoreType> (state: State<StoreType>, uri: string) : void {
     if (state[uri]) set(state[uri]._meta, 'deleting', true)
   },
   /**
@@ -77,7 +77,7 @@ export const mutations: MutationTree<State> = {
    * @param state Vuex state
    * @param uri   URI of the entity that failed to be deleted
    */
-  deletingFailed (state: State, uri: string) : void {
+  deletingFailed<StoreType> (state: State<StoreType>, uri: string) : void {
     if (state[uri]) set(state[uri]._meta, 'deleting', false)
   }
 }

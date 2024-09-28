@@ -8,5 +8,5 @@ interface InternalConfig extends ExternalConfig {
   apiRoot?: string
 }
 
-export { InternalConfig, ExternalConfig }
+export type { InternalConfig, ExternalConfig }
 export default ExternalConfig
