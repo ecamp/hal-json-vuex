@@ -12,7 +12,7 @@ export default defineConfig({
 
       // the exposed global variable
       // is required when formats includes 'umd' or 'iife'
-      name: 'HalJsonVuexPlugin',
+      name: 'HalJsonVuex',
 
       // the proper extensions will be added, ie:
       // name.js (es module)
