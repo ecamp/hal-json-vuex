@@ -1,4 +1,4 @@
-import normalize from 'hal-json-normalizer-esm'
+import normalize from 'hal-json-normalizer'
 import { parseTemplate } from 'url-template'
 import type { Store } from 'vuex/types'
 import type { AxiosError, AxiosInstance } from 'axios'
