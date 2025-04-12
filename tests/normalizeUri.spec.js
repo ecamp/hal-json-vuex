@@ -23,7 +23,8 @@ describe('URI normalizing', () => {
       '/camps?page=0&abc=123&page=1': '/camps?abc=123&page=0&page=1',
       '/camps?page=1&abc=123&page=0': '/camps?abc=123&page=1&page=0',
       '/camps?page=0&xyz=123&page=1': '/camps?page=0&page=1&xyz=123',
-      '/camps/?e[]=abc&a[]=123&a=test': '/camps/?a=test&a%5B%5D=123&e%5B%5D=abc'
+      '/camps/?e[]=abc&a[]=123&a=test':
+        '/camps/?a=test&a%5B%5D=123&e%5B%5D=abc'
     }
 
     Object.entries(examples).forEach(([example, expected]) => {
@@ -45,7 +46,7 @@ describe('URI normalizing', () => {
     expect(result).toEqual(null)
   })
 
-  it('treats undefined as root URI, to enable this.api.get() without parameters to be the same as this.api.get(\'\')', () => {
+  it("treats undefined as root URI, to enable this.api.get() without parameters to be the same as this.api.get('')", () => {
     // given
 
     // when
@@ -55,7 +56,7 @@ describe('URI normalizing', () => {
     expect(result).toEqual('')
   })
 
-  it('treats undefined as root URI, to enable this.api.get() without parameters to be the same as this.api.get(\'\')', () => {
+  it("treats undefined as root URI, to enable this.api.get() without parameters to be the same as this.api.get('')", () => {
     // given
 
     // when
@@ -65,59 +66,68 @@ describe('URI normalizing', () => {
     expect(result).toEqual('')
   })
 
-  const baseUrlParams =
-    [
-      {
-        baseUrl: undefined,
-        uri: '/api/activities',
-        normalized: '/api/activities'
-      },
-      {
-        baseUrl: null,
-        uri: '/api/activities',
-        normalized: '/api/activities'
-      },
-      {
-        baseUrl: '',
-        uri: '/api/activities',
-        normalized: '/api/activities'
-      },
-      {
-        baseUrl: '/api',
-        uri: '/api/activities',
-        normalized: '/activities'
-      },
-      {
-        baseUrl: 'http://localhost:3000',
-        uri: 'http://localhost:3000/api/activities',
-        normalized: '/api/activities'
-      },
-      {
-        baseUrl: 'http://localhost:3000',
-        uri: '/api/activities',
-        normalized: '/api/activities'
-      },
-      {
-        baseUrl: 'http://localhost:3000/api',
-        uri: 'http://localhost:3000/api/activities',
-        normalized: '/activities'
-      },
-      {
-        baseUrl: 'http://localhost:3000/api',
-        uri: '/api/activities',
-        normalized: '/activities'
-      },
-      {
-        baseUrl: 'http://localhost:3000/api/',
-        uri: '/api/activities',
-        normalized: '/activities'
-      },
-      {
-        baseUrl: 'http://localhost:3000/api/',
-        uri: 'http://localhost:3000/print/activities',
-        normalized: 'http://localhost:3000/print/activities'
-      }
-    ]
+  const baseUrlParams = [
+    {
+      baseUrl: undefined,
+      uri: '/api/activities',
+      normalized: '/api/activities'
+    },
+    {
+      baseUrl: null,
+      uri: '/api/activities',
+      normalized: '/api/activities'
+    },
+    {
+      baseUrl: '',
+      uri: '/api/activities',
+      normalized: '/api/activities'
+    },
+    {
+      baseUrl: '/api',
+      uri: '/api/activities',
+      normalized: '/activities'
+    },
+    {
+      baseUrl: 'http://localhost:3000',
+      uri: 'http://localhost:3000/api/activities',
+      normalized: '/api/activities'
+    },
+    {
+      baseUrl: 'http://localhost:3000',
+      uri: '/api/activities',
+      normalized: '/api/activities'
+    },
+    {
+      baseUrl: 'http://localhost:3000/api',
+      uri: 'http://localhost:3000/api/activities',
+      normalized: '/activities'
+    },
+    {
+      baseUrl: 'http://localhost:3000/api',
+      uri: '/api/activities',
+      normalized: '/activities'
+    },
+    {
+      baseUrl: 'http://localhost:3000/api/',
+      uri: '/api/activities',
+      normalized: '/activities'
+    },
+    {
+      baseUrl: 'http://localhost:3000/api/',
+      uri: 'http://localhost:3000/print/activities',
+      normalized: 'http://localhost:3000/print/activities'
+    },
+    {
+      baseUrl: 'http://localhost:3000/api/',
+      uri: '/api/activities?page=0&abc=123',
+      normalized: '/activities?abc=123&page=0'
+    },
+    {
+      baseUrl: '/api',
+      uri: '/api/activities?page=0&abc=123',
+      normalized: '/activities?abc=123&page=0'
+    }
+  ]
 
   baseUrlParams.forEach(({ baseUrl, uri, normalized }) => {
     it(`normalizes ${uri} when baseUrl is ${baseUrl} to ${normalized}`, () => {

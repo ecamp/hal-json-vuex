@@ -51,20 +51,19 @@ function normalizeUri (uri: unknown, baseUrl: string): string | null {
   if (typeof uri !== 'string') return null
   const sorted = sortQueryParams(uri)
   const simpleReplace = sorted.replace(new RegExp(`^${baseUrl}`), '')
-  if (baseUrl && simpleReplace === uri) {
-    try {
-      const parsedBaseUrl = new URL(baseUrl)
-      const uriHasHost = getHostOfUri(uri) !== undefined
-      if (parsedBaseUrl.host && uriHasHost) {
-        return simpleReplace
-      }
 
-      const pathname = parsedBaseUrl.pathname.replace(/\/$/, '')
-      return sorted.replace(new RegExp(`^${pathname}`), '')
-    } catch (_) {
+  try {
+    const parsedBaseUrl = new URL(baseUrl)
+    const uriHasHost = getHostOfUri(uri) !== undefined
+    if (parsedBaseUrl.host && uriHasHost) {
+      return simpleReplace
     }
+
+    const pathname = parsedBaseUrl.pathname.replace(/\/$/, '')
+    return sorted.replace(new RegExp(`^${pathname}`), '')
+  } catch (_) {
+    return simpleReplace
   }
-  return simpleReplace
 }
 
 /**
