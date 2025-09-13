@@ -22,7 +22,12 @@ let axiosMock
 let store
 let vm
 
-describe('Using dollar methods', () => {
+describe.each(
+  [
+    false,
+    true
+  ]
+)('Using dollar methods and store.strict: %s', (strict) => {
   beforeAll(() => {
     axios.defaults.baseURL = 'http://localhost'
   })
@@ -30,7 +35,9 @@ describe('Using dollar methods', () => {
   beforeEach(() => {
     axiosMock = new MockAdapter(axios)
 
-    store = createStore({})
+    store = createStore({
+      strict
+    })
 
     const installApi = {
       install (app) {
