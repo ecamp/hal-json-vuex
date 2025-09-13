@@ -2,7 +2,7 @@ import { del, set } from 'vue-demi'
 
 import type { MutationTree } from 'vuex/types'
 
-import type StoreData from './interfaces/StoreData'
+import type { StoreData, SerializablePromise } from './interfaces/StoreData'
 
 export const state = {}
 export type State<StoreType> = Record<string, StoreData<StoreType>>
@@ -29,6 +29,14 @@ export const mutations: MutationTree<State<unknown>> = {
       set(state[uri]._meta, 'loading', false)
       set(state[uri]._meta, 'reloading', false)
     })
+  },
+  /**
+     * Adds entities loaded from the API to the Vuex store.
+     * @param state Vuex state
+     * @param data  An object mapping URIs to entities that should be merged into the Vuex state.
+     */
+  setLoadPromise<StoreType> (state: State<StoreType>, data: { uri: string, promise: SerializablePromise<StoreData> }): void {
+    state[data.uri]._meta.load = data.promise
   },
   /**
    * Marks a single entity in the Vuex store as reloading, meaning a reloading network request is currently ongoin.

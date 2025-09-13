@@ -407,7 +407,10 @@ export function HalJsonVuexPlugin<RootEndpoint extends ResourceInterface, FullSt
   function setLoadPromiseOnStore<StoreType> (uri: string, loadStoreData: Promise<StoreData<StoreType>> | null = null) {
     const promise: SerializablePromise<StoreData<StoreType>> = loadStoreData || Promise.resolve(store.state[opts.apiName][uri])
     promise.toJSON = () => '{}' // avoid warning in Nuxt when serializing the complete Vuex store ("Cannot stringify arbitrary non-POJOs Promise")
-    store.state[opts.apiName][uri]._meta.load = promise
+    store.commit('setLoadPromise', {
+      uri,
+      promise
+    })
   }
 
   /**
